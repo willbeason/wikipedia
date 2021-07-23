@@ -1,0 +1,4 @@
+go run cmd/extract-wikipedia.go \
+  C:\\Users\\Will\\Documents\\WikipediaCorpus\\enwiki-20210701-pages-articles-multistream.xml.bz2 \
+  C:\\Users\\Will\\Documents\\WikipediaCorpus\\enwiki-20210701-pages-articles-multistream-index.txt \
+  C:\\Users\\Will\\Documents\\WikipediaCorpus
