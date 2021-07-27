@@ -3,7 +3,8 @@ package main
 import (
 	"encoding/xml"
 	"fmt"
-	"io/fs"
+	"github.com/willbeason/extract-wikipedia/pkg/documents"
+	"github.com/willbeason/extract-wikipedia/pkg/walker"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -25,7 +26,7 @@ var cmd = cobra.Command{
 		errs := make(chan error)
 
 		go func() {
-			err := filepath.WalkDir(in, walker(work))
+			err := filepath.WalkDir(in, walker.Files(work))
 			if err != nil {
 				errs <- err
 			}
@@ -72,18 +73,6 @@ func main() {
 	}
 }
 
-func walker(work chan<- string) func(string, fs.DirEntry, error) error {
-	return func(path string, d fs.DirEntry, err error) error {
-		if d.IsDir() {
-			return nil
-		}
-
-		work <- filepath.ToSlash(path)
-
-		return nil
-	}
-}
-
 func doWork(path, in, out string) error {
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -92,14 +81,14 @@ func doWork(path, in, out string) error {
 
 	bytes = []byte("<documents>\n" + string(bytes) + "\n</documents>")
 
-	var doc Document
+	var doc documents.Document
 	err = xml.Unmarshal(bytes, &doc)
 
 	if err != nil {
 		return err
 	}
 
-	result := Document{}
+	result := documents.Document{}
 
 	for i := range doc.Pages {
 		if doc.Pages[i].Redirect.Title != "" {
@@ -132,25 +121,6 @@ func doWork(path, in, out string) error {
 	}
 
 	return nil
-}
-
-type Document struct {
-	Pages []Page `xml:"page"`
-}
-
-type Page struct {
-	ID       int      `xml:"id"`
-	Title    string   `xml:"title"`
-	Redirect Redirect `xml:"redirect"`
-	Revision Revision `xml:"revision"`
-}
-
-type Redirect struct {
-	Title string `xml:"title,attr"`
-}
-
-type Revision struct {
-	Text string `xml:"text"`
 }
 
 var (

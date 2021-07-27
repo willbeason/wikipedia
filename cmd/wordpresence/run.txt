@@ -1,0 +1,4 @@
+go run cmd/wordpresence/wordpresence.go \
+  /c/Users/willb/Documents/wikipedia/wikipedia-clean \
+  /c/Users/willb/Documents/wikipedia/wordcounts/out.yaml \
+  /c/Users/willb/Documents/wikipedia/wordsets
