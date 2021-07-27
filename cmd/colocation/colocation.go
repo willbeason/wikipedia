@@ -78,6 +78,15 @@ var stopWords = map[string]bool {
 	"notify": true,
 	"contribution": true,
 	"padding": true,
+	"blp": true,
+	"tbl": true,
+	"rfd": true,
+	"admins": true,
+	"deleting": true,
+	"checkuser": true,
+	//
+	//"spacewatch": true,
+	//"republican": true,
 }
 
 var cmd = cobra.Command{
