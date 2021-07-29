@@ -3,15 +3,16 @@ package main
 import (
 	"encoding/xml"
 	"fmt"
-	"github.com/willbeason/extract-wikipedia/pkg/documents"
-	"github.com/willbeason/extract-wikipedia/pkg/parallel"
-	"github.com/willbeason/extract-wikipedia/pkg/walker"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
+
+	"github.com/willbeason/extract-wikipedia/pkg/documents"
+	"github.com/willbeason/extract-wikipedia/pkg/parallel"
+	"github.com/willbeason/extract-wikipedia/pkg/walker"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -69,7 +70,6 @@ func main() {
 
 func doWork(in, out string) func(string) error {
 	return func(path string) error {
-
 		bytes, err := ioutil.ReadFile(path)
 		if err != nil {
 			return err
@@ -122,7 +122,7 @@ func doWork(in, out string) func(string) error {
 
 var (
 	widgets = regexp.MustCompile(`{{[^{}]+}}`)
-	links   = regexp.MustCompile(`\[\[([^]|]+)(|[^]]+)?]]`)
+	links   = regexp.MustCompile(`\[\[([^]|]+)(|[^]]+)?]]`) //nolint: gocritic // We want two capture groups.
 
 	wikiClass = regexp.MustCompile(`(?s){\| class=.+?
 \|}`)

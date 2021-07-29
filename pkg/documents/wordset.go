@@ -1,9 +1,7 @@
 package documents
 
-
-
 type WordSets struct {
-	InFile string `json:"in_file,omitempty"`
+	InFile    string `json:"in_file,omitempty"`
 	Documents []WordSet
 }
 

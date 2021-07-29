@@ -2,17 +2,18 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/willbeason/extract-wikipedia/pkg/documents"
-	"github.com/willbeason/extract-wikipedia/pkg/nlp"
-	"github.com/willbeason/extract-wikipedia/pkg/walker"
-	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
+
+	"github.com/spf13/cobra"
+	"github.com/willbeason/extract-wikipedia/pkg/documents"
+	"github.com/willbeason/extract-wikipedia/pkg/nlp"
+	"github.com/willbeason/extract-wikipedia/pkg/walker"
+	"gopkg.in/yaml.v3"
 )
 
 var cmd = cobra.Command{
@@ -170,7 +171,7 @@ func collect(dictionary1, dictionary2 map[string]bool, results <-chan map[string
 	for counts := range results {
 		for word, v := range counts {
 			word = nlp.Normalize(word)
-			if len(word) == 0 {
+			if word == "" {
 				continue
 			}
 			if !dictionary1[word] && !dictionary2[word] {
@@ -178,10 +179,6 @@ func collect(dictionary1, dictionary2 map[string]bool, results <-chan map[string
 				continue
 			}
 			result[word] += v
-			//if len(result) > 1e6 {
-			//	result = dropBelow(result, 100)
-			//	fmt.Println(len(result))
-			//}
 		}
 	}
 

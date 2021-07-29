@@ -3,17 +3,18 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/willbeason/extract-wikipedia/pkg/documents"
-	"github.com/willbeason/extract-wikipedia/pkg/nlp"
-	"github.com/willbeason/extract-wikipedia/pkg/walker"
-	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
+
+	"github.com/spf13/cobra"
+	"github.com/willbeason/extract-wikipedia/pkg/documents"
+	"github.com/willbeason/extract-wikipedia/pkg/nlp"
+	"github.com/willbeason/extract-wikipedia/pkg/walker"
+	"gopkg.in/yaml.v3"
 )
 
 var cmd = cobra.Command{
@@ -81,7 +82,6 @@ var cmd = cobra.Command{
 			writeResultsWg.Done()
 		}()
 
-
 		workWg.Wait()
 		close(results)
 
@@ -123,7 +123,7 @@ func doWork(dictionary map[string]int, path string, results chan<- documents.Wor
 
 		seen := getPresences(dictionary, doc.Pages[i].Revision.Text)
 		docWords[i] = documents.WordSet{
-			ID:   doc.Pages[i].ID,
+			ID:    doc.Pages[i].ID,
 			Words: seen,
 		}
 	}

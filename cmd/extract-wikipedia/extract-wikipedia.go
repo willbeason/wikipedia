@@ -76,7 +76,7 @@ var cmd = cobra.Command{
 						continue
 					}
 
-					outBytes = make([]byte, endIndex - startIndex)
+					outBytes = make([]byte, endIndex-startIndex)
 					_, err = fRepo.Read(outBytes)
 					if err != nil {
 						errs <- err
@@ -155,7 +155,7 @@ func decompress(i int, b []byte, outDir string, errs chan<- error) {
 		return
 	}
 
-	if i % 1000 == 0 {
+	if i%1000 == 0 {
 		fmt.Println(i)
 	}
 }

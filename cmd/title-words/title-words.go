@@ -2,16 +2,17 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/willbeason/extract-wikipedia/pkg/documents"
-	"github.com/willbeason/extract-wikipedia/pkg/nlp"
-	"github.com/willbeason/extract-wikipedia/pkg/walker"
-	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/spf13/cobra"
+	"github.com/willbeason/extract-wikipedia/pkg/documents"
+	"github.com/willbeason/extract-wikipedia/pkg/nlp"
+	"github.com/willbeason/extract-wikipedia/pkg/walker"
+	"gopkg.in/yaml.v3"
 )
 
 var cmd = cobra.Command{

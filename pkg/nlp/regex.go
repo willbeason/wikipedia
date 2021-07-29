@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	WordRegex = regexp.MustCompile(`[\w']+`)
+	WordRegex   = regexp.MustCompile(`[\w']+`)
 	LetterRegex = regexp.MustCompile(`[A-Za-z]`)
 )
 

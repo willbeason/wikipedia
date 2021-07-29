@@ -16,15 +16,14 @@ func ReadDictionary(path string) (map[string]bool, error) {
 	lines := strings.Split(string(bytes), "\n")
 
 	dictionary := make(map[string]bool, len(lines))
-	for _, word := range lines{
-		if len(word) == 0 {
+	for _, word := range lines {
+		if word == "" {
 			continue
 		}
 		dictionary[word] = true
 	}
 
 	return dictionary, nil
-
 }
 
 func WriteDictionary(path string, dictionary map[string]bool) error {

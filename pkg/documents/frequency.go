@@ -5,8 +5,6 @@ type FrequencyTable struct {
 }
 
 type Frequency struct {
-	Word string
+	Word  string
 	Count int
 }
-
-
