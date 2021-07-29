@@ -1,3 +1,7 @@
 go run cmd/colocation/colocation.go \
   /c/Users/willb/Documents/wikipedia/wordsets \
   /c/Users/willb/Documents/wikipedia/wordcounts/out.yaml
+
+go run cmd/colocation/colocation.go \
+  /c/Users/willb/Documents/wikipedia/wordsets-dic \
+  /c/Users/willb/Documents/wikipedia/wordcounts/out-dic.yaml

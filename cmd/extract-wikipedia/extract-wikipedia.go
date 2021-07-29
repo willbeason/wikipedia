@@ -17,7 +17,7 @@ import (
 
 var cmd = cobra.Command{
 	Args: cobra.ExactArgs(3),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		cmd.SilenceUsage = true
 
 		repo := args[0]
@@ -28,13 +28,17 @@ var cmd = cobra.Command{
 		if err != nil {
 			return err
 		}
-		defer fRepo.Close()
+		defer func() {
+			err = fRepo.Close()
+		}()
 
 		fIndex, err := os.Open(index)
 		if err != nil {
 			return err
 		}
-		defer fIndex.Close()
+		defer func() {
+			err = fIndex.Close()
+		}()
 
 		rIndex := bufio.NewReader(fIndex)
 

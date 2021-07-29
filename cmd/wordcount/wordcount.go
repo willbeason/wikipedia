@@ -29,9 +29,13 @@ var cmd = cobra.Command{
 		if err != nil {
 			return err
 		}
-		dictionary2, err := nlp.ReadDictionary(inDictionaryFile2)
-		if err != nil {
-			return err
+
+		var dictionary2 map[string]bool
+		if inDictionaryFile2 != "" {
+			dictionary2, err = nlp.ReadDictionary(inDictionaryFile2)
+			if err != nil {
+				return err
+			}
 		}
 
 		work := make(chan string)
@@ -158,15 +162,6 @@ func countWords(p *documents.Page) map[string]int {
 	}
 
 	return result
-}
-
-func dropBelow(m map[string]int, threshold int) map[string]int {
-	for w, c := range m {
-		if c < threshold {
-			delete(m, w)
-		}
-	}
-	return m
 }
 
 func collect(dictionary1, dictionary2 map[string]bool, results <-chan map[string]int) map[string]int {

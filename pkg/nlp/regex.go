@@ -7,7 +7,6 @@ import (
 
 var (
 	WordRegex = regexp.MustCompile(`[\w']+`)
-	NumRegex = regexp.MustCompile(`^[0-9.]+$`)
 	LetterRegex = regexp.MustCompile(`[A-Za-z]`)
 )
 

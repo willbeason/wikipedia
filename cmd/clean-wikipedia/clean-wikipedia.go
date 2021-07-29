@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/willbeason/extract-wikipedia/pkg/documents"
+	"github.com/willbeason/extract-wikipedia/pkg/parallel"
 	"github.com/willbeason/extract-wikipedia/pkg/walker"
 	"io/ioutil"
 	"os"
@@ -37,14 +38,7 @@ var cmd = cobra.Command{
 		for i := 0; i < 8; i++ {
 			workWg.Add(1)
 			go func() {
-				for item := range work {
-					err := doWork(item, in, out)
-					if err != nil {
-						errs <- fmt.Errorf("%s: %w", item, err)
-						workWg.Done()
-						return
-					}
-				}
+				parallel.DoWork(work, doWork(in, out), errs)
 				workWg.Done()
 			}()
 		}
@@ -73,61 +67,64 @@ func main() {
 	}
 }
 
-func doWork(path, in, out string) error {
-	bytes, err := ioutil.ReadFile(path)
-	if err != nil {
-		return err
-	}
+func doWork(in, out string) func(string) error {
+	return func(path string) error {
 
-	bytes = []byte("<documents>\n" + string(bytes) + "\n</documents>")
-
-	var doc documents.Document
-	err = xml.Unmarshal(bytes, &doc)
-
-	if err != nil {
-		return err
-	}
-
-	result := documents.Document{}
-
-	for i := range doc.Pages {
-		if doc.Pages[i].Redirect.Title != "" {
-			continue
+		bytes, err := ioutil.ReadFile(path)
+		if err != nil {
+			return err
 		}
 
-		doc.Pages[i].Revision.Text = cleanText(doc.Pages[i].Revision.Text)
-		result.Pages = append(result.Pages, doc.Pages[i])
+		bytes = []byte("<documents>\n" + string(bytes) + "\n</documents>")
+
+		var doc documents.Document
+		err = xml.Unmarshal(bytes, &doc)
+
+		if err != nil {
+			return err
+		}
+
+		result := documents.Document{}
+
+		for i := range doc.Pages {
+			if doc.Pages[i].Redirect.Title != "" {
+				continue
+			}
+
+			doc.Pages[i].Revision.Text = cleanText(doc.Pages[i].Revision.Text)
+			result.Pages = append(result.Pages, doc.Pages[i])
+		}
+
+		outBytes, err := yaml.Marshal(result)
+		if err != nil {
+			return err
+		}
+
+		if !strings.HasPrefix(path, in) {
+			panic(path + "\n" + in + "\n")
+		}
+
+		outPath := filepath.Join(out, strings.TrimPrefix(path, in))
+
+		err = os.MkdirAll(filepath.Dir(outPath), os.ModePerm)
+		if err != nil {
+			return err
+		}
+
+		err = ioutil.WriteFile(outPath, outBytes, os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("writing file: %w", err)
+		}
+
+		return nil
 	}
-
-	outBytes, err := yaml.Marshal(result)
-	if err != nil {
-		return err
-	}
-
-	if !strings.HasPrefix(path, in) {
-		panic(path + "\n" + in + "\n")
-	}
-
-	outPath := filepath.Join(out, strings.TrimPrefix(path, in))
-
-	err = os.MkdirAll(filepath.Dir(outPath), os.ModePerm)
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(outPath, outBytes, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("writing file: %w", err)
-	}
-
-	return nil
 }
 
 var (
 	widgets = regexp.MustCompile(`{{[^{}]+}}`)
 	links   = regexp.MustCompile(`\[\[([^]|]+)(|[^]]+)?]]`)
 
-	wikiclass = regexp.MustCompile(`(?s){\| class=.+?
+	wikiClass = regexp.MustCompile(`(?s){\| class=.+?
 \|}`)
 	timeline = regexp.MustCompile(`(?s)<timeline>
 .+?
@@ -149,7 +146,7 @@ func cleanText(text string) string {
 		text = widgets.ReplaceAllString(text, "")
 		nextLen = len(text)
 	}
-	text = wikiclass.ReplaceAllString(text, "")
+	text = wikiClass.ReplaceAllString(text, "")
 	text = ref.ReplaceAllString(text, "")
 	text = timeline.ReplaceAllString(text, "")
 

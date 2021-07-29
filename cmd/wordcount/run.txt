@@ -3,3 +3,9 @@ go run cmd/wordcount/wordcount.go \
   /c/Users/willb/Documents/wikipedia/wordcounts/english3.txt \
   /c/Users/willb/Documents/wikipedia/wordcounts/titles.txt \
   /c/Users/willb/Documents/wikipedia/wordcounts/out.yaml
+
+go run cmd/wordcount/wordcount.go \
+  /c/Users/willb/Documents/wikipedia/wikipedia-clean \
+  /c/Users/willb/Documents/wikipedia/wordcounts/english3.txt \
+  "" \
+  /c/Users/willb/Documents/wikipedia/wordcounts/out-dic.yaml

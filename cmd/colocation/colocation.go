@@ -84,9 +84,6 @@ var stopWords = map[string]bool {
 	"admins": true,
 	"deleting": true,
 	"checkuser": true,
-	//
-	//"spacewatch": true,
-	//"republican": true,
 }
 
 var cmd = cobra.Command{
@@ -158,8 +155,23 @@ var cmd = cobra.Command{
 		allSeen := make([]int, 10000*19999)
 		for _, part := range allSeenParts {
 			for idx, id := range part {
-				if id != 0 {
-					allSeen[idx] = id
+				switch id {
+				case 0:
+					// The pair was not observed in this slice.
+				case -1:
+					// The pair was observed multiple times in this slice.
+					allSeen[idx] = -1
+				default:
+					switch allSeen[idx] {
+					case 0:
+						// The pair has not been seen before, and was seen once.
+						allSeen[idx] = id
+					case -1:
+						// The pair has already been seen multiple times.
+					default:
+						// The pair has been seen once before, and now once more.
+						allSeen[idx] = -1
+					}
 				}
 			}
 		}
@@ -175,8 +187,13 @@ var cmd = cobra.Command{
 		}
 
 		numPrinted := 0
+		alreadyPrinted := make(map[int]int)
 		for i := 0; i < 20000; i++ {
 			toPrint := make(map[int]string)
+
+			if alreadyPrinted[i] != 0 {
+				continue
+			}
 
 			iWord := dictionary.Frequencies[i].Word
 			if stopWords[iWord] {
@@ -185,6 +202,10 @@ var cmd = cobra.Command{
 
 			iIdx := i * (i - 1) / 2
 			for j := 0; j < i; j++ {
+				if alreadyPrinted[j] != 0 || alreadyPrinted[i] != 0 {
+					continue
+				}
+
 				jWord := dictionary.Frequencies[j].Word
 
 				if stopWords[jWord] {
@@ -192,7 +213,13 @@ var cmd = cobra.Command{
 				}
 
 				idx := iIdx + j
-				if allSeen[idx] == 0 {
+				switch allSeen[idx] {
+				case 0, -1:
+					// Do nothing
+				default:
+					// Seen exactly once
+					alreadyPrinted[i] = allSeen[idx]
+					alreadyPrinted[j] = allSeen[idx]
 					toPrint[j] = jWord
 				}
 			}
@@ -203,7 +230,7 @@ var cmd = cobra.Command{
 				numPrinted += len(toPrint)
 				nPrinted := 0
 				for j, jWord := range toPrint {
-					fmt.Printf("(%d, %d): (%s, %s)\n", i, j, iWord, jWord)
+					fmt.Printf("(%d, %d): (%s, %s): %d\n", i, j, iWord, jWord, alreadyPrinted[i])
 					nPrinted++
 					if nPrinted >= 10 {
 						continue
@@ -261,11 +288,15 @@ func observeSeen(wordSets <-chan *documents.WordSets) []int {
 
 					idx := iIdx + j64
 
-					if result[idx] != 0 {
-						continue
+					switch result[idx] {
+					case 0:
+						// First seen
+						result[idx] = set.ID
+					case -1:
+						// Do nothing
+					default:
+						result[idx] = -1
 					}
-
-					result[idx] = set.ID
 				}
 			}
 		}
