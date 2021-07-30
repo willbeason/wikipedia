@@ -15,78 +15,80 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var cmd = cobra.Command{
-	Args: cobra.ExactArgs(3),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		cmd.SilenceUsage = true
+func mainCmd() *cobra.Command {
+	return &cobra.Command{
+		Args: cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.SilenceUsage = true
 
-		inArticles := args[0]
-		inDictionary := args[1]
-		outDictionary := args[2]
+			inArticles := args[0]
+			inDictionary := args[1]
+			outDictionary := args[2]
 
-		dictionary, err := nlp.ReadDictionary(inDictionary)
-		if err != nil {
-			return err
-		}
-
-		work := make(chan string)
-		errs := make(chan error)
-		results := make(chan string)
-
-		go func() {
-			err := filepath.WalkDir(inArticles, walker.Files(work))
+			dictionary, err := nlp.ReadDictionary(inDictionary)
 			if err != nil {
-				errs <- err
+				return err
 			}
-			close(work)
-		}()
 
-		workWg := sync.WaitGroup{}
+			work := make(chan string)
+			errs := make(chan error)
+			results := make(chan string)
 
-		for i := 0; i < 8; i++ {
-			workWg.Add(1)
 			go func() {
-				for item := range work {
-					err := doWork(item, results)
-					if err != nil {
-						errs <- fmt.Errorf("%s: %w", item, err)
-					}
+				err := filepath.WalkDir(inArticles, walker.Files(work))
+				if err != nil {
+					errs <- err
 				}
-				workWg.Done()
+				close(work)
 			}()
-		}
 
-		var titleDictionary map[string]bool
-		titleWg := sync.WaitGroup{}
-		titleWg.Add(1)
+			workWg := sync.WaitGroup{}
 
-		go func() {
-			titleDictionary = collectTitleDictionary(dictionary, results)
-			titleWg.Done()
-		}()
-
-		errsWg := sync.WaitGroup{}
-		errsWg.Add(1)
-		go func() {
-			for err := range errs {
-				fmt.Println(err)
+			for i := 0; i < 8; i++ {
+				workWg.Add(1)
+				go func() {
+					for item := range work {
+						err := doWork(item, results)
+						if err != nil {
+							errs <- fmt.Errorf("%s: %w", item, err)
+						}
+					}
+					workWg.Done()
+				}()
 			}
-			errsWg.Done()
-		}()
 
-		workWg.Wait()
-		close(results)
-		close(errs)
-		errsWg.Wait()
+			var titleDictionary map[string]bool
+			titleWg := sync.WaitGroup{}
+			titleWg.Add(1)
 
-		titleWg.Wait()
+			go func() {
+				titleDictionary = collectTitleDictionary(dictionary, results)
+				titleWg.Done()
+			}()
 
-		return nlp.WriteDictionary(outDictionary, titleDictionary)
-	},
+			errsWg := sync.WaitGroup{}
+			errsWg.Add(1)
+			go func() {
+				for err := range errs {
+					fmt.Println(err)
+				}
+				errsWg.Done()
+			}()
+
+			workWg.Wait()
+			close(results)
+			close(errs)
+			errsWg.Wait()
+
+			titleWg.Wait()
+
+			return nlp.WriteDictionary(outDictionary, titleDictionary)
+		},
+	}
 }
 
 func main() {
-	err := cmd.Execute()
+	err := mainCmd().Execute()
 	if err != nil {
 		os.Exit(1)
 	}
@@ -102,6 +104,7 @@ func doWork(path string, results chan<- string) error {
 
 	var doc documents.Document
 	err = yaml.Unmarshal(bytes, &doc)
+
 	if err != nil {
 		return err
 	}
@@ -111,10 +114,12 @@ func doWork(path string, results chan<- string) error {
 		if !nlp.IsArticle(title) {
 			continue
 		}
+
 		for _, word := range nlp.WordRegex.FindAllString(title, -1) {
 			if !nlp.HasLetter(word) {
 				continue
 			}
+
 			word = nlp.Normalize(word)
 			results <- word
 		}
@@ -124,15 +129,15 @@ func doWork(path string, results chan<- string) error {
 }
 
 func collectTitleDictionary(dictionary map[string]bool, words <-chan string) map[string]bool {
-	counts := make(map[string]int)
+	frequencies := documents.FrequencyMap{
+		Counts: make(map[string]int),
+	}
+	frequencies.Collect(words)
+
 	result := make(map[string]bool)
 
-	for word := range words {
-		if dictionary[word] {
-			continue
-		}
-		counts[word]++
-		if counts[word] == 2 {
+	for word, count := range frequencies.Counts {
+		if !dictionary[word] && count >= 2 {
 			result[word] = true
 		}
 	}

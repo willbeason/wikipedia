@@ -12,115 +12,87 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/willbeason/extract-wikipedia/pkg/flags"
+
 	"github.com/spf13/cobra"
 )
 
-var cmd = cobra.Command{
-	Args: cobra.ExactArgs(3),
-	RunE: func(cmd *cobra.Command, args []string) (err error) {
-		cmd.SilenceUsage = true
+const (
+	shardSize = 1000
+)
 
-		repo := args[0]
-		index := args[1]
-		outDir := args[2]
-
-		fRepo, err := os.Open(repo)
-		if err != nil {
-			return err
-		}
-		defer func() {
-			err = fRepo.Close()
-		}()
-
-		fIndex, err := os.Open(index)
-		if err != nil {
-			return err
-		}
-		defer func() {
-			err = fIndex.Close()
-		}()
-
-		rIndex := bufio.NewReader(fIndex)
-
-		startIndex, endIndex := int64(0), int64(0)
-		var lineBytes []byte
-		errs := make(chan error, 100)
-
-		go func() {
-			for err = range errs {
-				fmt.Println(err)
-			}
-		}()
-
-		jobs := make(chan job)
-
-		jobSync := sync.WaitGroup{}
-		jobSync.Add(1)
-		go func() {
-			fileIndex := 0
-			for ; err == nil && err != io.EOF; lineBytes, _, err = rIndex.ReadLine() {
-				if len(lineBytes) == 0 {
-					continue
-				}
-
-				var outBytes []byte
-				if err == nil {
-					line := string(lineBytes)
-					parts := strings.SplitN(line, ":", 3)
-					endIndex, err = strconv.ParseInt(parts[0], 10, 64)
-					if err != nil {
-						errs <- err
-						return
-					}
-					if startIndex == endIndex {
-						continue
-					}
-
-					outBytes = make([]byte, endIndex-startIndex)
-					_, err = fRepo.Read(outBytes)
-					if err != nil {
-						errs <- err
-						return
-					}
-				} else {
-					fmt.Println("got last file")
-					// err = io.EOF
-					outBytes, err = ioutil.ReadAll(fRepo)
-					if err != nil {
-						errs <- err
-						return
-					}
-				}
-
-				jobs <- job{i: fileIndex, b: outBytes}
-				fileIndex++
-
-				startIndex = endIndex
-
-				if err == io.EOF {
-					break
-				}
+func mainCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Args: cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			nParallel, err := cmd.Flags().GetInt(flags.ParallelKey)
+			if err != nil {
+				return err
 			}
 
-			close(jobs)
-			jobSync.Done()
-		}()
+			cmd.SilenceUsage = true
 
-		wg := sync.WaitGroup{}
-		for w := 0; w < 8; w++ {
-			wg.Add(1)
-			go func() {
-				worker(outDir, jobs, errs)
-				wg.Done()
+			repo := args[0]
+			index := args[1]
+			outDir := args[2]
+
+			fRepo, err := os.Open(repo)
+			if err != nil {
+				return err
+			}
+			defer func() {
+				err = fRepo.Close()
 			}()
-		}
 
-		jobSync.Wait()
-		wg.Wait()
-		close(errs)
+			fIndex, err := os.Open(index)
+			if err != nil {
+				return err
+			}
+			defer func() {
+				err = fIndex.Close()
+			}()
 
-		return err
-	},
+			rIndex := bufio.NewReader(fIndex)
+
+			errs := make(chan error)
+
+			go func() {
+				for err = range errs {
+					fmt.Println(err)
+				}
+			}()
+
+			jobs := make(chan job)
+
+			jobSync := sync.WaitGroup{}
+			jobSync.Add(1)
+			go func() {
+				extractFile(rIndex, fRepo, jobs, errs)
+
+				close(jobs)
+				jobSync.Done()
+			}()
+
+			wg := sync.WaitGroup{}
+			for w := 0; w < nParallel; w++ {
+				wg.Add(1)
+				go func() {
+					worker(outDir, jobs, errs)
+					wg.Done()
+				}()
+			}
+
+			jobSync.Wait()
+			wg.Wait()
+			close(errs)
+
+			return err
+		},
+	}
+
+	flags.Parallel(cmd)
+
+	return cmd
 }
 
 func worker(outDir string, jobs <-chan job, errs chan<- error) {
@@ -143,26 +115,88 @@ func decompress(i int, b []byte, outDir string, errs chan<- error) {
 		return
 	}
 
-	err = os.MkdirAll(fmt.Sprintf("%s/extracted/%03d", outDir, i/1000), os.ModePerm)
+	err = os.MkdirAll(fmt.Sprintf("%s/extracted/%06d", outDir, i/shardSize), os.ModePerm)
 	if err != nil {
 		errs <- err
 		return
 	}
 
-	err = ioutil.WriteFile(fmt.Sprintf("%s/extracted/%03d/%03d.txt", outDir, i/1000, i), b, os.ModePerm)
+	err = ioutil.WriteFile(fmt.Sprintf("%s/extracted/%03d/%06d.txt", outDir, i/shardSize, i), b, os.ModePerm)
 	if err != nil {
 		errs <- err
 		return
 	}
 
-	if i%1000 == 0 {
+	if i%shardSize == 0 {
 		fmt.Println(i)
 	}
 }
 
 func main() {
-	err := cmd.Execute()
+	err := mainCmd().Execute()
 	if err != nil {
 		os.Exit(1)
+	}
+}
+
+func extractFile(rIndex *bufio.Reader, fRepo *os.File, jobs chan<- job, errs chan<- error) {
+	startIndex, endIndex := int64(0), int64(0)
+
+	var (
+		lineBytes []byte
+		err       error
+		outBytes  []byte
+	)
+
+	fileIndex := 0
+
+	for ; err == nil; lineBytes, _, err = rIndex.ReadLine() {
+		if len(lineBytes) == 0 {
+			continue
+		}
+
+		if err == nil {
+			line := string(lineBytes)
+			parts := strings.SplitN(line, ":", 3)
+
+			endIndex, err = strconv.ParseInt(parts[0], 10, strconv.IntSize)
+
+			if err != nil {
+				errs <- err
+				return
+			}
+
+			if startIndex == endIndex {
+				continue
+			}
+
+			outBytes = make([]byte, endIndex-startIndex)
+
+			_, err = fRepo.Read(outBytes)
+			if err != nil {
+				errs <- err
+				return
+			}
+		}
+
+		jobs <- job{i: fileIndex, b: outBytes}
+		fileIndex++
+
+		startIndex = endIndex
+
+		if err == io.EOF {
+			break
+		}
+	}
+
+	if err == io.EOF {
+		fmt.Println("got last file")
+
+		outBytes, err = ioutil.ReadAll(fRepo)
+		if err != nil {
+			errs <- err
+			return
+		}
+		jobs <- job{i: fileIndex, b: outBytes}
 	}
 }

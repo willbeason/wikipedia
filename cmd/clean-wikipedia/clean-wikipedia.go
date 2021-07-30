@@ -18,51 +18,53 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var cmd = cobra.Command{
-	Args: cobra.ExactArgs(2),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		in := args[0]
-		out := args[1]
+func mainCmd() *cobra.Command {
+	return &cobra.Command{
+		Args: cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			in := args[0]
+			out := args[1]
 
-		work := make(chan string)
-		errs := make(chan error)
+			work := make(chan string)
+			errs := make(chan error)
 
-		go func() {
-			err := filepath.WalkDir(in, walker.Files(work))
-			if err != nil {
-				errs <- err
-			}
-			close(work)
-		}()
-
-		workWg := sync.WaitGroup{}
-		for i := 0; i < 8; i++ {
-			workWg.Add(1)
 			go func() {
-				parallel.DoWork(work, doWork(in, out), errs)
-				workWg.Done()
+				err := filepath.WalkDir(in, walker.Files(work))
+				if err != nil {
+					errs <- err
+				}
+				close(work)
 			}()
-		}
 
-		errsWg := sync.WaitGroup{}
-		errsWg.Add(1)
-		go func() {
-			for err := range errs {
-				fmt.Println(err)
+			workWg := sync.WaitGroup{}
+			for i := 0; i < 8; i++ {
+				workWg.Add(1)
+				go func() {
+					parallel.DoWork(work, doWork(in, out), errs)
+					workWg.Done()
+				}()
 			}
-			errsWg.Done()
-		}()
 
-		workWg.Wait()
-		close(errs)
-		errsWg.Wait()
+			errsWg := sync.WaitGroup{}
+			errsWg.Add(1)
+			go func() {
+				for err := range errs {
+					fmt.Println(err)
+				}
+				errsWg.Done()
+			}()
 
-		return nil
-	},
+			workWg.Wait()
+			close(errs)
+			errsWg.Wait()
+
+			return nil
+		},
+	}
 }
 
 func main() {
-	err := cmd.Execute()
+	err := mainCmd().Execute()
 	if err != nil {
 		os.Exit(1)
 	}
@@ -146,6 +148,7 @@ func cleanText(text string) string {
 		text = widgets.ReplaceAllString(text, "")
 		nextLen = len(text)
 	}
+
 	text = wikiClass.ReplaceAllString(text, "")
 	text = ref.ReplaceAllString(text, "")
 	text = timeline.ReplaceAllString(text, "")

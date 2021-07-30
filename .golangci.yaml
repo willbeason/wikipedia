@@ -22,6 +22,11 @@ linters-settings:
     min-complexity: 15
   goimports:
     local-prefixes: github.com/willbeason/wikipedia
+  gomnd:
+    settings:
+      mnd:
+        ignored-functions: cobra.ExactArgs
+        ignored-numbers: [2, 3, 10]
   govet:
     check-shadowing: true
   lll:
@@ -34,6 +39,7 @@ linters-settings:
 linters:
   disable-all: true
   enable:
+    - asciicheck
     - bodyclose
     - deadcode
     - depguard
@@ -43,13 +49,17 @@ linters:
     - exportloopref
     - exhaustive
     - funlen
+    - gochecknoglobals
     - gochecknoinits
+    - gocognit
     - goconst
     - gocritic
     - gocyclo
+    - godot
+    - goerr113
     - gofmt
     - goimports
-#    - gomnd
+    - gomnd
     - goprintffuncname
     - gosec
     - gosimple
@@ -58,8 +68,11 @@ linters:
     - lll
     - misspell
     - nakedret
+    - nestif
     - noctx
     - nolintlint
+    - prealloc
+    - revive
     - rowserrcheck
     - staticcheck
     - structcheck
@@ -70,19 +83,11 @@ linters:
     - unused
     - varcheck
     - whitespace
+    - wsl
 
   # don't enable:
-  # - asciicheck
   # - scopelint
-  # - gochecknoglobals
-  # - gocognit
-  # - godot
   # - godox
-  # - goerr113
   # - interfacer
   # - maligned
-  # - nestif
-  # - prealloc
   # - testpackage
-  # - revive
-  # - wsl

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/willbeason/extract-wikipedia/pkg/flags"
+
 	"github.com/spf13/cobra"
 	"github.com/willbeason/extract-wikipedia/pkg/documents"
 	"github.com/willbeason/extract-wikipedia/pkg/nlp"
@@ -16,103 +18,98 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var cmd = cobra.Command{
-	Args: cobra.ExactArgs(4),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		cmd.SilenceUsage = true
-
-		in := args[0]
-		inDictionaryFile1 := args[1]
-		inDictionaryFile2 := args[2]
-		out := args[3]
-
-		dictionary1, err := nlp.ReadDictionary(inDictionaryFile1)
-		if err != nil {
-			return err
-		}
-
-		var dictionary2 map[string]bool
-		if inDictionaryFile2 != "" {
-			dictionary2, err = nlp.ReadDictionary(inDictionaryFile2)
+func mainCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Args: cobra.ExactArgs(4),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			dictionarySize, err := cmd.Flags().GetInt(flags.DictionarySizeKey)
 			if err != nil {
 				return err
 			}
-		}
 
-		work := make(chan string)
-		errs := make(chan error)
+			cmd.SilenceUsage = true
 
-		go func() {
-			err := filepath.WalkDir(in, walker.Files(work))
+			in := args[0]
+			inDictionaryFile1 := args[1]
+			inDictionaryFile2 := args[2]
+			out := args[3]
+
+			dictionary1, err := nlp.ReadDictionary(inDictionaryFile1)
 			if err != nil {
-				errs <- err
+				return err
 			}
-			close(work)
-		}()
 
-		results := make(chan map[string]int)
-		workWg := sync.WaitGroup{}
-
-		for i := 0; i < 8; i++ {
-			workWg.Add(1)
-			go func() {
-				for item := range work {
-					err := doWork(item, results)
-					if err != nil {
-						errs <- fmt.Errorf("%s: %w", item, err)
-					}
+			var dictionary2 map[string]bool
+			if inDictionaryFile2 != "" {
+				dictionary2, err = nlp.ReadDictionary(inDictionaryFile2)
+				if err != nil {
+					return err
 				}
-				workWg.Done()
+			}
+
+			work := make(chan string)
+			errs := make(chan error)
+
+			go func() {
+				err := filepath.WalkDir(in, walker.Files(work))
+				if err != nil {
+					errs <- err
+				}
+				close(work)
 			}()
-		}
 
-		wordCountsWg := sync.WaitGroup{}
-		var wordCounts map[string]int
+			results := make(chan map[string]int)
+			workWg := sync.WaitGroup{}
 
-		wordCountsWg.Add(1)
-		go func() {
-			wordCounts = collect(dictionary1, dictionary2, results)
-			wordCountsWg.Done()
-		}()
-
-		errsWg := sync.WaitGroup{}
-		errsWg.Add(1)
-		go func() {
-			for err := range errs {
-				fmt.Println(err)
-			}
-			errsWg.Done()
-		}()
-
-		workWg.Wait()
-		close(results)
-
-		wordCountsWg.Wait()
-
-		frequencies := make([]documents.Frequency, len(wordCounts))
-		i := 0
-		for word, count := range wordCounts {
-			frequencies[i] = documents.Frequency{
-				Word:  word,
-				Count: count,
+			for i := 0; i < 8; i++ {
+				workWg.Add(1)
+				go func() {
+					for item := range work {
+						err := doWork(item, results)
+						if err != nil {
+							errs <- fmt.Errorf("%s: %w", item, err)
+						}
+					}
+					workWg.Done()
+				}()
 			}
 
-			i++
-		}
+			wordCountsWg := sync.WaitGroup{}
+			var wordCounts map[string]int
 
-		fmt.Println(len(wordCounts))
-		sort.Slice(frequencies, func(i, j int) bool {
-			return frequencies[i].Count > frequencies[j].Count
-		})
-		// Just the top 10,000 words.
-		frequencies = frequencies[:20000]
+			wordCountsWg.Add(1)
+			go func() {
+				wordCounts = collect(dictionary1, dictionary2, results)
+				wordCountsWg.Done()
+			}()
 
-		return writeFrequencyTable(out, documents.FrequencyTable{Frequencies: frequencies})
-	},
+			errsWg := sync.WaitGroup{}
+			errsWg.Add(1)
+			go func() {
+				for err := range errs {
+					fmt.Println(err)
+				}
+				errsWg.Done()
+			}()
+
+			workWg.Wait()
+			close(results)
+
+			wordCountsWg.Wait()
+
+			frequencies := collectFrequencies(dictionarySize, wordCounts)
+
+			return writeFrequencyTable(out, documents.FrequencyTable{Frequencies: frequencies})
+		},
+	}
+
+	flags.DictionarySize(cmd)
+
+	return cmd
 }
 
 func main() {
-	err := cmd.Execute()
+	err := mainCmd().Execute()
 	if err != nil {
 		os.Exit(1)
 	}
@@ -142,6 +139,7 @@ func doWork(path string, results chan<- map[string]int) error {
 
 	var doc documents.Document
 	err = yaml.Unmarshal(bytes, &doc)
+
 	if err != nil {
 		return err
 	}
@@ -174,13 +172,36 @@ func collect(dictionary1, dictionary2 map[string]bool, results <-chan map[string
 			if word == "" {
 				continue
 			}
+
 			if !dictionary1[word] && !dictionary2[word] {
 				// Not in either dictionary.
 				continue
 			}
+
 			result[word] += v
 		}
 	}
 
 	return result
+}
+
+func collectFrequencies(dictionarySize int, wordCounts map[string]int) []documents.Frequency {
+	frequencies := make([]documents.Frequency, len(wordCounts))
+	i := 0
+
+	for word, count := range wordCounts {
+		frequencies[i] = documents.Frequency{
+			Word:  word,
+			Count: count,
+		}
+
+		i++
+	}
+
+	fmt.Println(len(wordCounts))
+	sort.Slice(frequencies, func(i, j int) bool {
+		return frequencies[i].Count > frequencies[j].Count
+	})
+	// Just the top words.
+	return frequencies[:dictionarySize]
 }
