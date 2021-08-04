@@ -31,7 +31,7 @@ func mainCmd() *cobra.Command {
 
 			results := make(chan string)
 
-			jobs.DoJobs(parallel, doJob(search, results), work, errs)
+			jobs.DoPageJobs(parallel, doJob(search, results), work, errs)
 
 			resultsWg := sync.WaitGroup{}
 			resultsWg.Add(1)
@@ -61,7 +61,7 @@ func main() {
 	}
 }
 
-func doJob(find string, results chan<- string) jobs.Job {
+func doJob(find string, results chan<- string) jobs.Page {
 	return func(page *documents.Page) error {
 		text := page.Revision.Text
 

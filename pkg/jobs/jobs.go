@@ -1,7 +1,6 @@
 package jobs
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -73,13 +72,11 @@ func Errors() (chan<- error, *sync.WaitGroup) {
 	return errs, &errsWg
 }
 
-type Job func(page *documents.Page) error
+type Page func(page *documents.Page) error
 
-// DoJobs run parallel workers performing job on work and filling errs with any
-// encountered errors.
-//
-// Returns a WaitGroup which waits for all workers to finish.
-func DoJobs(parallel int, job Job, work <-chan string, errs chan<- error) *sync.WaitGroup {
+type Document func(doc *documents.Document) error
+
+func DoDocumentJobs(parallel int, job Document, work <-chan string, errs chan<- error) *sync.WaitGroup {
 	workWg := sync.WaitGroup{}
 
 	for i := 0; i < parallel; i++ {
@@ -94,14 +91,12 @@ func DoJobs(parallel int, job Job, work <-chan string, errs chan<- error) *sync.
 	return &workWg
 }
 
-func runWorker(job Job, work <-chan string, errs chan<- error) {
-	for path := range work {
-		doc, err := readDocument(path)
-		if err != nil {
-			errs <- err
-			continue
-		}
-
+// DoPageJobs run parallel workers performing job on work and filling errs with any
+// encountered errors.
+//
+// Returns a WaitGroup which waits for all workers to finish.
+func DoPageJobs(parallel int, job Page, work <-chan string, errs chan<- error) *sync.WaitGroup {
+	return DoDocumentJobs(parallel, func(doc *documents.Document) error {
 		for i := range doc.Pages {
 			page := &doc.Pages[i]
 			if !nlp.IsArticle(page.Title) {
@@ -110,11 +105,27 @@ func runWorker(job Job, work <-chan string, errs chan<- error) {
 
 			page.Revision.Text = nlp.NormalizeArticle(page.Revision.Text)
 
-			err = job(&doc.Pages[i])
+			err := job(&doc.Pages[i])
 			if err != nil {
 				errs <- err
-				continue
 			}
+		}
+
+		return nil
+	}, work, errs)
+}
+
+func runWorker(job Document, work <-chan string, errs chan<- error) {
+	for path := range work {
+		doc, err := readDocument(path)
+		if err != nil {
+			errs <- err
+			continue
+		}
+
+		err = job(doc)
+		if err != nil {
+			errs <- err
 		}
 	}
 }
@@ -134,7 +145,7 @@ func readDocument(path string) (*documents.Document, error) {
 		return nil, err
 	}
 
+	doc.Path = path
+
 	return doc, nil
 }
-
-var ErrEncountered = errors.New("encountered error")

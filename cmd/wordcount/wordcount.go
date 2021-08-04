@@ -51,7 +51,7 @@ func mainCmd() *cobra.Command {
 
 			results := make(chan map[string]int)
 
-			workWg := jobs.DoJobs(parallel, doWork(results), work, errs)
+			workWg := jobs.DoPageJobs(parallel, doWork(results), work, errs)
 
 			wordCountsWg := sync.WaitGroup{}
 			var wordCounts map[string]int
@@ -89,7 +89,7 @@ func main() {
 	}
 }
 
-func doWork(results chan<- map[string]int) jobs.Job {
+func doWork(results chan<- map[string]int) jobs.Page {
 	return func(page *documents.Page) error {
 		counts := countWords(page)
 		results <- counts

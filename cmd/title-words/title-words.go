@@ -37,7 +37,7 @@ func mainCmd() *cobra.Command {
 
 			results := make(chan string)
 
-			workWg := jobs.DoJobs(parallel, doWork(results), work, errs)
+			workWg := jobs.DoPageJobs(parallel, doWork(results), work, errs)
 
 			var titleDictionary map[string]bool
 			titleWg := sync.WaitGroup{}
@@ -67,7 +67,7 @@ func main() {
 	}
 }
 
-func doWork(results chan<- string) jobs.Job {
+func doWork(results chan<- string) jobs.Page {
 	return func(page *documents.Page) error {
 		title := page.Title
 		if !nlp.IsArticle(title) {

@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -55,20 +54,7 @@ func mainCmd() *cobra.Command {
 			work := jobs.WalkDir(inArticles, errs)
 
 			results := make(chan documents.WordSets)
-			workWg := sync.WaitGroup{}
-
-			for i := 0; i < parallel; i++ {
-				workWg.Add(1)
-				go func() {
-					for item := range work {
-						err := doWork(dictionary, item, results)
-						if err != nil {
-							errs <- fmt.Errorf("%s: %w", item, err)
-						}
-					}
-					workWg.Done()
-				}()
-			}
+			workWg := jobs.DoDocumentJobs(parallel, doWork(dictionary, results), work, errs)
 
 			writeResultsWg := sync.WaitGroup{}
 			writeResultsWg.Add(1)
@@ -101,42 +87,30 @@ func main() {
 	}
 }
 
-func doWork(dictionary map[string]int, path string, results chan<- documents.WordSets) error {
-	bytes, err := ioutil.ReadFile(path)
-	if err != nil {
-		return err
-	}
+func doWork(dictionary map[string]int, results chan<- documents.WordSets) jobs.Document {
+	return func(doc *documents.Document) error {
+		docWords := make([]documents.WordSet, len(doc.Pages))
 
-	bytes = []byte(strings.ReplaceAll(string(bytes), "\t", ""))
+		for i := range doc.Pages {
+			title := doc.Pages[i].Title
+			if !nlp.IsArticle(title) {
+				continue
+			}
 
-	var doc documents.Document
-	err = yaml.Unmarshal(bytes, &doc)
-
-	if err != nil {
-		return err
-	}
-
-	docWords := make([]documents.WordSet, len(doc.Pages))
-
-	for i := range doc.Pages {
-		title := doc.Pages[i].Title
-		if !nlp.IsArticle(title) {
-			continue
+			seen := getPresences(GuessSize, dictionary, doc.Pages[i].Revision.Text)
+			docWords[i] = documents.WordSet{
+				ID:    doc.Pages[i].ID,
+				Words: seen,
+			}
 		}
 
-		seen := getPresences(GuessSize, dictionary, doc.Pages[i].Revision.Text)
-		docWords[i] = documents.WordSet{
-			ID:    doc.Pages[i].ID,
-			Words: seen,
+		results <- documents.WordSets{
+			InFile:    doc.Path,
+			Documents: docWords,
 		}
-	}
 
-	results <- documents.WordSets{
-		InFile:    path,
-		Documents: docWords,
+		return nil
 	}
-
-	return nil
 }
 
 func getPresences(guessSize int, dictionary map[string]int, text string) []uint16 {

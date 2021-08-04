@@ -51,7 +51,7 @@ func mainCmd() *cobra.Command {
 			}
 
 			results := make(chan map[string]int)
-			workWg := jobs.DoJobs(parallel, getNgrams(tokenizer, results), work, errs)
+			workWg := jobs.DoPageJobs(parallel, getNgrams(tokenizer, results), work, errs)
 
 			counts := documents.FrequencyMap{
 				Counts: make(map[string]int),
@@ -86,7 +86,7 @@ func main() {
 	}
 }
 
-func getNgrams(tokenizer nlp.Tokenizer, results chan<- map[string]int) jobs.Job {
+func getNgrams(tokenizer nlp.Tokenizer, results chan<- map[string]int) jobs.Page {
 	return func(page *documents.Page) error {
 		frequencies := documents.FrequencyMap{
 			Counts: make(map[string]int),

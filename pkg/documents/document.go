@@ -1,6 +1,8 @@
 package documents
 
 type Document struct {
+	Path string
+
 	Pages []Page `xml:"page"`
 }
 
