@@ -12,6 +12,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/willbeason/extract-wikipedia/pkg/jobs"
+
 	"github.com/willbeason/extract-wikipedia/pkg/flags"
 
 	"github.com/spf13/cobra"
@@ -24,7 +26,7 @@ const (
 func mainCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Args: cobra.ExactArgs(3),
-		RunE: func(cmd *cobra.Command, args []string) (err error) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			nParallel, err := cmd.Flags().GetInt(flags.ParallelKey)
 			if err != nil {
 				return err
@@ -49,27 +51,21 @@ func mainCmd() *cobra.Command {
 				return err
 			}
 			defer func() {
-				err = fIndex.Close()
+				_ = fIndex.Close()
 			}()
 
 			rIndex := bufio.NewReader(fIndex)
 
-			errs := make(chan error)
+			errs, errsWg := jobs.Errors()
 
-			go func() {
-				for err = range errs {
-					fmt.Println(err)
-				}
-			}()
-
-			jobs := make(chan job)
+			jobFiles := make(chan job)
 
 			jobSync := sync.WaitGroup{}
 			jobSync.Add(1)
 			go func() {
-				extractFile(rIndex, fRepo, jobs, errs)
+				extractFile(rIndex, fRepo, jobFiles, errs)
 
-				close(jobs)
+				close(jobFiles)
 				jobSync.Done()
 			}()
 
@@ -77,7 +73,7 @@ func mainCmd() *cobra.Command {
 			for w := 0; w < nParallel; w++ {
 				wg.Add(1)
 				go func() {
-					worker(outDir, jobs, errs)
+					worker(outDir, jobFiles, errs)
 					wg.Done()
 				}()
 			}
@@ -85,8 +81,9 @@ func mainCmd() *cobra.Command {
 			jobSync.Wait()
 			wg.Wait()
 			close(errs)
+			errsWg.Wait()
 
-			return err
+			return fIndex.Close()
 		},
 	}
 
@@ -95,8 +92,8 @@ func mainCmd() *cobra.Command {
 	return cmd
 }
 
-func worker(outDir string, jobs <-chan job, errs chan<- error) {
-	for j := range jobs {
+func worker(outDir string, work <-chan job, errs chan<- error) {
+	for j := range work {
 		decompress(j.i, j.b, outDir, errs)
 	}
 }
@@ -139,7 +136,7 @@ func main() {
 	}
 }
 
-func extractFile(rIndex *bufio.Reader, fRepo *os.File, jobs chan<- job, errs chan<- error) {
+func extractFile(rIndex *bufio.Reader, fRepo *os.File, work chan<- job, errs chan<- error) {
 	startIndex, endIndex := int64(0), int64(0)
 
 	var (
@@ -179,7 +176,7 @@ func extractFile(rIndex *bufio.Reader, fRepo *os.File, jobs chan<- job, errs cha
 			}
 		}
 
-		jobs <- job{i: fileIndex, b: outBytes}
+		work <- job{i: fileIndex, b: outBytes}
 		fileIndex++
 
 		startIndex = endIndex
@@ -197,6 +194,6 @@ func extractFile(rIndex *bufio.Reader, fRepo *os.File, jobs chan<- job, errs cha
 			errs <- err
 			return
 		}
-		jobs <- job{i: fileIndex, b: outBytes}
+		work <- job{i: fileIndex, b: outBytes}
 	}
 }

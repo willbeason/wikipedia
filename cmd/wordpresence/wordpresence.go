@@ -12,8 +12,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/willbeason/extract-wikipedia/pkg/documents"
+	"github.com/willbeason/extract-wikipedia/pkg/flags"
+	"github.com/willbeason/extract-wikipedia/pkg/jobs"
 	"github.com/willbeason/extract-wikipedia/pkg/nlp"
-	"github.com/willbeason/extract-wikipedia/pkg/walker"
 	"gopkg.in/yaml.v3"
 )
 
@@ -22,12 +23,17 @@ import (
 const GuessSize = 1000
 
 func mainCmd() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Args: cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			inArticles := args[0]
 			inWordOrder := args[1]
 			out := args[2]
+
+			parallel, err := cmd.Flags().GetInt(flags.ParallelKey)
+			if err != nil {
+				return err
+			}
 
 			bytes, err := ioutil.ReadFile(inWordOrder)
 			if err != nil {
@@ -45,20 +51,13 @@ func mainCmd() *cobra.Command {
 				dictionary[f.Word] = i
 			}
 
-			work := make(chan string)
-			errs := make(chan error)
-
-			go func() {
-				err := filepath.WalkDir(inArticles, walker.Files(work))
-				if err != nil {
-					errs <- err
-				}
-				close(work)
-			}()
+			errs, errsWg := jobs.Errors()
+			work := jobs.WalkDir(inArticles, errs)
 
 			results := make(chan documents.WordSets)
 			workWg := sync.WaitGroup{}
-			for i := 0; i < 8; i++ {
+
+			for i := 0; i < parallel; i++ {
 				workWg.Add(1)
 				go func() {
 					for item := range work {
@@ -70,15 +69,6 @@ func mainCmd() *cobra.Command {
 					workWg.Done()
 				}()
 			}
-
-			errsWg := sync.WaitGroup{}
-			errsWg.Add(1)
-			go func() {
-				for err := range errs {
-					fmt.Println(err)
-				}
-				errsWg.Done()
-			}()
 
 			writeResultsWg := sync.WaitGroup{}
 			writeResultsWg.Add(1)
@@ -98,6 +88,10 @@ func mainCmd() *cobra.Command {
 			return nil
 		},
 	}
+
+	flags.Parallel(cmd)
+
+	return cmd
 }
 
 func main() {

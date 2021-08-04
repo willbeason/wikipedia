@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/willbeason/extract-wikipedia/pkg/jobs"
+
 	"github.com/willbeason/extract-wikipedia/pkg/flags"
 
 	"github.com/spf13/cobra"
@@ -114,7 +116,7 @@ func mainCmd() *cobra.Command {
 			dictionaryFile := args[1]
 
 			work := make(chan string)
-			errs := make(chan error)
+			errs, errsWg := jobs.Errors()
 
 			go func() {
 				err2 := filepath.WalkDir(wordSetsDir, walker.Files(work))
@@ -125,7 +127,6 @@ func mainCmd() *cobra.Command {
 			}()
 
 			workWg := sync.WaitGroup{}
-
 			seenSets := make(chan *documents.WordSets)
 
 			for i := 0; i < nParallel; i++ {
@@ -142,15 +143,6 @@ func mainCmd() *cobra.Command {
 					workWg.Done()
 				}()
 			}
-
-			errsWg := sync.WaitGroup{}
-			errsWg.Add(1)
-			go func() {
-				for err := range errs {
-					fmt.Println(err)
-				}
-				errsWg.Done()
-			}()
 
 			allSeenParts := make([][]int, nParallel)
 			seenWg := sync.WaitGroup{}

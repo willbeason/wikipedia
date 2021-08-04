@@ -10,49 +10,38 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/willbeason/extract-wikipedia/pkg/documents"
-	"github.com/willbeason/extract-wikipedia/pkg/parallel"
-	"github.com/willbeason/extract-wikipedia/pkg/walker"
+	"github.com/willbeason/extract-wikipedia/pkg/flags"
+	"github.com/willbeason/extract-wikipedia/pkg/jobs"
 
 	"github.com/spf13/cobra"
+	"github.com/willbeason/extract-wikipedia/pkg/documents"
+	"github.com/willbeason/extract-wikipedia/pkg/parallel"
 	"gopkg.in/yaml.v3"
 )
 
 func mainCmd() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			in := args[0]
+			inArticles := args[0]
 			out := args[1]
 
-			work := make(chan string)
-			errs := make(chan error)
+			parallelJobs, err := cmd.Flags().GetInt(flags.ParallelKey)
+			if err != nil {
+				return err
+			}
 
-			go func() {
-				err := filepath.WalkDir(in, walker.Files(work))
-				if err != nil {
-					errs <- err
-				}
-				close(work)
-			}()
+			errs, errsWg := jobs.Errors()
+			work := jobs.WalkDir(inArticles, errs)
 
 			workWg := sync.WaitGroup{}
-			for i := 0; i < 8; i++ {
+			for i := 0; i < parallelJobs; i++ {
 				workWg.Add(1)
 				go func() {
-					parallel.DoWork(work, doWork(in, out), errs)
+					parallel.DoWork(work, doWork(inArticles, out), errs)
 					workWg.Done()
 				}()
 			}
-
-			errsWg := sync.WaitGroup{}
-			errsWg.Add(1)
-			go func() {
-				for err := range errs {
-					fmt.Println(err)
-				}
-				errsWg.Done()
-			}()
 
 			workWg.Wait()
 			close(errs)
@@ -61,6 +50,10 @@ func mainCmd() *cobra.Command {
 			return nil
 		},
 	}
+
+	flags.Parallel(cmd)
+
+	return cmd
 }
 
 func main() {
