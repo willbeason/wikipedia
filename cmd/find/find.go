@@ -24,19 +24,14 @@ func mainCmd() *cobra.Command {
 				return err
 			}
 
-			errsWg := sync.WaitGroup{}
-			errsWg.Add(1)
-			errs, _ := jobs.Errors(&errsWg)
+			errs, errsWg := jobs.Errors()
 
 			workWg := sync.WaitGroup{}
 			work := jobs.WalkDir(inArticles, errs)
 
 			results := make(chan string)
 
-			for i := 0; i < parallel; i++ {
-				workWg.Add(1)
-				jobs.DoJobs(doJob(search, results), &workWg, work, errs)
-			}
+			jobs.DoJobs(parallel, doJob(search, results), work, errs)
 
 			resultsWg := sync.WaitGroup{}
 			resultsWg.Add(1)

@@ -45,19 +45,13 @@ func mainCmd() *cobra.Command {
 				}
 			}
 
-			errsWg := sync.WaitGroup{}
-			errsWg.Add(1)
-			errs, _ := jobs.Errors(&errsWg)
+			errs, errsWg := jobs.Errors()
 
-			workWg := sync.WaitGroup{}
 			work := jobs.WalkDir(inArticles, errs)
 
 			results := make(chan map[string]int)
 
-			for i := 0; i < parallel; i++ {
-				workWg.Add(1)
-				jobs.DoJobs(doWork(results), &workWg, work, errs)
-			}
+			workWg := jobs.DoJobs(parallel, doWork(results), work, errs)
 
 			wordCountsWg := sync.WaitGroup{}
 			var wordCounts map[string]int

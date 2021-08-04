@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 
 	"gopkg.in/yaml.v3"
 )
@@ -100,21 +101,33 @@ type FrequencyMap struct {
 	Counts map[string]int
 }
 
-func (f *FrequencyMap) CollectMaps(wordCountChannel <-chan map[string]int,
-	countFilter, sizeThreshold int) {
-	for wordCounts := range wordCountChannel {
-		for word, count := range wordCounts {
-			f.Counts[word] += count
+func (f *FrequencyMap) CollectMaps(
+	wordCountChannel <-chan map[string]int,
+	countFilter,
+	sizeThreshold int,
+) *sync.WaitGroup {
+	countsWg := sync.WaitGroup{}
+	countsWg.Add(1)
+
+	go func() {
+		for wordCounts := range wordCountChannel {
+			for word, count := range wordCounts {
+				f.Counts[word] += count
+			}
+
+			if len(f.Counts) > sizeThreshold {
+				f.Filter(countFilter)
+				fmt.Println(len(f.Counts))
+			}
 		}
 
-		if len(f.Counts) > sizeThreshold {
-			f.Filter(countFilter)
-			fmt.Println(len(f.Counts))
-		}
-	}
+		f.Filter(countFilter)
+		fmt.Println(len(f.Counts))
 
-	f.Filter(countFilter)
-	fmt.Println(len(f.Counts))
+		countsWg.Done()
+	}()
+
+	return &countsWg
 }
 
 // Collect reads the words in a channel into a frequency table.

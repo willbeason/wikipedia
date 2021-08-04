@@ -51,7 +51,12 @@ func (b *SyncBool) Get() bool {
 //
 // Calls Done on the WaitGroup once the channel has been closed and all errors
 // have been printed.
-func Errors(wg *sync.WaitGroup) (chan<- error, *SyncBool) {
+//
+// The returned channel must be closed before the WaitGroup is waited upon.
+func Errors() (chan<- error, *sync.WaitGroup) {
+	errsWg := sync.WaitGroup{}
+	errsWg.Add(1)
+
 	errs := make(chan error)
 	printedErr := SyncBool{}
 
@@ -62,41 +67,56 @@ func Errors(wg *sync.WaitGroup) (chan<- error, *SyncBool) {
 			fmt.Println(err)
 		}
 
-		wg.Done()
+		errsWg.Done()
 	}()
 
-	return errs, &printedErr
+	return errs, &errsWg
 }
 
 type Job func(page *documents.Page) error
 
-func DoJobs(job Job, workWg *sync.WaitGroup, work <-chan string, errs chan<- error) {
-	go func() {
-		for path := range work {
-			doc, err := readDocument(path)
+// DoJobs run parallel workers performing job on work and filling errs with any
+// encountered errors.
+//
+// Returns a WaitGroup which waits for all workers to finish.
+func DoJobs(parallel int, job Job, work <-chan string, errs chan<- error) *sync.WaitGroup {
+	workWg := sync.WaitGroup{}
+
+	for i := 0; i < parallel; i++ {
+		workWg.Add(1)
+
+		go func() {
+			runWorker(job, work, errs)
+			workWg.Done()
+		}()
+	}
+
+	return &workWg
+}
+
+func runWorker(job Job, work <-chan string, errs chan<- error) {
+	for path := range work {
+		doc, err := readDocument(path)
+		if err != nil {
+			errs <- err
+			continue
+		}
+
+		for i := range doc.Pages {
+			page := &doc.Pages[i]
+			if !nlp.IsArticle(page.Title) {
+				continue
+			}
+
+			page.Revision.Text = nlp.NormalizeArticle(page.Revision.Text)
+
+			err = job(&doc.Pages[i])
 			if err != nil {
 				errs <- err
 				continue
 			}
-
-			for i := range doc.Pages {
-				page := &doc.Pages[i]
-				if !nlp.IsArticle(page.Title) {
-					continue
-				}
-
-				page.Revision.Text = nlp.NormalizeArticle(page.Revision.Text)
-
-				err = job(&doc.Pages[i])
-				if err != nil {
-					errs <- err
-					continue
-				}
-			}
 		}
-
-		workWg.Done()
-	}()
+	}
 }
 
 func readDocument(path string) (*documents.Document, error) {

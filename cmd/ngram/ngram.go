@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"strings"
-	"sync"
 
 	"github.com/willbeason/extract-wikipedia/pkg/jobs"
 
@@ -43,33 +42,21 @@ func mainCmd() *cobra.Command {
 				}
 			}
 
-			errsWg := sync.WaitGroup{}
-			errsWg.Add(1)
-			errs, _ := jobs.Errors(&errsWg)
+			errs, errsWg := jobs.Errors()
 
-			workWg := sync.WaitGroup{}
 			work := jobs.WalkDir(inArticles, errs)
-
 			tokenizer := nlp.NgramTokenizer{
 				Underlying: nlp.WordTokenizer{},
 				Dictionary: frequencyTable.ToNgramDictionary(),
 			}
 
 			results := make(chan map[string]int)
-			for i := 0; i < parallel; i++ {
-				workWg.Add(1)
-				jobs.DoJobs(getNgrams(tokenizer, results), &workWg, work, errs)
-			}
+			workWg := jobs.DoJobs(parallel, getNgrams(tokenizer, results), work, errs)
 
 			counts := documents.FrequencyMap{
 				Counts: make(map[string]int),
 			}
-			countsWg := sync.WaitGroup{}
-			countsWg.Add(1)
-			go func() {
-				counts.CollectMaps(results, DefaultCountFilter, DefaultSizeThreshold)
-				countsWg.Done()
-			}()
+			countsWg := counts.CollectMaps(results, DefaultCountFilter, DefaultSizeThreshold)
 
 			workWg.Wait()
 			close(results)
