@@ -7,7 +7,7 @@ const (
 	ParallelDefault = 8
 
 	DictionarySizeKey     = "dictionary-size"
-	DictionarySizeDefault = 20000
+	DictionarySizeDefault = 50000
 )
 
 func Parallel(cmd *cobra.Command) {

@@ -1,21 +1,14 @@
 package main
 
 import (
-	"fmt"
-	"io/ioutil"
 	"os"
-	"path/filepath"
-	"sort"
-	"strings"
 	"sync"
-
-	"github.com/willbeason/extract-wikipedia/pkg/flags"
 
 	"github.com/spf13/cobra"
 	"github.com/willbeason/extract-wikipedia/pkg/documents"
+	"github.com/willbeason/extract-wikipedia/pkg/flags"
+	"github.com/willbeason/extract-wikipedia/pkg/jobs"
 	"github.com/willbeason/extract-wikipedia/pkg/nlp"
-	"github.com/willbeason/extract-wikipedia/pkg/walker"
-	"gopkg.in/yaml.v3"
 )
 
 func mainCmd() *cobra.Command {
@@ -27,9 +20,14 @@ func mainCmd() *cobra.Command {
 				return err
 			}
 
+			parallel, err := cmd.Flags().GetInt(flags.ParallelKey)
+			if err != nil {
+				return err
+			}
+
 			cmd.SilenceUsage = true
 
-			in := args[0]
+			inArticles := args[0]
 			inDictionaryFile1 := args[1]
 			inDictionaryFile2 := args[2]
 			out := args[3]
@@ -47,31 +45,18 @@ func mainCmd() *cobra.Command {
 				}
 			}
 
-			work := make(chan string)
-			errs := make(chan error)
+			errsWg := sync.WaitGroup{}
+			errsWg.Add(1)
+			errs, _ := jobs.Errors(&errsWg)
 
-			go func() {
-				err := filepath.WalkDir(in, walker.Files(work))
-				if err != nil {
-					errs <- err
-				}
-				close(work)
-			}()
+			workWg := sync.WaitGroup{}
+			work := jobs.WalkDir(inArticles, errs)
 
 			results := make(chan map[string]int)
-			workWg := sync.WaitGroup{}
 
-			for i := 0; i < 8; i++ {
+			for i := 0; i < parallel; i++ {
 				workWg.Add(1)
-				go func() {
-					for item := range work {
-						err := doWork(item, results)
-						if err != nil {
-							errs <- fmt.Errorf("%s: %w", item, err)
-						}
-					}
-					workWg.Done()
-				}()
+				jobs.DoJobs(doWork(results), &workWg, work, errs)
 			}
 
 			wordCountsWg := sync.WaitGroup{}
@@ -83,26 +68,21 @@ func mainCmd() *cobra.Command {
 				wordCountsWg.Done()
 			}()
 
-			errsWg := sync.WaitGroup{}
-			errsWg.Add(1)
-			go func() {
-				for err := range errs {
-					fmt.Println(err)
-				}
-				errsWg.Done()
-			}()
-
 			workWg.Wait()
 			close(results)
+			close(errs)
+			errsWg.Wait()
 
 			wordCountsWg.Wait()
 
-			frequencies := collectFrequencies(dictionarySize, wordCounts)
+			frequencies := documents.ToFrequencyTable(wordCounts)
+			frequencies.Frequencies = frequencies.Frequencies[:dictionarySize]
 
-			return writeFrequencyTable(out, documents.FrequencyTable{Frequencies: frequencies})
+			return documents.WriteFrequencyTable(out, frequencies)
 		},
 	}
 
+	flags.Parallel(cmd)
 	flags.DictionarySize(cmd)
 
 	return cmd
@@ -115,41 +95,13 @@ func main() {
 	}
 }
 
-func writeFrequencyTable(out string, t documents.FrequencyTable) error {
-	bytes, err := yaml.Marshal(t)
-	if err != nil {
-		return err
-	}
-
-	err = os.MkdirAll(filepath.Dir(out), os.ModePerm)
-	if err != nil {
-		return err
-	}
-
-	return ioutil.WriteFile(out, bytes, os.ModePerm)
-}
-
-func doWork(path string, results chan<- map[string]int) error {
-	bytes, err := ioutil.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	bytes = []byte(strings.ReplaceAll(string(bytes), "\t", ""))
-
-	var doc documents.Document
-	err = yaml.Unmarshal(bytes, &doc)
-
-	if err != nil {
-		return err
-	}
-
-	for i := range doc.Pages {
-		counts := countWords(&doc.Pages[i])
+func doWork(results chan<- map[string]int) jobs.Job {
+	return func(page *documents.Page) error {
+		counts := countWords(page)
 		results <- counts
-	}
 
-	return nil
+		return nil
+	}
 }
 
 func countWords(p *documents.Page) map[string]int {
@@ -183,25 +135,4 @@ func collect(dictionary1, dictionary2 map[string]bool, results <-chan map[string
 	}
 
 	return result
-}
-
-func collectFrequencies(dictionarySize int, wordCounts map[string]int) []documents.Frequency {
-	frequencies := make([]documents.Frequency, len(wordCounts))
-	i := 0
-
-	for word, count := range wordCounts {
-		frequencies[i] = documents.Frequency{
-			Word:  word,
-			Count: count,
-		}
-
-		i++
-	}
-
-	fmt.Println(len(wordCounts))
-	sort.Slice(frequencies, func(i, j int) bool {
-		return frequencies[i].Count > frequencies[j].Count
-	})
-	// Just the top words.
-	return frequencies[:dictionarySize]
 }

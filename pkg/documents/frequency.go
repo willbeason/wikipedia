@@ -1,7 +1,94 @@
 package documents
 
+import (
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+
+	"gopkg.in/yaml.v3"
+)
+
 type FrequencyTable struct {
 	Frequencies []Frequency
+}
+
+func WriteFrequencyTable(out string, t FrequencyTable) error {
+	bytes, err := yaml.Marshal(t)
+	if err != nil {
+		return err
+	}
+
+	err = os.MkdirAll(filepath.Dir(out), os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(out, bytes, os.ModePerm)
+}
+
+func ReadFrequencyTables(paths ...string) (*FrequencyTable, error) {
+	result := &FrequencyTable{}
+
+	for _, path := range paths {
+		fmt.Println(path)
+
+		bytes, err := ioutil.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+
+		frequencyTable := &FrequencyTable{}
+
+		err = yaml.Unmarshal(bytes, frequencyTable)
+		if err != nil {
+			return nil, err
+		}
+
+		result.Frequencies = append(result.Frequencies, frequencyTable.Frequencies...)
+	}
+
+	return result, nil
+}
+
+func (t *FrequencyTable) ToNgramDictionary() map[string]bool {
+	result := make(map[string]bool, len(t.Frequencies))
+
+	for _, f := range t.Frequencies {
+		words := strings.Split(f.Word, " ")
+		for i := 1; i <= len(words); i++ {
+			ngram := strings.Join(words[:i], " ")
+			result[ngram] = true
+		}
+	}
+
+	return result
+}
+
+func ToFrequencyTable(wordCounts map[string]int) FrequencyTable {
+	frequencies := make([]Frequency, len(wordCounts))
+	i := 0
+
+	for word, count := range wordCounts {
+		frequencies[i] = Frequency{
+			Word:  word,
+			Count: count,
+		}
+
+		i++
+	}
+
+	sort.Slice(frequencies, func(i, j int) bool {
+		if frequencies[i].Count != frequencies[j].Count {
+			return frequencies[i].Count > frequencies[j].Count
+		}
+		return frequencies[i].Word < frequencies[j].Word
+	})
+
+	// Just the top words.
+	return FrequencyTable{Frequencies: frequencies}
 }
 
 type Frequency struct {
@@ -11,6 +98,23 @@ type Frequency struct {
 
 type FrequencyMap struct {
 	Counts map[string]int
+}
+
+func (f *FrequencyMap) CollectMaps(wordCountChannel <-chan map[string]int,
+	countFilter, sizeThreshold int) {
+	for wordCounts := range wordCountChannel {
+		for word, count := range wordCounts {
+			f.Counts[word] += count
+		}
+
+		if len(f.Counts) > sizeThreshold {
+			f.Filter(countFilter)
+			fmt.Println(len(f.Counts))
+		}
+	}
+
+	f.Filter(countFilter)
+	fmt.Println(len(f.Counts))
 }
 
 // Collect reads the words in a channel into a frequency table.

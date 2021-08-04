@@ -1,0 +1,34 @@
+go run cmd/ngram/ngram.go \
+  C:/Users/willb/Documents/wikipedia/wikipedia-clean \
+  "" \
+  C:/Users/willb/Documents/wikipedia/ngram/out.yaml
+
+go run cmd/ngram/ngram.go \
+  C:/Users/willb/Documents/wikipedia/wikipedia-clean \
+  C:/Users/willb/Documents/wikipedia/ngram/out.yaml \
+  C:/Users/willb/Documents/wikipedia/ngram/out-2.yaml
+
+go run cmd/ngram/ngram.go \
+  C:/Users/willb/Documents/wikipedia/wikipedia-clean \
+  C:/Users/willb/Documents/wikipedia/ngram/out-full.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-full-2.yaml \
+  C:/Users/willb/Documents/wikipedia/ngram/out-full-3.yaml
+
+go run cmd/ngram/ngram.go \
+  C:/Users/willb/Documents/wikipedia/wikipedia-clean \
+  C:/Users/willb/Documents/wikipedia/ngram/out-full.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-full-2.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-full-3.yaml \
+  C:/Users/willb/Documents/wikipedia/ngram/out-full-4.yaml
+
+go run cmd/ngram/ngram.go \
+  C:/Users/willb/Documents/wikipedia/wikipedia-clean \
+  C:/Users/willb/Documents/wikipedia/ngram/out-full.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-full-2.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-full-3.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-full-4.yaml \
+  C:/Users/willb/Documents/wikipedia/ngram/out-full-5.yaml
+
+go run cmd/ngram/ngram.go \
+  C:/Users/willb/Documents/wikipedia/wikipedia-clean \
+  C:/Users/willb/Documents/wikipedia/ngram/out-full.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-full-2.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-full-3.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-full-4.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-full-5.yaml \
+  C:/Users/willb/Documents/wikipedia/ngram/out-full-6.yaml
+
+go run cmd/ngram/ngram.go \
+  C:/Users/willb/Documents/wikipedia/wikipedia-clean \
+  C:/Users/willb/Documents/wikipedia/ngram/out-full.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-full-2.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-full-3.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-full-4.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-full-5.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-full-6.yaml \
+  C:/Users/willb/Documents/wikipedia/ngram/out-full-7.yaml
