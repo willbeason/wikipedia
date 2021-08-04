@@ -15,6 +15,11 @@ func mainCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Args: cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			inArticles := args[0]
+			inDictionaryFile1 := args[1]
+			inDictionaryFile2 := args[2]
+			out := args[3]
+
 			dictionarySize, err := cmd.Flags().GetInt(flags.DictionarySizeKey)
 			if err != nil {
 				return err
@@ -26,11 +31,6 @@ func mainCmd() *cobra.Command {
 			}
 
 			cmd.SilenceUsage = true
-
-			inArticles := args[0]
-			inDictionaryFile1 := args[1]
-			inDictionaryFile2 := args[2]
-			out := args[3]
 
 			dictionary1, err := nlp.ReadDictionary(inDictionaryFile1)
 			if err != nil {

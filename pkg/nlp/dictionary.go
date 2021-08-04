@@ -32,7 +32,6 @@ func ReadDictionary(path string) (Dictionary, error) {
 
 func WriteDictionary(path string, dictionary Dictionary) error {
 	words := make([]string, len(dictionary))
-
 	idx := 0
 
 	for w := range dictionary {

@@ -26,8 +26,8 @@ type WordTokenizer struct{}
 func (t WordTokenizer) Tokenize(s string) []string {
 	tokens := WordRegex.FindAllString(s, -1)
 
-	for i, t := range tokens {
-		tokens[i] = strings.Trim(t, "'")
+	for i, token := range tokens {
+		tokens[i] = strings.Trim(token, "'")
 	}
 
 	return tokens
@@ -53,10 +53,6 @@ func (t NgramTokenizer) Tokenize(s string) []string {
 
 	for curStart < nWords {
 		curString := words[curStart]
-		if !t.Dictionary[curString] {
-			curStart++
-			continue
-		}
 
 		curLen := 1
 		for ; curLen < nWords-curStart; curLen++ {

@@ -43,6 +43,14 @@ func TestNgramTokenizer_Tokenize(t *testing.T) {
 			want: []string{"hello world", "peace"},
 		},
 		{
+			name: "ambiguous bigram 2",
+			s:    "big big big",
+			dictionary: map[string]bool{
+				"big big": true,
+			},
+			want: []string{"big big", "big"},
+		},
+		{
 			name: "trigram",
 			s:    "university of texas",
 			dictionary: map[string]bool{
