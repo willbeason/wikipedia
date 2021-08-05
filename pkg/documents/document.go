@@ -9,12 +9,12 @@ type Document struct {
 type Page struct {
 	ID       int      `xml:"id"`
 	Title    string   `xml:"title"`
-	Redirect Redirect `xml:"redirect"`
+	Redirect Redirect `yaml:",omitempty" xml:"redirect"`
 	Revision Revision `xml:"revision"`
 }
 
 type Redirect struct {
-	Title string `xml:"title,attr"`
+	Title string `yaml:",omitempty" xml:"title,attr"`
 }
 
 type Revision struct {

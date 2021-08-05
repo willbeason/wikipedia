@@ -112,13 +112,13 @@ func decompress(i int, b []byte, outDir string, errs chan<- error) {
 		return
 	}
 
-	err = os.MkdirAll(fmt.Sprintf("%s/extracted/%06d", outDir, i/shardSize), os.ModePerm)
+	err = os.MkdirAll(fmt.Sprintf("%s/%03d", outDir, i/shardSize), os.ModePerm)
 	if err != nil {
 		errs <- err
 		return
 	}
 
-	err = ioutil.WriteFile(fmt.Sprintf("%s/extracted/%03d/%06d.txt", outDir, i/shardSize, i), b, os.ModePerm)
+	err = ioutil.WriteFile(fmt.Sprintf("%s/%03d/%06d.txt", outDir, i/shardSize, i), b, os.ModePerm)
 	if err != nil {
 		errs <- err
 		return
@@ -152,28 +152,26 @@ func extractFile(rIndex *bufio.Reader, fRepo *os.File, work chan<- job, errs cha
 			continue
 		}
 
-		if err == nil {
-			line := string(lineBytes)
-			parts := strings.SplitN(line, ":", 3)
+		line := string(lineBytes)
+		parts := strings.SplitN(line, ":", 3)
 
-			endIndex, err = strconv.ParseInt(parts[0], 10, strconv.IntSize)
+		endIndex, err = strconv.ParseInt(parts[0], 10, strconv.IntSize)
 
-			if err != nil {
-				errs <- err
-				return
-			}
+		if err != nil {
+			errs <- err
+			return
+		}
 
-			if startIndex == endIndex {
-				continue
-			}
+		if startIndex == endIndex {
+			continue
+		}
 
-			outBytes = make([]byte, endIndex-startIndex)
+		outBytes = make([]byte, endIndex-startIndex)
 
-			_, err = fRepo.Read(outBytes)
-			if err != nil {
-				errs <- err
-				return
-			}
+		_, err = fRepo.Read(outBytes)
+		if err != nil {
+			errs <- err
+			return
 		}
 
 		work <- job{i: fileIndex, b: outBytes}

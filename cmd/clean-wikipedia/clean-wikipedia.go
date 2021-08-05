@@ -6,18 +6,21 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"sync"
 
 	"github.com/willbeason/extract-wikipedia/pkg/flags"
 	"github.com/willbeason/extract-wikipedia/pkg/jobs"
+	"github.com/willbeason/extract-wikipedia/pkg/nlp"
 
 	"github.com/spf13/cobra"
 	"github.com/willbeason/extract-wikipedia/pkg/documents"
 	"github.com/willbeason/extract-wikipedia/pkg/parallel"
 	"gopkg.in/yaml.v3"
 )
+
+// clean-wikipedia removes parts of articles we never want to analyze, such as xml tags, tables, and
+// formatting directives.
 
 func mainCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -86,13 +89,25 @@ func doWork(in, out string) func(string) error {
 				continue
 			}
 
-			doc.Pages[i].Revision.Text = cleanText(doc.Pages[i].Revision.Text)
+			if !nlp.IsArticle(doc.Pages[i].Title) {
+				continue
+			}
+
+			doc.Pages[i].Revision.Text = nlp.CleanArticle(doc.Pages[i].Revision.Text)
 			result.Pages = append(result.Pages, doc.Pages[i])
 		}
 
 		outBytes, err := yaml.Marshal(result)
 		if err != nil {
 			return err
+		}
+
+		testDoc := documents.Document{}
+
+		err = yaml.Unmarshal(outBytes, &testDoc)
+		if err != nil {
+			// Print out encountered yaml parsing errors.
+			fmt.Printf("%s: %v", path, err)
 		}
 
 		if !strings.HasPrefix(path, in) {
@@ -108,87 +123,9 @@ func doWork(in, out string) func(string) error {
 
 		err = ioutil.WriteFile(outPath, outBytes, os.ModePerm)
 		if err != nil {
-			return fmt.Errorf("writing file: %w", err)
+			return fmt.Errorf("writing file %s: %w", outPath, err)
 		}
 
 		return nil
 	}
-}
-
-var (
-	widgets = regexp.MustCompile(`{{[^{}]+}}`)
-	links   = regexp.MustCompile(`\[\[([^]|]+)(|[^]]+)?]]`) //nolint: gocritic // We want two capture groups.
-
-	wikiClass = regexp.MustCompile(`(?s){\| class=.+?
-\|}`)
-	timeline = regexp.MustCompile(`(?s)<timeline>
-.+?
-</timeline>`)
-
-	alpha = regexp.MustCompile(`[A-Za-z]`)
-	ref   = regexp.MustCompile(`(?s)<ref( name=.+?)?(>.*?</ref>| />)`)
-	link  = regexp.MustCompile(`\[http[^]]+]`)
-)
-
-func cleanText(text string) string {
-	prevLen := len(text)
-	text = widgets.ReplaceAllString(text, "")
-	nextLen := len(text)
-
-	for prevLen != nextLen {
-		prevLen = nextLen
-
-		text = widgets.ReplaceAllString(text, "")
-		nextLen = len(text)
-	}
-
-	text = wikiClass.ReplaceAllString(text, "")
-	text = ref.ReplaceAllString(text, "")
-	text = timeline.ReplaceAllString(text, "")
-
-	lines := strings.Split(text, "\n")
-
-	result := make([]string, 0, len(lines))
-
-	lastLineEmpty := false
-
-	for _, line := range lines {
-		if line == "" {
-			if !lastLineEmpty {
-				result = append(result, line)
-			}
-
-			lastLineEmpty = true
-
-			continue
-		}
-
-		lastLineEmpty = false
-
-		line = links.ReplaceAllString(line, "$1")
-
-		line = strings.ReplaceAll(line, "&nbsp;", " ")
-
-		line = link.ReplaceAllString(line, "")
-
-		if !hasWords(line) {
-			continue
-		}
-
-		result = append(result, line)
-	}
-
-	return strings.Join(result, "\n")
-}
-
-func hasWords(line string) bool {
-	if !alpha.MatchString(line) {
-		return false
-	}
-
-	if strings.HasPrefix(line, "Category:") {
-		return false
-	}
-
-	return true
 }

@@ -1,0 +1,4 @@
+go run cmd/extract-wikipedia/extract-wikipedia.go \
+  F:/Wikipedia/enwiki-20210801-pages-articles-multistream.xml.bz2 \
+  F:/Wikipedia/enwiki-20210801-pages-articles-multistream-index.txt \
+  F:/Wikipedia/wikipedia-extracted/enwiki-20210801

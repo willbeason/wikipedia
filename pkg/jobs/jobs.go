@@ -18,14 +18,21 @@ import (
 func WalkDir(inArticles string, errs chan<- error) <-chan string {
 	work := make(chan string)
 
-	go func() {
-		err := filepath.WalkDir(inArticles, walker.Files(work))
-		if err != nil {
-			errs <- err
-		}
+	if filepath.Ext(inArticles) == ".txt" {
+		go func() {
+			work <- inArticles
+			close(work)
+		}()
+	} else {
+		go func() {
+			err := filepath.WalkDir(inArticles, walker.Files(work))
+			if err != nil {
+				errs <- err
+			}
 
-		close(work)
-	}()
+			close(work)
+		}()
+	}
 
 	return work
 }
