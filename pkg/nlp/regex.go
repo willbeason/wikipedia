@@ -1,8 +1,16 @@
 package nlp
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
+)
+
+const (
+	NumToken  = "_num_"
+	DateToken = "_date_"
+
+	Months = "(january|february|march|april|may|june|july|august|september|october|november|december)"
 )
 
 var (
@@ -16,16 +24,21 @@ var (
 	CommentRegex = regexp.MustCompile("(?s)<!--.+?-->")
 
 	CellRegex       = regexp.MustCompile(`{?[\|!].+`)
-	DivRegex        = regexp.MustCompile(`(?s)</?div.*?>`)
-	GalleryRegex    = regexp.MustCompile(`(?s)</?gallery.*?>`)
-	SpanRegex       = regexp.MustCompile(`(?s)</?span.*?>`)
-	BigRegex        = regexp.MustCompile(`(?s)</?big.*?>`)
-	PoemRegex       = regexp.MustCompile(`(?s)</?poem.*?>`)
-	BlockQuoteRegex = regexp.MustCompile(`(?s)</?sup.*?>`)
-	SupRegex        = regexp.MustCompile(`(?s)</?blockquote.*?>`)
+	DivRegex        = regexp.MustCompile(`</?div.*?>`)
+	GalleryRegex    = regexp.MustCompile(`</?gallery.*?>`)
+	SpanRegex       = regexp.MustCompile(`</?span.*?>`)
+	BigRegex        = regexp.MustCompile(`</?big.*?>`)
+	PoemRegex       = regexp.MustCompile(`</?poem.*?>`)
+	BlockQuoteRegex = regexp.MustCompile(`</?sup.*?>`)
+	SupRegex        = regexp.MustCompile(`</?blockquote.*?>`)
 	TimelineRegex   = regexp.MustCompile(`(?s)<timeline.*?</timeline>`)
+	BrRegex         = regexp.MustCompile(`<br.*?>`)
 
-	NumberRegex = regexp.MustCompile(`\b\d+\b`)
+	NumberRegex = regexp.MustCompile(`\b\d+(,\d{3})*(\.\d+)?\b`)
+	DateRegex   = regexp.MustCompile(fmt.Sprintf(`(?i)\b(%s %s,? %s|%s %s,? %s)\b`,
+		NumToken, Months, NumToken,
+		Months, NumToken, NumToken,
+	))
 )
 
 func Normalize(w string) string {
@@ -47,8 +60,11 @@ func NormalizeArticle(text string) string {
 	text = SupRegex.ReplaceAllString(text, "")
 	text = TimelineRegex.ReplaceAllString(text, "")
 
+	text = BrRegex.ReplaceAllString(text, "\n")
+
 	// Tokens for special types of sequences.
-	text = NumberRegex.ReplaceAllString(text, "_number_")
+	text = NumberRegex.ReplaceAllString(text, NumToken)
+	text = DateRegex.ReplaceAllString(text, DateToken)
 
 	return text
 }
