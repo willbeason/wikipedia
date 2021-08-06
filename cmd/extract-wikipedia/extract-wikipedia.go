@@ -26,6 +26,11 @@ const (
 func mainCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Args: cobra.ExactArgs(3),
+		Use: `extract-wikipedia path/to/pages-articles-multistream.xml.bz2 \
+  path/to/pages-articles-multistream-index.txt \
+  path/to/output/dir`,
+		Short: `Extracts the compressed pages-articles-multistream dump of Wikipedia to an output
+directory, given an already-extracted index file.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			nParallel, err := cmd.Flags().GetInt(flags.ParallelKey)
 			if err != nil {
@@ -104,15 +109,15 @@ type job struct {
 }
 
 func decompress(i int, b []byte, outDir string, errs chan<- error) {
-	bz := bzip2.NewReader(bytes.NewReader(b))
-
-	b, err := ioutil.ReadAll(bz)
+	err := os.MkdirAll(fmt.Sprintf("%s/%03d", outDir, i/shardSize), os.ModePerm)
 	if err != nil {
 		errs <- err
 		return
 	}
 
-	err = os.MkdirAll(fmt.Sprintf("%s/%03d", outDir, i/shardSize), os.ModePerm)
+	bz := bzip2.NewReader(bytes.NewReader(b))
+
+	b, err = ioutil.ReadAll(bz)
 	if err != nil {
 		errs <- err
 		return

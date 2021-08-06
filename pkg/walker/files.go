@@ -19,6 +19,11 @@ func Files(work chan<- string) func(string, fs.DirEntry, error) error {
 			return nil
 		}
 
+		if d.Name() == "000000.txt" {
+			// This is the initial mediawiki file.
+			return nil
+		}
+
 		work <- filepath.ToSlash(path)
 
 		return nil

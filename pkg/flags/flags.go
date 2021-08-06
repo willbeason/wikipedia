@@ -1,10 +1,14 @@
 package flags
 
-import "github.com/spf13/cobra"
+import (
+	"runtime"
 
+	"github.com/spf13/cobra"
+)
+
+// Flags and default values for keys used in the various CLIs.
 const (
-	ParallelKey     = "parallel"
-	ParallelDefault = 8
+	ParallelKey = "parallel"
 
 	DictionarySizeKey     = "dictionary-size"
 	DictionarySizeDefault = 50000
@@ -13,8 +17,8 @@ const (
 func Parallel(cmd *cobra.Command) {
 	var p int
 
-	cmd.Flags().IntVar(&p, "parallel", ParallelDefault,
-		"number of concurrent workers to run on jobs")
+	cmd.Flags().IntVar(&p, "parallel", runtime.NumCPU(),
+		"number of concurrent workers to run on jobs; defaults to number of available logical CPUs")
 }
 
 func DictionarySize(cmd *cobra.Command) {

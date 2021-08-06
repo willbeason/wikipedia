@@ -18,6 +18,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// Defaults for colocation detection which may be made configuralbe in the future.
 const (
 	MaxPrint          = 100
 	StopWordThreshold = 1000

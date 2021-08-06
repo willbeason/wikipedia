@@ -73,7 +73,16 @@ func doWork(in, out string) func(string) error {
 			return err
 		}
 
-		bytes = []byte("<documents>\n" + string(bytes) + "\n</documents>")
+		text := string(bytes)
+		if !strings.HasPrefix(text, "<mediawiki>") {
+			text = "<mediawiki>\n" + text
+		}
+
+		if !strings.HasSuffix(text, "</mediawiki>") {
+			text += "\n</mediawiki>\n"
+		}
+
+		bytes = []byte(text)
 
 		var doc documents.Document
 		err = xml.Unmarshal(bytes, &doc)
@@ -107,7 +116,7 @@ func doWork(in, out string) func(string) error {
 		err = yaml.Unmarshal(outBytes, &testDoc)
 		if err != nil {
 			// Print out encountered yaml parsing errors.
-			fmt.Printf("%s: %v", path, err)
+			panic(fmt.Sprintf("%s: %v", path, err))
 		}
 
 		if !strings.HasPrefix(path, in) {

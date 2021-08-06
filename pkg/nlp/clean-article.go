@@ -6,8 +6,9 @@ import (
 	"strings"
 )
 
-var (
-	IgnoredTags = []string{
+// ignoredTags are tags we can safely strip out, retaining the contents.
+func ignoredTags() []string {
+	return []string{
 		"abbr",
 		"big",
 		"center",
@@ -31,6 +32,10 @@ var (
 		"u",
 		"var",
 	}
+}
+
+// Regular expressions for cleaning Wikipedia articles of XML tags and formatting.
+var (
 
 	// XMLTagRegex tries to find XML tags which are still present in the corpus. Useful for finding
 	// problematic tags that we want to avoid.
@@ -42,7 +47,7 @@ var (
 	// Obviously not perfect and can match non-comments in rare cases.
 	CommentRegex = regexp.MustCompile("(?s)<!--.*?-->")
 
-	IgnoredTagsRegex     = regexp.MustCompile(fmt.Sprintf(`</?(%s).*?>`, strings.Join(IgnoredTags, "|")))
+	IgnoredTagsRegex     = regexp.MustCompile(fmt.Sprintf(`</?(%s).*?>`, strings.Join(ignoredTags(), "|")))
 	SubSupRegex          = regexp.MustCompile(`</?su[bp].*?>`)
 	BlockQuoteRegex      = regexp.MustCompile(`</?blockquote.*?>`)
 	TimelineRegex        = regexp.MustCompile(`(?s)<timeline.*?</timeline>`)
@@ -51,9 +56,9 @@ var (
 	MathRegex            = regexp.MustCompile(`(?s)<math.*?</math>`)
 	CodeRegex            = regexp.MustCompile(`(?s)<code.*?</code>`)
 	ChemRegex            = regexp.MustCompile(`(?s)<hiero.*?</hiero>`)
-	HieroglyphRegex            = regexp.MustCompile(`(?s)<chem.*?</chem>`)
+	HieroglyphRegex      = regexp.MustCompile(`(?s)<chem.*?</chem>`)
 	SyntaxHighlightRegex = regexp.MustCompile(`(?s)<syntaxhighlight.*?</syntaxhighlight>`)
-	PreRegex = regexp.MustCompile(`(?s)<pre.*?</pre>`)
+	PreRegex             = regexp.MustCompile(`(?s)<pre.*?</pre>`)
 	BrRegex              = regexp.MustCompile(`<(p|br).*?>`)
 
 	AlteredQuote = regexp.MustCompile(`\[([a-zA-Z])]`)
@@ -69,7 +74,7 @@ var (
 	RefRegex = regexp.MustCompile(`(?s)<ref.*?(>.*?</ref>| ?/>)`)
 )
 
-func keepReplacing(pattern *regexp.Regexp, text string, replace string) string {
+func keepReplacing(pattern *regexp.Regexp, text, replace string) string {
 	prevLen := len(text)
 	text = pattern.ReplaceAllString(text, replace)
 	nextLen := len(text)
@@ -117,9 +122,6 @@ func CleanArticle(text string) string {
 	skip := false
 
 	for _, line := range lines {
-
-		// line = WikipediaLinks.ReplaceAllString(line, "$1")
-
 		line = strings.ReplaceAll(line, "&nbsp;", " ")
 		line = strings.ReplaceAll(line, "&ndash;", "–")
 
@@ -133,6 +135,7 @@ func CleanArticle(text string) string {
 		} else if strings.HasPrefix(line, "==") {
 			skip = false
 		}
+
 		if skip {
 			continue
 		}

@@ -12,6 +12,7 @@ import (
 	"github.com/willbeason/extract-wikipedia/pkg/nlp"
 )
 
+// Defaults for ngram detection which may be made configuralbe in the future.
 const (
 	DefaultMinCount = 1000
 
@@ -104,9 +105,9 @@ func getNgrams(tokenizer nlp.Tokenizer, results chan<- map[string]int) jobs.Page
 			for j := 0; j < len(ngrams); j++ {
 				ngram := ngrams[j] // + " " + ngrams[j]
 
-				//if strings.Count(ngram, " ") < 16 {
-				//	continue
-				//}
+				if strings.Count(ngram, " ") < 0 {
+					continue
+				}
 
 				frequencies.Counts[ngram]++
 			}
