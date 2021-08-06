@@ -73,17 +73,6 @@ func doWork(in, out string) func(string) error {
 			return err
 		}
 
-		text := string(bytes)
-		if !strings.HasPrefix(text, "<mediawiki>") {
-			text = "<mediawiki>\n" + text
-		}
-
-		if !strings.HasSuffix(text, "</mediawiki>") {
-			text += "\n</mediawiki>\n"
-		}
-
-		bytes = []byte(text)
-
 		var doc documents.Document
 		err = xml.Unmarshal(bytes, &doc)
 
