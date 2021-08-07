@@ -93,6 +93,8 @@ func keepReplacing(pattern *regexp.Regexp, text, replace string) string {
 func CleanArticle(text string) string {
 	text = keepReplacing(widgets, text, "")
 	text = RemoveLinks.ReplaceAllString(text, "")
+
+	text = link.ReplaceAllString(text, "")
 	text = keepReplacing(WikipediaLinks, text, "$2")
 
 	text = RefRegex.ReplaceAllString(text, "")
@@ -123,8 +125,6 @@ func CleanArticle(text string) string {
 	for _, line := range lines {
 		line = strings.ReplaceAll(line, "&nbsp;", " ")
 		line = strings.ReplaceAll(line, "&ndash;", "–")
-
-		line = link.ReplaceAllString(line, "")
 
 		line = strings.TrimPrefix(line, "*")
 		line = strings.TrimSpace(line)
