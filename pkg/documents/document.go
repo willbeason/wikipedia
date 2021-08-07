@@ -1,7 +1,7 @@
 package documents
 
 type Document struct {
-	Path string
+	Path string `yaml:",omitempty"`
 
 	Pages []Page `xml:"page"`
 }

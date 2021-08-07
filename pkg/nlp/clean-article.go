@@ -11,6 +11,7 @@ func ignoredTags() []string {
 	return []string{
 		"abbr",
 		"big",
+		"blockquote",
 		"center",
 		"div",
 		"dfn",
@@ -22,7 +23,6 @@ func ignoredTags() []string {
 		"ol",
 		"mapframe",
 		"nowiki",
-		"poem",
 		"ref",
 		"s",
 		"small",
@@ -48,15 +48,14 @@ var (
 	CommentRegex = regexp.MustCompile("(?s)<!--.*?-->")
 
 	IgnoredTagsRegex     = regexp.MustCompile(fmt.Sprintf(`</?(%s).*?>`, strings.Join(ignoredTags(), "|")))
-	SubSupRegex          = regexp.MustCompile(`</?su[bp].*?>`)
-	BlockQuoteRegex      = regexp.MustCompile(`</?blockquote.*?>`)
 	TimelineRegex        = regexp.MustCompile(`(?s)<timeline.*?</timeline>`)
 	GalleryRegex         = regexp.MustCompile(`(?s)<gallery.*?</gallery>`)
 	ImageMapRegex        = regexp.MustCompile(`(?s)<imagemap.*?</imagemap>`)
 	MathRegex            = regexp.MustCompile(`(?s)<math.*?</math>`)
 	CodeRegex            = regexp.MustCompile(`(?s)<code.*?</code>`)
-	ChemRegex            = regexp.MustCompile(`(?s)<hiero.*?</hiero>`)
-	HieroglyphRegex      = regexp.MustCompile(`(?s)<chem.*?</chem>`)
+	ChemRegex            = regexp.MustCompile(`(?s)<chem.*?</chem>`)
+	PoemRegex            = regexp.MustCompile(`(?s)<poem.*?</poem>`)
+	HieroglyphRegex      = regexp.MustCompile(`(?s)<hiero.*?</hiero>`)
 	SyntaxHighlightRegex = regexp.MustCompile(`(?s)<syntaxhighlight.*?</syntaxhighlight>`)
 	PreRegex             = regexp.MustCompile(`(?s)<pre.*?</pre>`)
 	BrRegex              = regexp.MustCompile(`<(p|br).*?>`)
@@ -74,6 +73,7 @@ var (
 	RefRegex = regexp.MustCompile(`(?s)<ref.*?(>.*?</ref>| ?/>)`)
 )
 
+// keepReplacing replaces pattern in text with replace until the length of the string stops changing.
 func keepReplacing(pattern *regexp.Regexp, text, replace string) string {
 	prevLen := len(text)
 	text = pattern.ReplaceAllString(text, replace)
@@ -99,8 +99,6 @@ func CleanArticle(text string) string {
 
 	text = CommentRegex.ReplaceAllString(text, "")
 	text = GalleryRegex.ReplaceAllString(text, "")
-	text = BlockQuoteRegex.ReplaceAllString(text, "")
-	text = SubSupRegex.ReplaceAllString(text, "")
 	text = TimelineRegex.ReplaceAllString(text, "")
 	text = MathRegex.ReplaceAllString(text, MathToken)
 	text = HieroglyphRegex.ReplaceAllString(text, HieroglyphToken)
@@ -109,6 +107,7 @@ func CleanArticle(text string) string {
 	text = ImageMapRegex.ReplaceAllString(text, "")
 	text = SyntaxHighlightRegex.ReplaceAllString(text, "")
 	text = PreRegex.ReplaceAllString(text, "")
+	text = PoemRegex.ReplaceAllString(text, "")
 
 	text = IgnoredTagsRegex.ReplaceAllString(text, "")
 

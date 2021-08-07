@@ -1,13 +1,11 @@
 package main
 
 import (
-	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/willbeason/extract-wikipedia/pkg/flags"
 	"github.com/willbeason/extract-wikipedia/pkg/jobs"
@@ -15,7 +13,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/willbeason/extract-wikipedia/pkg/documents"
-	"github.com/willbeason/extract-wikipedia/pkg/parallel"
 	"gopkg.in/yaml.v3"
 )
 
@@ -37,14 +34,7 @@ func mainCmd() *cobra.Command {
 			errs, errsWg := jobs.Errors()
 			work := jobs.WalkDir(inArticles, errs)
 
-			workWg := sync.WaitGroup{}
-			for i := 0; i < parallelJobs; i++ {
-				workWg.Add(1)
-				go func() {
-					parallel.DoWork(work, doWork(inArticles, out), errs)
-					workWg.Done()
-				}()
-			}
+			workWg := jobs.DoDocumentJobs(parallelJobs, doWork(inArticles, out), work, errs)
 
 			workWg.Wait()
 			close(errs)
@@ -66,20 +56,8 @@ func main() {
 	}
 }
 
-func doWork(in, out string) func(string) error {
-	return func(path string) error {
-		bytes, err := ioutil.ReadFile(path)
-		if err != nil {
-			return err
-		}
-
-		var doc documents.Document
-		err = xml.Unmarshal(bytes, &doc)
-
-		if err != nil {
-			return err
-		}
-
+func doWork(in, out string) jobs.Document {
+	return func(doc *documents.Document) error {
 		result := documents.Document{}
 
 		for i := range doc.Pages {
@@ -87,7 +65,8 @@ func doWork(in, out string) func(string) error {
 				continue
 			}
 
-			if !nlp.IsArticle(doc.Pages[i].Title) {
+			title := doc.Pages[i].Title
+			if !nlp.IsArticle(title) {
 				continue
 			}
 
@@ -102,9 +81,13 @@ func doWork(in, out string) func(string) error {
 
 		testDoc := documents.Document{}
 
+		path := doc.Path
+
 		err = yaml.Unmarshal(outBytes, &testDoc)
 		if err != nil {
 			// Print out encountered yaml parsing errors.
+			// We want to panic and not complete the job as otherwise we'll write data
+			// we will not be able to read in the future.
 			panic(fmt.Sprintf("%s: %v", path, err))
 		}
 
@@ -113,6 +96,8 @@ func doWork(in, out string) func(string) error {
 		}
 
 		outPath := filepath.Join(out, strings.TrimPrefix(path, in))
+		outExt := filepath.Ext(outPath)
+		outPath = strings.TrimSuffix(outPath, outExt) + ".yaml"
 
 		err = os.MkdirAll(filepath.Dir(outPath), os.ModePerm)
 		if err != nil {

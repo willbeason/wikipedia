@@ -15,7 +15,7 @@ const (
 )
 
 const (
-	// Months are all of the months of the year.
+	// Months are all the months of the year.
 	Months = "(january|february|march|april|may|june|july|august|september|october|november|december)"
 )
 
@@ -51,16 +51,31 @@ func NormalizeArticle(text string) string {
 }
 
 func IsArticle(title string) bool {
-	return !strings.HasPrefix(title, "Wikipedia:") &&
-		!strings.HasPrefix(title, "Category:") &&
-		!strings.HasPrefix(title, "Draft:") &&
-		!strings.HasPrefix(title, "Template:") &&
+	// Check in descending order of frequency.
+	//
+	// Observed 2021-08-01:
+	//
+	// Category	2,100,543
+	// Wikipedia	1,170,425
+	// File	915,410
+	// Template	592,437
+	// Portal	93,146
+	// Draft	59,584
+	// Module	12,598
+	// MediaWiki	2,212
+	// TimedText	1,352
+	// Help	957
+	return !strings.HasPrefix(title, "Category:") &&
+		!strings.HasPrefix(title, "Wikipedia:") &&
 		!strings.HasPrefix(title, "File:") &&
+		!strings.HasPrefix(title, "Template:") &&
 		!strings.HasPrefix(title, "Portal:") &&
-		!strings.HasPrefix(title, "Help:") &&
-		!strings.HasPrefix(title, "List of ") &&
+		!strings.HasPrefix(title, "Draft:") &&
 		!strings.HasPrefix(title, "Module:") &&
-		!strings.HasPrefix(title, "MediaWiki:")
+		!strings.HasPrefix(title, "MediaWiki:") &&
+		!strings.HasPrefix(title, "TimedText:") &&
+		!strings.HasPrefix(title, "Help:") &&
+		!strings.HasSuffix(title, "(disambiguation)")
 }
 
 func HasLetter(word string) bool {

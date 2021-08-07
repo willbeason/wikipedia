@@ -124,7 +124,7 @@ func decompress(i int, b []byte, outDir string, errs chan<- error) {
 	}
 
 	text := string(b)
-	if !strings.HasPrefix(text, "<mediawiki>") {
+	if !strings.HasPrefix(text, "<mediawiki") {
 		text = "<mediawiki>\n" + text
 	}
 
@@ -132,7 +132,7 @@ func decompress(i int, b []byte, outDir string, errs chan<- error) {
 		text += "\n</mediawiki>\n"
 	}
 
-	err = ioutil.WriteFile(fmt.Sprintf("%s/%03d/%06d.txt", outDir, i/shardSize, i), []byte(text), os.ModePerm)
+	err = ioutil.WriteFile(fmt.Sprintf("%s/%03d/%06d.xml", outDir, i/shardSize, i), []byte(text), os.ModePerm)
 	if err != nil {
 		errs <- err
 		return

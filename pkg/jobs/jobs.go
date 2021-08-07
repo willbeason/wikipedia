@@ -1,10 +1,11 @@
 package jobs
 
 import (
+	"encoding/xml"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
-	"strings"
 	"sync"
 
 	"github.com/willbeason/extract-wikipedia/pkg/nlp"
@@ -18,12 +19,14 @@ import (
 func WalkDir(inArticles string, errs chan<- error) <-chan string {
 	work := make(chan string)
 
-	if filepath.Ext(inArticles) == ".txt" {
+	if filepath.Ext(inArticles) != "" {
+		// We were passed a single file, so there is only one work item.
 		go func() {
 			work <- inArticles
 			close(work)
 		}()
 	} else {
+		// We were passed a directory, so walk it recursively.
 		go func() {
 			err := filepath.WalkDir(inArticles, walker.Files(work))
 			if err != nil {
@@ -83,6 +86,10 @@ type Page func(page *documents.Page) error
 
 type Document func(doc *documents.Document) error
 
+// DoDocumentJobs runs parallel workers performing job on work and filling errs with any encountered
+// errors. Jobs perform actions on Documents.
+//
+// Returns a WaitGroup which waits for all workers to finish.
 func DoDocumentJobs(parallel int, job Document, work <-chan string, errs chan<- error) *sync.WaitGroup {
 	workWg := sync.WaitGroup{}
 
@@ -99,7 +106,7 @@ func DoDocumentJobs(parallel int, job Document, work <-chan string, errs chan<- 
 }
 
 // DoPageJobs run parallel workers performing job on work and filling errs with any
-// encountered errors.
+// encountered errors. Jobs perform actions on Pages.
 //
 // Returns a WaitGroup which waits for all workers to finish.
 func DoPageJobs(parallel int, job Page, work <-chan string, errs chan<- error) *sync.WaitGroup {
@@ -137,17 +144,26 @@ func runWorker(job Document, work <-chan string, errs chan<- error) {
 	}
 }
 
+// ErrUnsupportedExtension indicates that the file is not a supported format for Documents.
+var ErrUnsupportedExtension = errors.New("unsupported Document extension")
+
 func readDocument(path string) (*documents.Document, error) {
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	bytes = []byte(strings.ReplaceAll(string(bytes), "\t", ""))
-
 	doc := &documents.Document{}
 
-	err = yaml.Unmarshal(bytes, doc)
+	switch ext := filepath.Ext(path); ext {
+	case ".xml":
+		err = xml.Unmarshal(bytes, doc)
+	case ".yaml":
+		err = yaml.Unmarshal(bytes, doc)
+	default:
+		return nil, fmt.Errorf("%w: %s", ErrUnsupportedExtension, ext)
+	}
+
 	if err != nil {
 		return nil, err
 	}
