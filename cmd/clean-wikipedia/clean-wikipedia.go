@@ -22,6 +22,9 @@ import (
 func mainCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Args: cobra.ExactArgs(2),
+		Use: `clean-wikipedia path/to/input path/to/output`,
+		Short: `Cleans an extracted set of Wikipedia articles by removing irrelevant pages and formatting
+directives.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			inArticles := args[0]
 			out := args[1]
