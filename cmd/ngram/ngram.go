@@ -94,7 +94,6 @@ func getNgrams(tokenizer nlp.Tokenizer, results chan<- map[string]int) jobs.Page
 		}
 
 		text := page.Revision.Text
-		text = strings.ToLower(text)
 
 		// Ignore ngrams resulting from line breaks.
 		lines := strings.Split(text, "\n")
@@ -105,9 +104,9 @@ func getNgrams(tokenizer nlp.Tokenizer, results chan<- map[string]int) jobs.Page
 			for j := 0; j < len(ngrams); j++ {
 				ngram := ngrams[j] // + " " + ngrams[j]
 
-				if strings.Count(ngram, " ") < 0 {
-					continue
-				}
+				// if strings.Count(ngram, " ") < 0 {
+				// 	continue
+				// }
 
 				frequencies.Counts[ngram]++
 			}

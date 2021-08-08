@@ -117,7 +117,7 @@ func DoPageJobs(parallel int, job Page, work <-chan string, errs chan<- error) *
 				continue
 			}
 
-			page.Revision.Text = nlp.NormalizeArticle(page.Revision.Text)
+			// page.Revision.Text = nlp.NormalizeArticle(page.Revision.Text)
 
 			err := job(&doc.Pages[i])
 			if err != nil {

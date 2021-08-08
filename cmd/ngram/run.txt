@@ -1,34 +1,34 @@
 go run cmd/ngram/ngram.go \
-  C:/Users/willb/Documents/wikipedia/wikipedia-clean \
+  F:/wikipedia-normalized/enwiki-20210801 \
   "" \
-  C:/Users/willb/Documents/wikipedia/ngram/out.yaml
+  F:/ngrams/out.yaml
 
 go run cmd/ngram/ngram.go \
-  C:/Users/willb/Documents/wikipedia/wikipedia-clean \
-  C:/Users/willb/Documents/wikipedia/ngram/out.yaml \
-  C:/Users/willb/Documents/wikipedia/ngram/out-2.yaml
+  F:/wikipedia-normalized/enwiki-20210801 \
+  F:/ngrams/out.yaml \
+  F:/ngrams/out-2.yaml
 
 go run cmd/ngram/ngram.go \
-  C:/Users/willb/Documents/wikipedia/wikipedia-clean \
-  C:/Users/willb/Documents/wikipedia/ngram/out.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-2.yaml \
-  C:/Users/willb/Documents/wikipedia/ngram/out-3.yaml
+  F:/wikipedia-normalized/enwiki-20210801 \
+  F:/ngrams/out.yaml,F:/ngrams/out-2.yaml \
+  F:/ngrams/out-3.yaml
 
 go run cmd/ngram/ngram.go \
-  C:/Users/willb/Documents/wikipedia/wikipedia-clean \
-  C:/Users/willb/Documents/wikipedia/ngram/out.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-2.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-3.yaml \
-  C:/Users/willb/Documents/wikipedia/ngram/out-4.yaml
+  F:/wikipedia-normalized/enwiki-20210801 \
+  F:/ngrams/out.yaml,F:/ngrams/out-2.yaml,F:/ngrams/out-3.yaml \
+  F:/ngrams/out-4.yaml
 
 go run cmd/ngram/ngram.go \
-  C:/Users/willb/Documents/wikipedia/wikipedia-clean \
-  C:/Users/willb/Documents/wikipedia/ngram/out.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-2.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-3.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-4.yaml \
-  C:/Users/willb/Documents/wikipedia/ngram/out-5.yaml
+  F:/wikipedia-normalized/enwiki-20210801 \
+  F:/ngrams/out.yaml,F:/ngrams/out-2.yaml,F:/ngrams/out-3.yaml,F:/ngrams/out-4.yaml \
+  F:/ngrams/out-5.yaml
 
 go run cmd/ngram/ngram.go \
-  C:/Users/willb/Documents/wikipedia/wikipedia-clean \
-  C:/Users/willb/Documents/wikipedia/ngram/out.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-2.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-3.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-4.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-5.yaml \
-  C:/Users/willb/Documents/wikipedia/ngram/out-6.yaml
+  F:/wikipedia-normalized/enwiki-20210801 \
+  F:/ngrams/out.yaml,F:/ngrams/out-2.yaml,F:/ngrams/out-3.yaml,F:/ngrams/out-4.yaml,F:/ngrams/out-5.yaml \
+  F:/ngrams/out-6.yaml
 
 go run cmd/ngram/ngram.go \
-  C:/Users/willb/Documents/wikipedia/wikipedia-clean \
-  C:/Users/willb/Documents/wikipedia/ngram/out.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-2.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-3.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-4.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-5.yaml,C:/Users/willb/Documents/wikipedia/ngram/out-6.yaml \
-  C:/Users/willb/Documents/wikipedia/ngram/out-7.yaml
+  F:/wikipedia-normalized/enwiki-20210801 \
+  F:/ngrams/out.yaml,F:/ngrams/out-2.yaml,F:/ngrams/out-3.yaml,F:/ngrams/out-4.yaml,F:/ngrams/out-5.yaml,F:/ngrams/out-6.yaml \
+  F:/ngrams/out-7.yaml
