@@ -101,12 +101,12 @@ func getNgrams(tokenizer nlp.Tokenizer, results chan<- map[string]int) jobs.Page
 		for _, line := range lines {
 			ngrams := tokenizer.Tokenize(line)
 
-			for j := 0; j < len(ngrams); j++ {
-				ngram := ngrams[j] // + " " + ngrams[j]
+			for j := 1; j < len(ngrams); j++ {
+				ngram := ngrams[j-1] + " " + ngrams[j]
 
-				// if strings.Count(ngram, " ") < 0 {
-				// 	continue
-				// }
+				if strings.Count(ngram, " ") < 64 {
+					continue
+				}
 
 				frequencies.Counts[ngram]++
 			}

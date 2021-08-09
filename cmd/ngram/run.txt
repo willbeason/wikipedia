@@ -5,30 +5,40 @@ go run cmd/ngram/ngram.go \
 
 go run cmd/ngram/ngram.go \
   F:/wikipedia-normalized/enwiki-20210801 \
-  F:/ngrams/out.yaml \
+  "" \
   F:/ngrams/out-2.yaml
 
 go run cmd/ngram/ngram.go \
   F:/wikipedia-normalized/enwiki-20210801 \
-  F:/ngrams/out.yaml,F:/ngrams/out-2.yaml \
+  F:/ngrams/out-2.yaml \
   F:/ngrams/out-3.yaml
 
 go run cmd/ngram/ngram.go \
   F:/wikipedia-normalized/enwiki-20210801 \
-  F:/ngrams/out.yaml,F:/ngrams/out-2.yaml,F:/ngrams/out-3.yaml \
+  F:/ngrams/out-2.yaml,F:/ngrams/out-3.yaml \
   F:/ngrams/out-4.yaml
 
 go run cmd/ngram/ngram.go \
   F:/wikipedia-normalized/enwiki-20210801 \
-  F:/ngrams/out.yaml,F:/ngrams/out-2.yaml,F:/ngrams/out-3.yaml,F:/ngrams/out-4.yaml \
+  F:/ngrams/out-2.yaml,F:/ngrams/out-3.yaml,F:/ngrams/out-4.yaml \
   F:/ngrams/out-5.yaml
 
 go run cmd/ngram/ngram.go \
   F:/wikipedia-normalized/enwiki-20210801 \
-  F:/ngrams/out.yaml,F:/ngrams/out-2.yaml,F:/ngrams/out-3.yaml,F:/ngrams/out-4.yaml,F:/ngrams/out-5.yaml \
+  F:/ngrams/out-2.yaml,F:/ngrams/out-3.yaml,F:/ngrams/out-4.yaml,F:/ngrams/out-5.yaml \
   F:/ngrams/out-6.yaml
 
 go run cmd/ngram/ngram.go \
   F:/wikipedia-normalized/enwiki-20210801 \
-  F:/ngrams/out.yaml,F:/ngrams/out-2.yaml,F:/ngrams/out-3.yaml,F:/ngrams/out-4.yaml,F:/ngrams/out-5.yaml,F:/ngrams/out-6.yaml \
+  F:/ngrams/out-2.yaml,F:/ngrams/out-3.yaml,F:/ngrams/out-4.yaml,F:/ngrams/out-5.yaml,F:/ngrams/out-6.yaml \
   F:/ngrams/out-7.yaml
+
+go run cmd/ngram/ngram.go \
+  F:/wikipedia-normalized/enwiki-20210801 \
+  F:/ngrams/out-2.yaml,F:/ngrams/out-3.yaml,F:/ngrams/out-4.yaml,F:/ngrams/out-5.yaml,F:/ngrams/out-6.yaml,F:/ngrams/out-7.yaml \
+  F:/ngrams/out-8-a.yaml
+
+go run cmd/ngram/ngram.go \
+  F:/wikipedia-normalized/enwiki-20210801 \
+  F:/ngrams/out-2.yaml,F:/ngrams/out-3.yaml,F:/ngrams/out-4.yaml,F:/ngrams/out-5.yaml,F:/ngrams/out-6.yaml,F:/ngrams/out-7.yaml,F:/ngrams/out-8.yaml \
+  F:/ngrams/out-9.yaml
