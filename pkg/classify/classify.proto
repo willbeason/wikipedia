@@ -2,11 +2,35 @@ syntax = "proto3";
 
 option go_package = "pkg/classify";
 
+enum Classification {
+  UNKNOWN = 0;
+  PHILOSOPHY = 1;
+  PSYCHOLOGY = 2;
+  RELIGION = 3;
+  HISTORY = 4;
+  GEOGRAPHY = 5;
+  SOCIAL_SCIENCES = 6;
+  POLITICAL_SCIENCE = 7;
+  LAW = 8;
+  EDUCATION = 9;
+  MUSIC = 10;
+  FINE_ARTS = 11;
+  PHILOLOGY = 12;
+  LINGUISTICS = 13;
+  LITERATURE = 14;
+  SCIENCE = 15;
+  MEDICINE = 16;
+  AGRICULTURE = 17;
+  TECHNOLOGY = 18;
+  MILITARY_SCIENCE = 19;
+  INFORMATION_SCIENCE = 20;
+}
+
 message ClassifiedArticles {
   repeated ClassifiedArticle articles = 1;
 }
 
 message ClassifiedArticle {
   int32 id = 1;
-  int32 classification = 2;
+  Classification classification = 2;
 }
