@@ -1,1 +1,2 @@
-protoc --gofast_out=pkg/classify pkg/classify/classified-articles.proto
+protoc -I=. --go_out=. \
+  pkg/classify/classify.proto
