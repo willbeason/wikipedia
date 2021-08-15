@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+message ClassifiedArticles {
+  repeated ClassifiedArticle articles = 1;
+}
+
+message ClassifiedArticle {
+  int32 id = 1;
+  int32 classification = 2;
+}

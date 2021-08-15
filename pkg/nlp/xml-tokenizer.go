@@ -10,7 +10,7 @@ var (
 	XMLTagRegex = regexp.MustCompile(`<[a-z][a-z0-9]+`)
 )
 
-type XMLTokenizer struct {}
+type XMLTokenizer struct{}
 
 var _ Tokenizer = XMLTokenizer{}
 

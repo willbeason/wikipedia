@@ -1,0 +1,1 @@
+protoc --gofast_out=pkg/classify pkg/classify/classified-articles.proto

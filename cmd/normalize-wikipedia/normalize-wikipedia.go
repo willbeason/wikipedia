@@ -44,14 +44,12 @@ func mainCmd() *cobra.Command {
 	return cmd
 }
 
-
 func main() {
 	err := mainCmd().Execute()
 	if err != nil {
 		os.Exit(1)
 	}
 }
-
 
 func doWork(in, out string) jobs.Document {
 	return func(doc *documents.Document) error {

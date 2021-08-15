@@ -52,7 +52,6 @@ func ignoredTags() []string {
 // Regular expressions for cleaning Wikipedia articles of XML tags and formatting.
 var (
 
-
 	// CommentRegex matches commented-out text. Such text is not shown on pages
 	// and is generally either off-topic or low quality.
 	//
@@ -62,7 +61,7 @@ var (
 	IgnoredTagsRegex     = regexp.MustCompile(fmt.Sprintf(`(?i)</?(%s).*?>`, strings.Join(ignoredTags(), "|")))
 	TimelineRegex        = regexp.MustCompile(`(?is)<timeline.*?</timeline[\w\s]*>`)
 	GalleryRegex         = regexp.MustCompile(`(?is)<gallery.*?</gallery[\w\s]*>`)
-	GraphRegex         = regexp.MustCompile(`(?is)<graph.*?</graph[\w\s]*>`)
+	GraphRegex           = regexp.MustCompile(`(?is)<graph.*?</graph[\w\s]*>`)
 	ImageMapRegex        = regexp.MustCompile(`(?is)<imagemap.*?</imagemap[\w\s]*>`)
 	MathRegex            = regexp.MustCompile(`(?is)<math.*?</math[\w\s]*>`)
 	CodeRegex            = regexp.MustCompile(`(?is)<code.*?</code[\w\s]*>`)
@@ -70,11 +69,12 @@ var (
 	ChemRegex            = regexp.MustCompile(`(?is)<chem.*?</chem[\w\s]*>`)
 	PoemRegex            = regexp.MustCompile(`(?is)<poem.*?</poem[\w\s]*>`)
 	HieroglyphRegex      = regexp.MustCompile(`(?is)<hiero.*?</hiero[\w\s]*>`)
-	MapframeRegex      = regexp.MustCompile(`(?is)<mapframe.*?</mapframe[\w\s]*>`)
-	DelRegex      = regexp.MustCompile(`(?is)<del.*?</del[\w\s]*>`)
+	MapframeRegex        = regexp.MustCompile(`(?is)<mapframe.*?</mapframe[\w\s]*>`)
+	DelRegex             = regexp.MustCompile(`(?is)<del.*?</del[\w\s]*>`)
 	SyntaxHighlightRegex = regexp.MustCompile(`(?is)<syntaxhighlight.*?</syntaxhighlight[\w\s]*>`)
 	PreRegex             = regexp.MustCompile(`(?is)<pre.*?</pre[\w\s]*>`)
-	TableRegex             = regexp.MustCompile(`(?is)<table.*?</table[\w\s]*>`)
+	TableRegex           = regexp.MustCompile(`(?is)<table.*?</table[\w\s]*>`)
+	TableRegex2          = regexp.MustCompile(`(?s)({\||{{).*?\n\|}`)
 	BrRegex              = regexp.MustCompile(`(?i)<(p|br|hr).*?>`)
 
 	AlteredQuote = regexp.MustCompile(`\[([a-zA-Z])]`)
@@ -109,36 +109,45 @@ func keepReplacing(pattern *regexp.Regexp, text, replace string) string {
 
 // CleanArticle removes all parts of Wikipedia we never want to analyze.
 func CleanArticle(text string) string {
-	text = keepReplacing(widgets, text, "")
-	text = RemoveLinks.ReplaceAllString(text, "")
+	text = TableRegex2.ReplaceAllString(text, "")
 
-	text = link.ReplaceAllString(text, "")
-	text = keepReplacing(WikipediaLinks, text, "$2")
-	text = keepReplacing(parens, text, "")
+	sections := strings.Split(text, "\n\n")
 
-	text = RefRegex.ReplaceAllString(text, "")
+	for i, section := range sections {
+		section = keepReplacing(widgets, section, "")
+		section = RemoveLinks.ReplaceAllString(section, "")
 
-	text = CommentRegex.ReplaceAllString(text, "")
-	text = TableRegex.ReplaceAllString(text, "")
-	text = CiteRegex.ReplaceAllString(text, "")
-	text = GalleryRegex.ReplaceAllString(text, "")
-	text = GraphRegex.ReplaceAllString(text, "")
-	text = TimelineRegex.ReplaceAllString(text, "")
-	text = MathRegex.ReplaceAllString(text, MathToken)
-	text = HieroglyphRegex.ReplaceAllString(text, HieroglyphToken)
-	text = CodeRegex.ReplaceAllString(text, "")
-	text = ChemRegex.ReplaceAllString(text, "")
-	text = ImageMapRegex.ReplaceAllString(text, "")
-	text = SyntaxHighlightRegex.ReplaceAllString(text, "")
-	text = PreRegex.ReplaceAllString(text, "")
-	text = PoemRegex.ReplaceAllString(text, "")
-	text = DelRegex.ReplaceAllString(text, "")
-	text = MapframeRegex.ReplaceAllString(text, "")
+		section = link.ReplaceAllString(section, "")
+		section = keepReplacing(WikipediaLinks, section, "$2")
+		section = keepReplacing(parens, section, "")
 
-	text = BrRegex.ReplaceAllString(text, "\n")
-	text = AlteredQuote.ReplaceAllString(text, "$1")
+		section = RefRegex.ReplaceAllString(section, "")
 
-	text = IgnoredTagsRegex.ReplaceAllString(text, "")
+		section = CommentRegex.ReplaceAllString(section, "")
+		section = TableRegex.ReplaceAllString(section, "")
+		section = CiteRegex.ReplaceAllString(section, "")
+		section = GalleryRegex.ReplaceAllString(section, "")
+		section = GraphRegex.ReplaceAllString(section, "")
+		section = TimelineRegex.ReplaceAllString(section, "")
+		section = MathRegex.ReplaceAllString(section, MathToken)
+		section = HieroglyphRegex.ReplaceAllString(section, HieroglyphToken)
+		section = CodeRegex.ReplaceAllString(section, "")
+		section = ChemRegex.ReplaceAllString(section, "")
+		section = ImageMapRegex.ReplaceAllString(section, "")
+		section = SyntaxHighlightRegex.ReplaceAllString(section, "")
+		section = PreRegex.ReplaceAllString(section, "")
+		section = PoemRegex.ReplaceAllString(section, "")
+		section = DelRegex.ReplaceAllString(section, "")
+		section = MapframeRegex.ReplaceAllString(section, "")
+
+		section = BrRegex.ReplaceAllString(section, "\n")
+		section = AlteredQuote.ReplaceAllString(section, "$1")
+
+		section = IgnoredTagsRegex.ReplaceAllString(section, "")
+		sections[i] = section
+	}
+
+	text = strings.Join(sections, "\n\n")
 
 	lines := strings.Split(text, "\n")
 	result := make([]string, 0, len(lines))
@@ -163,6 +172,14 @@ func CleanArticle(text string) string {
 		}
 
 		if skip {
+			continue
+		}
+
+		if strings.HasPrefix(line, "!") ||
+			strings.HasPrefix(line, "|") ||
+			strings.HasPrefix(line, "|-") ||
+			strings.HasPrefix(line, "{|") ||
+			strings.HasPrefix(line, "{{") {
 			continue
 		}
 

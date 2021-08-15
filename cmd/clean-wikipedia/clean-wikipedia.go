@@ -22,7 +22,7 @@ import (
 func mainCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Args: cobra.ExactArgs(2),
-		Use: `clean-wikipedia path/to/input path/to/output`,
+		Use:  `clean-wikipedia path/to/input path/to/output`,
 		Short: `Cleans an extracted set of Wikipedia articles by removing irrelevant pages and formatting
 directives.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -73,7 +73,8 @@ func doWork(in, out string) jobs.Document {
 				continue
 			}
 
-			doc.Pages[i].Revision.Text = nlp.CleanArticle(doc.Pages[i].Revision.Text)
+			text := nlp.CleanArticle(doc.Pages[i].Revision.Text)
+			doc.Pages[i].Revision.Text = text
 			result.Pages = append(result.Pages, doc.Pages[i])
 		}
 
