@@ -1,0 +1,4 @@
+go run cmd/word-bags/word-bags.go \
+  F:/wikipedia-normalized/enwiki-20210801 \
+  F:/dictionary/out-10000.pb \
+  F:/wikipedia-word-bags-10000/enwiki-20210801

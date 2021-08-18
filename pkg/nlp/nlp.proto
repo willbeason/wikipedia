@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package nlp;
+
+option go_package = "pkg/nlp";
+
+// FrequencyMap is a set of known words and their frequencies.
+message FrequencyMap {
+  map<string, uint32> words = 1;
+}
+
+// FrequencyMap is a set of known words and their frequencies.
+message FrequencyTable {
+  repeated WordCount words = 1;
+}
+
+message WordCount {
+  string word = 1;
+  uint32 count = 2;
+}
+
+// Dictionary is a set of known words.
+message Dictionary {
+  // Words is a list of recognized words, in the order they appear in a frequency table.
+  repeated string words = 1;
+}

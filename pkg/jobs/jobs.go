@@ -15,9 +15,11 @@ import (
 	"github.com/willbeason/extract-wikipedia/pkg/walker"
 )
 
+type Done <-chan struct{}
+
 // WalkDir walks inArticles, returning a channel of files to process.
 func WalkDir(inArticles string, errs chan<- error) <-chan string {
-	work := make(chan string)
+	work := make(chan string, 100)
 
 	if filepath.Ext(inArticles) != "" {
 		// We were passed a single file, so there is only one work item.

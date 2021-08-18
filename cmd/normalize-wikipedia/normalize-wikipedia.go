@@ -64,7 +64,6 @@ func doWork(in, out string) jobs.Document {
 		}
 
 		path := doc.Path
-
 		outPath := filepath.Join(out, strings.TrimPrefix(path, in))
 		outExt := filepath.Ext(outPath)
 		outPath = strings.TrimSuffix(outPath, outExt) + ".yaml"

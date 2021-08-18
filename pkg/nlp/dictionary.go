@@ -3,71 +3,51 @@ package nlp
 import (
 	"io/ioutil"
 	"os"
-	"sort"
 	"strings"
+
+	"google.golang.org/protobuf/proto"
 )
 
-type Dictionary map[string]bool
+// ReadDictionary reads a Dictionary proto from a file.
+// Returns an empty dictionary if path is the empty string.
+func ReadDictionary(path string) (*Dictionary, error) {
+	dictionary := new(Dictionary)
+	if path == "" {
+		return dictionary, nil
+	}
 
-func ReadDictionary(path string) (Dictionary, error) {
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	lines := strings.Split(string(bytes), "\n")
-
-	dictionary := make(map[string]bool, len(lines))
-
-	for _, word := range lines {
-		if word == "" {
-			continue
-		}
-
-		dictionary[word] = true
+	err = proto.Unmarshal(bytes, dictionary)
+	if err != nil {
+		return nil, err
 	}
 
 	return dictionary, nil
 }
 
-func WriteDictionary(path string, dictionary Dictionary) error {
-	words := make([]string, len(dictionary))
-	idx := 0
-
-	for w := range dictionary {
-		words[idx] = w
-		idx++
-	}
-
-	sort.Strings(words)
-
-	out, err := os.Open(path)
+func WriteDictionary(path string, dictionary *Dictionary) error {
+	bytes, err := proto.Marshal(dictionary)
 	if err != nil {
 		return err
 	}
 
-	defer func() {
-		// For deferred closing, we don't care about the error as we've already
-		// encountered one.
-		_ = out.Close()
-	}()
+	return ioutil.WriteFile(path, bytes, os.ModePerm)
+}
 
-	for _, word := range words {
-		_, err = out.WriteString(word)
-		if err != nil {
-			return err
-		}
+func ToNgramDictionary(dictionary *Dictionary) map[string]bool {
+	result := make(map[string]bool, len(dictionary.Words))
 
-		_, err = out.WriteString("\n")
-		if err != nil {
-			return err
+	for _, word := range dictionary.Words {
+		words := strings.Split(word, " ")
+		for i := 1; i <= len(words); i++ {
+			ngram := strings.Join(words[:i], " ")
+			result[ngram] = true
 		}
 	}
 
-	err = out.Sync()
-	if err != nil {
-		return err
-	}
-
-	return out.Close()
+	return result
 }

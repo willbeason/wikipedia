@@ -31,6 +31,7 @@ message ClassifiedArticles {
 }
 
 message ClassifiedArticle {
+  // id is the unique identifier of the article.
   int32 id = 1;
   Classification classification = 2;
 }
