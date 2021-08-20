@@ -77,8 +77,7 @@ func IsArticle(title string) bool {
 		!strings.HasPrefix(title, "Module:") &&
 		!strings.HasPrefix(title, "MediaWiki:") &&
 		!strings.HasPrefix(title, "TimedText:") &&
-		!strings.HasPrefix(title, "Help:") &&
-		!strings.HasSuffix(title, "(disambiguation)")
+		!strings.HasPrefix(title, "Help:")
 }
 
 func HasLetter(word string) bool {

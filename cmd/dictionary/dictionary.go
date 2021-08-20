@@ -5,18 +5,20 @@ import (
 	"os"
 	"strings"
 
+	"github.com/dgraph-io/badger/v3"
 	"github.com/spf13/cobra"
 	"github.com/willbeason/extract-wikipedia/pkg/documents"
 	"github.com/willbeason/extract-wikipedia/pkg/flags"
 	"github.com/willbeason/extract-wikipedia/pkg/jobs"
 	"github.com/willbeason/extract-wikipedia/pkg/nlp"
+	"google.golang.org/protobuf/proto"
 )
 
 // Defaults for ngram detection which may be made configurable in the future.
 const (
 	DefaultMinCount = 10000
 
-	DefaultCountFilter   = 80
+	DefaultCountFilter   = 40
 	DefaultSizeThreshold = 4e6
 )
 
@@ -26,8 +28,16 @@ func mainCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 
-			inArticles := args[0]
+			inDBPath := args[0]
 			outDictionary := args[1]
+
+			inDB, err := badger.Open(badger.DefaultOptions(inDBPath))
+			defer func() {
+				_ = inDB.Close()
+			}()
+			if err != nil {
+				return err
+			}
 
 			parallel, err := cmd.Flags().GetInt(flags.ParallelKey)
 			if err != nil {
@@ -47,14 +57,14 @@ func mainCmd() *cobra.Command {
 
 				ngramDictionary := nlp.ToNgramDictionary(dictionary)
 
-				work := jobs.WalkDir(inArticles, errs)
+				work := jobs.Walk(cmd.Context(), inDB, newPage, parallel, errs)
 				tokenizer := nlp.NgramTokenizer{
 					Underlying: nlp.WordTokenizer{},
 					Dictionary: ngramDictionary,
 				}
 
 				results := make(chan map[string]uint32, 100)
-				workWg := jobs.DoPageJobs(parallel, getNgrams(tokenizer, ngramDictionary, minNgramLength-1, results), work, errs)
+				workWg := jobs.RunProto(parallel, getNgrams(tokenizer, ngramDictionary, minNgramLength-1, results), work, errs)
 
 				frequencyMapChan := nlp.CollectWordCounts(
 					results, ngramDictionary, DefaultCountFilter, DefaultSizeThreshold, DefaultMinCount)
@@ -101,6 +111,10 @@ func main() {
 	}
 }
 
+func newPage() proto.Message {
+	return &documents.Page{}
+}
+
 func addWords(frequencies map[string]uint32, tokens []string) {
 	for _, token := range tokens {
 		frequencies[token]++
@@ -137,11 +151,16 @@ func addNgrams(frequencies map[string]uint32, tokens []string, known map[string]
 	}
 }
 
-func getNgrams(tokenizer nlp.Tokenizer, known map[string]bool, minLen int, results chan<- map[string]uint32) jobs.Page {
-	return func(page *documents.Page) error {
+func getNgrams(tokenizer nlp.Tokenizer, known map[string]bool, minLen int, results chan<- map[string]uint32) jobs.Proto {
+	return func(p proto.Message) error {
+		page, ok := p.(*documents.Page)
+		if !ok {
+			return fmt.Errorf("got message type %T, want %T", p, &documents.Page{})
+		}
+
 		frequencies := make(map[string]uint32)
 
-		text := page.Revision.Text
+		text := page.Text
 
 		// Ignore ngrams resulting from line breaks.
 		lines := strings.Split(text, "\n")

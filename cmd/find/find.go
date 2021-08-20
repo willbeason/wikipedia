@@ -27,7 +27,7 @@ func mainCmd() *cobra.Command {
 			errs, errsWg := jobs.Errors()
 
 			workWg := sync.WaitGroup{}
-			work := jobs.WalkDir(inArticles, errs)
+			work := jobs.WalkFiles(inArticles, errs)
 
 			results := make(chan string)
 

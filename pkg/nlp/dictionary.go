@@ -1,10 +1,13 @@
 package nlp
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -21,18 +24,41 @@ func ReadDictionary(path string) (*Dictionary, error) {
 		return nil, err
 	}
 
-	err = proto.Unmarshal(bytes, dictionary)
-	if err != nil {
-		return nil, err
+	switch ext := filepath.Ext(path); ext {
+	case ".pb":
+		err = proto.Unmarshal(bytes, dictionary)
+		if err != nil {
+			return nil, err
+		}
+	case ".json":
+		err = protojson.Unmarshal(bytes, dictionary)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("unsupported proto extension %q", ext)
 	}
 
 	return dictionary, nil
 }
 
 func WriteDictionary(path string, dictionary *Dictionary) error {
-	bytes, err := proto.Marshal(dictionary)
-	if err != nil {
-		return err
+	var bytes []byte
+	var err error
+
+	switch ext := filepath.Ext(path); ext {
+	case ".pb":
+		bytes, err = proto.Marshal(dictionary)
+		if err != nil {
+			return err
+		}
+	case ".json":
+		bytes, err = protojson.MarshalOptions{Indent: "  "}.Marshal(dictionary)
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("unsupported proto extension %q", ext)
 	}
 
 	return ioutil.WriteFile(path, bytes, os.ModePerm)

@@ -107,13 +107,16 @@ func keepReplacing(pattern *regexp.Regexp, text, replace string) string {
 	return text
 }
 
-// CleanArticle removes all parts of Wikipedia we never want to analyze.
-func CleanArticle(text string) string {
-	text = TableRegex2.ReplaceAllString(text, "")
+// func CleanArticle(text string) string {
+// 	return text
+// }
 
+// CleanArticle2 removes all parts of Wikipedia we never want to analyze.
+func CleanArticle(text string) string {
 	sections := strings.Split(text, "\n\n")
 
 	for i, section := range sections {
+		section = TableRegex2.ReplaceAllString(section, "")
 		section = keepReplacing(widgets, section, "")
 		section = RemoveLinks.ReplaceAllString(section, "")
 
@@ -159,8 +162,7 @@ func CleanArticle(text string) string {
 		line = strings.ReplaceAll(line, "&nbsp;", " ")
 		line = strings.ReplaceAll(line, "&ndash;", "–")
 
-		line = strings.TrimPrefix(line, "*")
-		line = strings.TrimSpace(line)
+		line = strings.Trim(line, "* \t")
 
 		switch strings.ToLower(strings.Trim(line, " =")) {
 		case "bibliography", "citations", "external links", "further reading", "notes", "references", "see also", "sources":

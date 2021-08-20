@@ -15,23 +15,17 @@ enum Classification {
   EDUCATION = 9;
   MUSIC = 10;
   FINE_ARTS = 11;
-  PHILOLOGY = 12;
-  LINGUISTICS = 13;
-  LITERATURE = 14;
-  SCIENCE = 15;
-  MEDICINE = 16;
-  AGRICULTURE = 17;
-  TECHNOLOGY = 18;
-  MILITARY_SCIENCE = 19;
-  INFORMATION_SCIENCE = 20;
+  PHILOLOGY_AND_LINGUISTICS = 12;
+  LITERATURE = 13;
+  SCIENCE = 14;
+  MEDICINE = 15;
+  AGRICULTURE = 16;
+  TECHNOLOGY = 17;
+  MILITARY_SCIENCE = 18;
+  INFORMATION_SCIENCE = 19;
 }
 
+// ClassifiedArticles is a map from article IDs to their Classification.
 message ClassifiedArticles {
-  repeated ClassifiedArticle articles = 1;
-}
-
-message ClassifiedArticle {
-  // id is the unique identifier of the article.
-  int32 id = 1;
-  Classification classification = 2;
+  map<uint32, Classification> articles = 1;
 }

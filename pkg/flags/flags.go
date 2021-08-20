@@ -15,15 +15,11 @@ const (
 )
 
 func Parallel(cmd *cobra.Command) {
-	var p int
-
-	cmd.Flags().IntVar(&p, "parallel", runtime.NumCPU(),
+	cmd.Flags().Int("parallel", runtime.NumCPU(),
 		"number of concurrent workers to run on jobs; defaults to number of available logical CPUs")
 }
 
 func DictionarySize(cmd *cobra.Command) {
-	var p int
-
-	cmd.Flags().IntVar(&p, DictionarySizeKey, DictionarySizeDefault,
+	cmd.Flags().Int(DictionarySizeKey, DictionarySizeDefault,
 		"maximum number of top words to keep track of")
 }

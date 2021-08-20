@@ -5,7 +5,7 @@ import (
 )
 
 func CollectWordCounts(wordCountsChannel <-chan map[string]uint32, known map[string]bool, countFilter uint32, sizeThreshold int, minCount uint32) <-chan *FrequencyMap {
-	result := make(chan *FrequencyMap, 1)
+	result := make(chan *FrequencyMap, 100)
 
 	go func() {
 		counts := collectWordCounts(wordCountsChannel, known, countFilter, sizeThreshold)

@@ -4,16 +4,6 @@ package ordinality;
 
 option go_package = "pkg/ordinality";
 
-// DocumentPageWords is a contains word bags of each page in the document.
-message DocumentWordBag {
-  // Id is the unique document identifier.
-  // Used to figure out where to write the document on disk.
-  uint32 id = 1;
-
-  // Pages is the list of pages in the document.
-  repeated PageWordBag pages = 2;
-}
-
 // PageWordBag is an unordered count of all words in the document which are present in some
 // dictionary.
 message PageWordBag {

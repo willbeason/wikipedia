@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+option go_package = "pkg/documents";
+
+message Document {
+  repeated Page pages = 1;
+}
+
+message Page {
+  uint32 id = 1;
+  string title = 2;
+  string text = 3;
+}

@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option go_package = "pkg/indexes";
+
+// Index allows locating a specific file containing an article with a given ID.
+message Index {
+  // Root is the root directory the Index is of.
+  string root = 1;
+  // Entries are the sorted in ascending order by the maximum ID contained in the files.
+  repeated Entry entries = 2;
+}
+
+message Entry {
+  // File is the file which corresponds to this entry.
+  // Relative to the index's root.
+  string file = 1;
+  // Max is the maximum page ID contained in File.
+  uint32 max = 2;
+}

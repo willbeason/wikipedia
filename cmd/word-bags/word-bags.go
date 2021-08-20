@@ -1,16 +1,17 @@
 package main
 
 import (
+	"fmt"
 	"os"
-	"path/filepath"
-	"strings"
 
+	"github.com/dgraph-io/badger/v3"
 	"github.com/spf13/cobra"
 	"github.com/willbeason/extract-wikipedia/pkg/documents"
 	"github.com/willbeason/extract-wikipedia/pkg/flags"
 	"github.com/willbeason/extract-wikipedia/pkg/jobs"
 	"github.com/willbeason/extract-wikipedia/pkg/nlp"
 	"github.com/willbeason/extract-wikipedia/pkg/ordinality"
+	"google.golang.org/protobuf/proto"
 )
 
 func mainCmd() *cobra.Command {
@@ -19,9 +20,25 @@ func mainCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 
-			inArticles := args[0]
+			inDBPath := args[0]
 			inDictionary := args[1]
-			outArticles := args[2]
+			outDBPath := args[2]
+
+			inDB, err := badger.Open(badger.DefaultOptions(inDBPath))
+			defer func() {
+				_ = inDB.Close()
+			}()
+			if err != nil {
+				return err
+			}
+
+			outDB, err := badger.Open(badger.DefaultOptions(outDBPath))
+			defer func() {
+				_ = outDB.Close()
+			}()
+			if err != nil {
+				return err
+			}
 
 			parallel, err := cmd.Flags().GetInt(flags.ParallelKey)
 			if err != nil {
@@ -43,14 +60,30 @@ func mainCmd() *cobra.Command {
 
 			errs, errsWg := jobs.Errors()
 
-			work := jobs.WalkDir(inArticles, errs)
+			work := jobs.Walk(cmd.Context(), inDB, newPage, parallel, errs)
+			wordBags := make(chan jobs.MessageID, 100)
 
-			workWg := jobs.DoDocumentJobs(parallel, documentWordBags(inArticles, outArticles, converter), work, errs)
+			workWg := jobs.RunProto(parallel, documentWordBags(converter, wordBags), work, errs)
+
+			writeWg := jobs.WriteProtos(outDB, parallel, wordBags, errs)
 
 			workWg.Wait()
+			close(wordBags)
 
+			writeWg.Wait()
 			close(errs)
+
 			errsWg.Wait()
+
+			err = inDB.Close()
+			if err != nil {
+				return err
+			}
+
+			err = outDB.Close()
+			if err != nil {
+				return err
+			}
 
 			return nil
 		},
@@ -68,15 +101,20 @@ func main() {
 	}
 }
 
-func documentWordBags(in, out string, converter ordinality.WordBagConverter) jobs.Document {
-	return func(doc *documents.Document) error {
-		wordBags := converter.ToDocumentWordBag(doc)
+func newPage() proto.Message {
+	return &documents.Page{}
+}
 
-		path := doc.Path
-		outPath := filepath.Join(out, strings.TrimPrefix(path, in))
-		outExt := filepath.Ext(outPath)
-		outPath = strings.TrimSuffix(outPath, outExt) + ".pb"
+func documentWordBags(converter ordinality.WordBagConverter, out chan<- jobs.MessageID) jobs.Proto {
+	return func(p proto.Message) error {
+		page, ok := p.(*documents.Page)
+		if !ok {
+			return fmt.Errorf("got message type %T, want %T", p, &documents.Page{})
+		}
 
-		return ordinality.WriteWordBags(outPath, wordBags)
+		wordBag := converter.ToPageWordBag(page)
+		out <- wordBag
+
+		return nil
 	}
 }

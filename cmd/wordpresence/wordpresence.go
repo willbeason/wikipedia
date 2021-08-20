@@ -51,7 +51,7 @@ func mainCmd() *cobra.Command {
 			}
 
 			errs, errsWg := jobs.Errors()
-			work := jobs.WalkDir(inArticles, errs)
+			work := jobs.WalkFiles(inArticles, errs)
 
 			results := make(chan documents.WordSets)
 			workWg := jobs.DoDocumentJobs(parallel, doWork(dictionary, results), work, errs)

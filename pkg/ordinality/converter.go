@@ -13,25 +13,14 @@ type WordBagConverter struct {
 	WordOrdinality
 }
 
-func (c *WordBagConverter) ToDocumentWordBag(d *documents.Document) *DocumentWordBag {
-	result := &DocumentWordBag{}
-	result.Pages = make([]*PageWordBag, len(d.Pages))
-
-	for i, page := range d.Pages {
-		result.Pages[i] = c.ToPageWordBag(page)
-	}
-
-	return result
-}
-
-func (c *WordBagConverter) ToPageWordBag(p documents.Page) *PageWordBag {
+func (c *WordBagConverter) ToPageWordBag(p *documents.Page) *PageWordBag {
 	result := &PageWordBag{
-		Id: uint32(p.ID),
+		Id: p.Id,
 		Title: p.Title,
 	}
 
 	tokenCounts := make(map[uint32]uint32)
-	for _, line := range strings.Split(p.Revision.Text, "\n") {
+	for _, line := range strings.Split(p.Text, "\n") {
 		for _, token := range c.Tokenizer.Tokenize(line) {
 			tokenID := c.WordOrdinality[token]
 			if tokenID == 0 {

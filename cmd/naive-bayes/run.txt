@@ -1,0 +1,4 @@
+go run cmd/naive-bayes/naive-bayes.go \
+  C:/Users/Will/Documents/WikipediaCorpus/wikipedia-word-bags-10000/enwiki-20210801 \
+  F:/dictionary/out-10000.pb \
+  12666

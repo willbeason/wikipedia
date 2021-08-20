@@ -33,7 +33,7 @@ func mainCmd() *cobra.Command {
 			}
 
 			errs, errsWg := jobs.Errors()
-			work := jobs.WalkDir(inArticles, errs)
+			work := jobs.WalkFiles(inArticles, errs)
 
 			results := make(chan string)
 
@@ -44,7 +44,7 @@ func mainCmd() *cobra.Command {
 			titleWg.Add(1)
 
 			go func() {
-				titleDictionary = collectTitleDictionary(dictionary, results)
+				titleDictionary = collectTitleDictionary(nlp.ToNgramDictionary(dictionary), results)
 				titleWg.Done()
 			}()
 

@@ -24,13 +24,22 @@ func (c Counter) Count(s string) map[string]int {
 type WordTokenizer struct{}
 
 func (t WordTokenizer) Tokenize(s string) []string {
-	tokens := WordRegex.FindAllString(s, -1)
+	words := WordRegex.FindAllString(s, -1)
+	tokens := make([]string, len(words))
 
-	for i, token := range tokens {
-		tokens[i] = strings.Trim(token, "'")
+	nTokens := 0
+	for _, token := range words {
+		normalizedToken := strings.Trim(token, "'")
+		if normalizedToken == "" {
+			// Ignore "words" which are just apostrophes or are empty string.
+			continue
+		}
+
+		tokens[nTokens] = normalizedToken
+		nTokens++
 	}
 
-	return tokens
+	return tokens[:nTokens]
 }
 
 type NgramTokenizer struct {
