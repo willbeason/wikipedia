@@ -30,6 +30,8 @@ func mainCmd() *cobra.Command {
 		Short: `Cleans an extracted set of Wikipedia articles by removing irrelevant pages and formatting
 directives.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.SilenceUsage = true
+
 			inDBPath := args[0]
 			var outDBPath string
 			if len(args) > 1 {
@@ -73,6 +75,10 @@ directives.`,
 				if err != nil {
 					return err
 				}
+
+				defer func() {
+					_ = outDB.Close()
+				}()
 			}
 
 			var writeWg *sync.WaitGroup
@@ -95,9 +101,11 @@ directives.`,
 				return err
 			}
 
-			err = outDB.Close()
-			if err != nil {
-				return err
+			if outDB != nil {
+				err = outDB.Close()
+				if err != nil {
+					return err
+				}
 			}
 
 			return nil

@@ -17,7 +17,7 @@ type GarbageCollector struct {
 
 func NewGarbageCollector(db *badger.DB) *GarbageCollector {
 	return &GarbageCollector{
-		period:   100000,
+		period:   1000000,
 		db:       db,
 		Incoming: make(chan struct{}, 100),
 	}

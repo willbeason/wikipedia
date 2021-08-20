@@ -1,4 +1,5 @@
 go run cmd/naive-bayes/naive-bayes.go \
-  C:/Users/Will/Documents/WikipediaCorpus/wikipedia-word-bags-10000/enwiki-20210801 \
-  F:/dictionary/out-10000.pb \
+  C:/Users/Will/Documents/WikipediaCorpus/word-bags-10000/enwiki-20210801.db \
+  C:/Users/Will/Documents/WikipediaCorpus/training/training.json \
+  F:/dictionary/out-10000.json \
   12666

@@ -1,6 +1,6 @@
 go run cmd/clean-wikipedia/clean-wikipedia.go \
   C:/Users/Will/Documents/WikipediaCorpus/extracted/enwiki-20210801.db \
-  --ids=26700
+  --ids=26700,18949668
 
 go run cmd/clean-wikipedia/clean-wikipedia.go \
   C:/Users/Will/Documents/WikipediaCorpus/extracted/enwiki-20210801.db \
