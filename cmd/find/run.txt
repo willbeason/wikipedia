@@ -1,3 +1,0 @@
-go run cmd/find/find.go \
-  C:/Users/willb/Documents/wikipedia/wikipedia-clean \
-  "align:center"

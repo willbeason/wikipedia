@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
+	"sync"
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/spf13/cobra"
@@ -25,7 +27,7 @@ func mainCmd() *cobra.Command {
 			inDBPath := args[0]
 			inTrainingData := args[1]
 			inDictionary := args[2]
-			articleIDString := args[3]
+			articleIDsString := args[3]
 
 			inDB, err := badger.Open(badger.DefaultOptions(inDBPath))
 			if err != nil {
@@ -63,6 +65,7 @@ func mainCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+
 			modelChan := classify.TrainBayes(len(classify.Classification_value)-1, len(dictionary.Words), trainingData)
 
 			trainingWorkWg.Wait()
@@ -71,35 +74,48 @@ func mainCmd() *cobra.Command {
 			model := <-modelChan
 			fmt.Println("Trained model")
 
-			articleID, err := strconv.ParseUint(articleIDString, 10, 32)
-			if err != nil {
-				return fmt.Errorf("article ID %s is not a valid uint32", articleIDString)
+			var ids []uint
+			for _, articleIDString := range strings.Split(articleIDsString, ",") {
+				articleID, err := strconv.ParseUint(articleIDString, 10, 32)
+				if err != nil {
+					return fmt.Errorf("article ID %s is not a valid uint32", articleIDString)
+				}
+				ids = append(ids, uint(articleID))
 			}
 
-			findWork := jobs.IDs(inDB, newWordBag, []uint{uint(articleID)}, errs)
+			findWork := jobs.IDs(inDB, newWordBag, ids, errs)
 			foundChan := make(chan *ordinality.PageWordBag, 100)
 			findWorkWg := jobs.RunProto(parallel, findPage(foundChan), findWork, errs)
 
 			findWorkWg.Wait()
-
-			found := <-foundChan
 
 			err = inDB.Close()
 			if err != nil {
 				return err
 			}
 
+			classifyWg := sync.WaitGroup{}
+			classifyWg.Add(1)
+
+			go func() {
+				for found := range foundChan {
+					result := model.Classify(found)
+					fmt.Println()
+					fmt.Printf("Classifying article %q\n", found.Title)
+					for _, cp := range result {
+						fmt.Printf("%s: %.4f%%\n", cp.Classification.String(), cp.P*100)
+					}
+					fmt.Println()
+				}
+
+				classifyWg.Done()
+			}()
+
 			close(foundChan)
 			close(errs)
 			errsWg.Wait()
 
-			result := model.Classify(found)
-			fmt.Println()
-			fmt.Printf("Classifying article %q\n", found.Title)
-			for _, cp := range result {
-				fmt.Printf("%s: %.4f%%\n", cp.Classification.String(), cp.P*100)
-			}
-			fmt.Println()
+			classifyWg.Wait()
 
 			return nil
 		},
@@ -122,21 +138,21 @@ func newWordBag() proto.Message {
 }
 
 func readTrainingData(known map[uint32]classify.Classification, trainingData chan<- *classify.WordBagClassification) jobs.Proto {
-	return func(proto proto.Message) error {
-		page, ok := proto.(*ordinality.PageWordBag)
+	return func(p proto.Message) error {
+		wordBag, ok := p.(*ordinality.PageWordBag)
 		if !ok {
-			return fmt.Errorf("got proto.Message type %T, want %T", proto, &ordinality.PageWordBag{})
+			return fmt.Errorf("got proto.Message type %T, want %T", p, &ordinality.PageWordBag{})
 		}
 
-		classification := known[page.Id]
+		classification := known[wordBag.Id]
 		if classification == classify.Classification_UNKNOWN {
-			return fmt.Errorf("unknown classification for article ID %d", page.Id)
+			return fmt.Errorf("unknown classification for article ID %d", wordBag.Id)
 		}
 
-		fmt.Printf("Found article %d: %q to classify as %s\n", page.Id, page.Title, classification)
+		fmt.Printf("Found article %d: %q to classify as %s\n", wordBag.Id, wordBag.Title, classification)
 		trainingData <- &classify.WordBagClassification{
 			Classification: classification,
-			PageWordBag:    page,
+			PageWordBag:    wordBag,
 		}
 
 		return nil

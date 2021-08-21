@@ -16,6 +16,9 @@ type Model [][]float64
 
 type Counts [][]uint32
 
+// Ignored is the top n words to ignore in training and analysis.
+const Ignored = 55
+
 type Bayes struct {
 	Classifications int
 	Words int
@@ -71,9 +74,14 @@ func TrainBayes(nClassifications, nWords int, wordBags <-chan *WordBagClassifica
 		}
 
 		for wordID, wordCounts := range allWordCounts {
-			for classificationID, count := range wordCounts {
-				bayes.Model[wordID][classificationID] = float64(count) / float64(classificationWords[classificationID])
+			if wordID < Ignored {
+				continue
 			}
+
+			for classificationID, count := range wordCounts {
+				bayes.Model[wordID][classificationID] = math.Log(float64(count) / float64(classificationWords[classificationID]))
+			}
+
 		}
 
 		for _, wordLogProbabilities := range bayes.Model {

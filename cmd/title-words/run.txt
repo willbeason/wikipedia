@@ -1,4 +1,0 @@
-go run cmd/title-words/title-words.go \
-  /c/Users/willb/Documents/wikipedia/wikipedia-clean \
-  /c/Users/willb/Documents/wikipedia/wordcounts/english3.txt \
-  /c/Users/willb/Documents/wikipedia/wordcounts/titles.txt

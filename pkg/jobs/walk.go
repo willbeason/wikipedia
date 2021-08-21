@@ -97,7 +97,7 @@ func getProto(id uint, dst proto.Message) func(txn *badger.Txn) error {
 
 		item, err := txn.Get(key)
 		if err != nil {
-			return err
+			return fmt.Errorf("%w: %d", err, id)
 		}
 
 		valueBytes, err = item.ValueCopy(nil)

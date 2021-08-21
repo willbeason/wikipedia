@@ -1,0 +1,4 @@
+go run cmd/identify-training/identify-training.go \
+  C:/Users/Will/Documents/WikipediaCorpus/word-bags-10000/enwiki-20210801.db \
+  C:/Users/Will/Documents/WikipediaCorpus/training/training.json \
+  F:/dictionary/out-10000.json

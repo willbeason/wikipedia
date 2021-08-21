@@ -1,3 +1,0 @@
-go run cmd/index/index.go \
-  F:/wikipedia-extracted/enwiki-20210801 \
-  F:/wikipedia-indexes/index-extracted.pb
