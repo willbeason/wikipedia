@@ -20,7 +20,7 @@ const (
 func mainCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Args: cobra.MinimumNArgs(2),
-		Use: `normalize-wikipedia path/to/input path/to/output`,
+		Use:  `normalize-wikipedia path/to/input path/to/output`,
 		Short: `Normalizes text in Wikipedia by making all text lowercase and replacing certain sequences
 (e.g. numbers, dates) with normalized tokens.
 Mainly for use in early stages of corpus analysis.`,

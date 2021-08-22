@@ -9,9 +9,9 @@ import (
 
 type GarbageCollector struct {
 	period uint64
-	db *badger.DB
+	db     *badger.DB
 
-	count uint64
+	count    uint64
 	Incoming chan struct{}
 }
 
@@ -26,7 +26,7 @@ func NewGarbageCollector(db *badger.DB) *GarbageCollector {
 func (gc *GarbageCollector) run(errs chan<- error) {
 	for range gc.Incoming {
 		gc.count++
-		if gc.count % gc.period == 0 {
+		if gc.count%gc.period == 0 {
 			err := RunGC(gc.db)
 			if err != nil {
 				errs <- err

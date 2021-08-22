@@ -27,9 +27,9 @@ type XMLPage struct {
 
 func (p *XMLPage) ToProto() *Page {
 	return &Page{
-		Id:       p.ID,
-		Title:    p.Title,
-		Text: p.Revision.Text,
+		Id:    p.ID,
+		Title: p.Title,
+		Text:  p.Revision.Text,
 	}
 }
 

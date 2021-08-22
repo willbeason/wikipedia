@@ -83,10 +83,10 @@ func newWordBag() proto.Message {
 	return &ordinality.PageWordBag{}
 }
 
-func findMissing(dictionary *nlp.Dictionary, in <-chan proto.Message, errs chan<- error)  *sync.WaitGroup  {
+func findMissing(dictionary *nlp.Dictionary, in <-chan proto.Message, errs chan<- error) *sync.WaitGroup {
 	counts := make([]idCount, len(dictionary.Words))
 	for i := range counts {
-		counts[i].id = i+1
+		counts[i].id = i + 1
 		counts[i].word = dictionary.Words[i]
 	}
 
@@ -128,9 +128,9 @@ func findMissing(dictionary *nlp.Dictionary, in <-chan proto.Message, errs chan<
 }
 
 type idCount struct {
-	id int
+	id    int
 	count uint32
-	word string
+	word  string
 }
 
 func collect(known map[uint32]classify.Classification, in <-chan proto.Message, errs chan<- error) *sync.WaitGroup {

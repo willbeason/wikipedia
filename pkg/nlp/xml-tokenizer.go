@@ -14,6 +14,6 @@ type XMLTokenizer struct{}
 
 var _ Tokenizer = XMLTokenizer{}
 
-func (X XMLTokenizer) Tokenize(s string) []string {
+func (x XMLTokenizer) Tokenize(s string) []string {
 	return XMLTagRegex.FindAllString(s, -1)
 }

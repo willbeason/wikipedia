@@ -51,7 +51,7 @@ func mainCmd() *cobra.Command {
 			}
 
 			converter := ordinality.WordBagConverter{
-				Tokenizer:      nlp.NgramTokenizer{
+				Tokenizer: nlp.NgramTokenizer{
 					Underlying: nlp.WordTokenizer{},
 					Dictionary: nlp.ToNgramDictionary(dictionary),
 				},

@@ -82,7 +82,7 @@ func mainCmd() *cobra.Command {
 				dictionary.Words = append(dictionary.Words, make([]string, len(frequencies.Words))...)
 
 				for i, word := range frequencies.Words {
-					dictionary.Words[prevSize + i] = word.Word
+					dictionary.Words[prevSize+i] = word.Word
 				}
 
 				minNgramLength *= 2

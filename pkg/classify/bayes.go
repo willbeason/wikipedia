@@ -21,7 +21,7 @@ const Ignored = 55
 
 type Bayes struct {
 	Classifications int
-	Words int
+	Words           int
 
 	Model
 }
@@ -112,7 +112,7 @@ func (c *Bayes) Classify(page *ordinality.PageWordBag) []ClassificationP {
 
 	for _, wordCount := range page.Words {
 		for classification, logP := range c.Model[wordCount.Word] {
-			logProbabilities[classification].P += logP*float64(wordCount.Count)
+			logProbabilities[classification].P += logP * float64(wordCount.Count)
 		}
 	}
 

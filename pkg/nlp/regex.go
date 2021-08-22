@@ -22,8 +22,7 @@ const (
 
 // Regular expressions for detecting semantically-similar sequences.
 var (
-	WordRegex   = regexp.MustCompile(`[\w']+`)
-	LetterRegex = regexp.MustCompile(`[A-Za-z]`)
+	WordRegex = regexp.MustCompile(`[\w']+`)
 
 	NumberRegex  = regexp.MustCompile(`\b\d+(,\d{3})*(\.\d+)?\b`)
 	PercentRegex = regexp.MustCompile(fmt.Sprintf(`%s%%`, NumToken))
@@ -51,35 +50,4 @@ func NormalizeArticle(text string) string {
 	text = DateRegex.ReplaceAllString(text, DateToken)
 
 	return text
-}
-
-func IsArticle(title string) bool {
-	// Check in descending order of frequency.
-	//
-	// Observed 2021-08-01:
-	//
-	// Category	2,100,543
-	// Wikipedia	1,170,425
-	// File	915,410
-	// Template	592,437
-	// Portal	93,146
-	// Draft	59,584
-	// Module	12,598
-	// MediaWiki	2,212
-	// TimedText	1,352
-	// Help	957
-	return !strings.HasPrefix(title, "Category:") &&
-		!strings.HasPrefix(title, "Wikipedia:") &&
-		!strings.HasPrefix(title, "File:") &&
-		!strings.HasPrefix(title, "Template:") &&
-		!strings.HasPrefix(title, "Portal:") &&
-		!strings.HasPrefix(title, "Draft:") &&
-		!strings.HasPrefix(title, "Module:") &&
-		!strings.HasPrefix(title, "MediaWiki:") &&
-		!strings.HasPrefix(title, "TimedText:") &&
-		!strings.HasPrefix(title, "Help:")
-}
-
-func HasLetter(word string) bool {
-	return LetterRegex.MatchString(word)
 }

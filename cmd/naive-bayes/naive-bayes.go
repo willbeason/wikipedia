@@ -123,7 +123,7 @@ func mainCmd() *cobra.Command {
 
 			classifyWg.Wait()
 
-			fmt.Printf("Accuracy: %.2f%%", 100 - float64(wrong) * 100 / float64(len(known.Articles)))
+			fmt.Printf("Accuracy: %.2f%%", 100-float64(wrong)*100/float64(len(known.Articles)))
 
 			return nil
 		},

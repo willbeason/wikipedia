@@ -10,7 +10,6 @@ type NewProto func() proto.Message
 
 type Proto func(proto proto.Message) error
 
-
 func RunProto(parallel int, job Proto, work <-chan proto.Message, errs chan<- error) *sync.WaitGroup {
 	workWg := sync.WaitGroup{}
 

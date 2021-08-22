@@ -13,7 +13,7 @@ type MessageID interface {
 	ID() uint32
 }
 
-func WriteProtos(db *badger.DB, parallel int, protos <-chan MessageID, errs chan <- error) *sync.WaitGroup {
+func WriteProtos(db *badger.DB, parallel int, protos <-chan MessageID, errs chan<- error) *sync.WaitGroup {
 	wg := sync.WaitGroup{}
 	wg.Add(parallel)
 

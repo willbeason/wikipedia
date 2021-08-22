@@ -15,7 +15,7 @@ type WordBagConverter struct {
 
 func (c *WordBagConverter) ToPageWordBag(p *documents.Page) *PageWordBag {
 	result := &PageWordBag{
-		Id: p.Id,
+		Id:    p.Id,
 		Title: p.Title,
 	}
 
