@@ -46,6 +46,8 @@ func mainCmd() *cobra.Command {
 
 			known := &classify.ClassifiedArticles{}
 			err = protos.Read(inTrainingData, known)
+			fmt.Printf("Training on %d articles\n", len(known.Articles))
+
 			if err != nil {
 				return fmt.Errorf("unable to read training data: %w", err)
 			}
@@ -83,9 +85,30 @@ func mainCmd() *cobra.Command {
 				ids = append(ids, uint(articleID))
 			}
 
-			findWork := jobs.IDs(inDB, newWordBag, ids, errs)
+			findWork := jobs.IDs(inDB, newWordBag, trainingPageIds, errs)
 			foundChan := make(chan *ordinality.PageWordBag, 100)
 			findWorkWg := jobs.RunProto(parallel, findPage(foundChan), findWork, errs)
+
+			classifyWg := sync.WaitGroup{}
+			classifyWg.Add(1)
+
+			wrong := 0
+			go func() {
+				for found := range foundChan {
+					result := model.Classify(found)
+					if result[0].Classification != known.Articles[found.Id] {
+						wrong++
+						fmt.Println()
+						fmt.Printf("Incorrectly classified %q as %s, want %s\n", found.Title, result[0].Classification, known.Articles[found.Id])
+						for _, cp := range result[:4] {
+							fmt.Printf("%s: %.4f%%\n", cp.Classification.String(), cp.P*100)
+						}
+						fmt.Println()
+					}
+				}
+
+				classifyWg.Done()
+			}()
 
 			findWorkWg.Wait()
 
@@ -94,28 +117,13 @@ func mainCmd() *cobra.Command {
 				return err
 			}
 
-			classifyWg := sync.WaitGroup{}
-			classifyWg.Add(1)
-
-			go func() {
-				for found := range foundChan {
-					result := model.Classify(found)
-					fmt.Println()
-					fmt.Printf("Classifying article %q\n", found.Title)
-					for _, cp := range result {
-						fmt.Printf("%s: %.4f%%\n", cp.Classification.String(), cp.P*100)
-					}
-					fmt.Println()
-				}
-
-				classifyWg.Done()
-			}()
-
 			close(foundChan)
 			close(errs)
 			errsWg.Wait()
 
 			classifyWg.Wait()
+
+			fmt.Printf("Accuracy: %.2f%%", 100 - float64(wrong) * 100 / float64(len(known.Articles)))
 
 			return nil
 		},
@@ -149,7 +157,7 @@ func readTrainingData(known map[uint32]classify.Classification, trainingData cha
 			return fmt.Errorf("unknown classification for article ID %d", wordBag.Id)
 		}
 
-		fmt.Printf("Found article %d: %q to classify as %s\n", wordBag.Id, wordBag.Title, classification)
+		// fmt.Printf("Found article %d: %q to classify as %s\n", wordBag.Id, wordBag.Title, classification)
 		trainingData <- &classify.WordBagClassification{
 			Classification: classification,
 			PageWordBag:    wordBag,
