@@ -20,13 +20,13 @@ func (r *Runner) ProcessIDs(ctx context.Context, process Process, ids <-chan uin
 
 	ctx, cancel := context.WithCancel(ctx)
 
-	workWg := sync.WaitGroup{}
-	workWg.Add(r.parallel)
+	wg := sync.WaitGroup{}
+	wg.Add(r.parallel)
 
 	go func() {
 		defer cancel()
 		defer closeDB(db, errs)
-		workWg.Wait()
+		wg.Wait()
 	}()
 
 	for i := 0; i < r.parallel; i++ {
@@ -37,11 +37,11 @@ func (r *Runner) ProcessIDs(ctx context.Context, process Process, ids <-chan uin
 				errs <- perr
 			}
 
-			workWg.Done()
+			wg.Done()
 		}()
 	}
 
-	return &workWg, nil
+	return &wg, nil
 }
 
 func processIDs(ctx context.Context, db *badger.DB, ids <-chan uint32, process Process) error {
