@@ -1,6 +1,6 @@
 package documents
 
-// XMLDocument solely exists for extracting
+// XMLDocument solely exists for extracting.
 type XMLDocument struct {
 	Pages []XMLPage `xml:"page"`
 }

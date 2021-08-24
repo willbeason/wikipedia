@@ -81,7 +81,6 @@ func TrainBayes(nClassifications, nWords int, wordBags <-chan *WordBagClassifica
 			for classificationID, count := range wordCounts {
 				bayes.Model[wordID][classificationID] = math.Log(float64(count) / float64(classificationWords[classificationID]))
 			}
-
 		}
 
 		for _, wordLogProbabilities := range bayes.Model {

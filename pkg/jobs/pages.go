@@ -33,6 +33,7 @@ func WriteProtos(db *badger.DB, parallel int, protos <-chan MessageID, errs chan
 
 	gcWg := sync.WaitGroup{}
 	gcWg.Add(1)
+
 	go func() {
 		gc.run(errs)
 		gcWg.Done()
@@ -53,12 +54,12 @@ func runProtoWriter(db *badger.DB, gc *GarbageCollector, protos <-chan MessageID
 	}
 }
 
-func WriteProto(page MessageID) func(txn *badger.Txn) error {
+func WriteProto(m MessageID) func(txn *badger.Txn) error {
 	return func(txn *badger.Txn) error {
 		key := make([]byte, 4)
-		binary.LittleEndian.PutUint32(key, page.ID())
+		binary.LittleEndian.PutUint32(key, m.ID())
 
-		pageBytes, err := proto.Marshal(page)
+		pageBytes, err := proto.Marshal(m)
 		if err != nil {
 			return err
 		}

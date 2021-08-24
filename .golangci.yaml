@@ -30,7 +30,7 @@ linters-settings:
   govet:
     check-shadowing: true
   lll:
-    line-length: 120
+    line-length: 150
   maligned:
     suggest-new: true
   misspell:

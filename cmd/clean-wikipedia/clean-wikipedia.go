@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/willbeason/extract-wikipedia/pkg/db"
 	"os"
 	"sync"
 
@@ -32,42 +33,47 @@ directives.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true
 
-			inDBPath := args[0]
 			var outDBPath string
 			if len(args) > 1 {
 				outDBPath = args[1]
 			}
 
-			parallelJobs, err := cmd.Flags().GetInt(flags.ParallelKey)
+			parallel, err := cmd.Flags().GetInt(flags.ParallelKey)
 			if err != nil {
 				return err
 			}
 
-			pageIds, err := cmd.Flags().GetUintSlice(idsKey)
+			pageIDs, err := cmd.Flags().GetUintSlice(idsKey)
 			if err != nil {
 				return err
 			}
 
-			inDB, err := badger.Open(badger.DefaultOptions(inDBPath))
-			defer func() {
-				_ = inDB.Close()
-			}()
-			if err != nil {
-				return err
-			}
+			inDBPath := args[0]
+			inDB := db.NewRunner(inDBPath, parallel)
 
 			errs, errsWg := jobs.Errors()
-			var work <-chan proto.Message
+			work := make(chan *documents.Page)
 
-			if len(pageIds) == 0 {
-				work = jobs.Walk(cmd.Context(), inDB, newPage, parallelJobs, errs)
+			var inWg *sync.WaitGroup
+			if len(pageIDs) == 0 {
+				inWg, err = inDB.Process(cmd.Context(), documents.ReadPages(work), errs)
+				if err != nil {
+					return err
+				}
 			} else {
-				work = jobs.IDs(inDB, newPage, pageIds, errs)
+				inWg, err = inDB.ProcessIDs(cmd.Context(), documents.ReadPages(work), toUint32Chan(pageIDs), errs)
+				if err != nil {
+					return err
+				}
 			}
+			go func() {
+				inWg.Wait()
+				close(work)
+			}()
 
 			cleaned := make(chan jobs.MessageID, 100)
 
-			cleanWg := jobs.RunProto(parallelJobs, cleanDocuments(cleaned), work, errs)
+			cleanWg := jobs.RunProto(parallel, cleanDocuments(cleaned), work, errs)
 
 			var outDB *badger.DB
 			if outDBPath != "" {
@@ -85,7 +91,7 @@ directives.`,
 			if outDB == nil {
 				writeWg = printPages(cleaned)
 			} else {
-				writeWg = jobs.WriteProtos(outDB, parallelJobs, cleaned, errs)
+				writeWg = jobs.WriteProtos(outDB, parallel, cleaned, errs)
 			}
 
 			cleanWg.Wait()
@@ -95,11 +101,6 @@ directives.`,
 			close(errs)
 
 			errsWg.Wait()
-
-			err = inDB.Close()
-			if err != nil {
-				return err
-			}
 
 			if outDB != nil {
 				err = outDB.Close()
@@ -164,4 +165,18 @@ func printPages(cleaned <-chan jobs.MessageID) *sync.WaitGroup {
 	}()
 
 	return &wg
+}
+
+func toUint32Chan(ids []uint) chan uint32 {
+	result := make(chan uint32, 100)
+
+	go func() {
+		for _, id := range ids {
+			result <- uint32(id)
+		}
+
+		close(result)
+	}()
+
+	return result
 }

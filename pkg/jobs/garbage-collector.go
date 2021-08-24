@@ -38,6 +38,7 @@ func (gc *GarbageCollector) run(errs chan<- error) {
 func RunGC(db *badger.DB) error {
 	for {
 		fmt.Println("Running Garbage Collection")
+
 		err := db.RunValueLogGC(0.5)
 		if err != nil {
 			if !errors.Is(err, badger.ErrNoRewrite) && !errors.Is(err, badger.ErrRejected) {
