@@ -12,6 +12,8 @@ const (
 
 	DictionarySizeKey     = "dictionary-size"
 	DictionarySizeDefault = 50000
+
+	IDsKey = "ids"
 )
 
 func Parallel(cmd *cobra.Command) {
@@ -22,4 +24,8 @@ func Parallel(cmd *cobra.Command) {
 func DictionarySize(cmd *cobra.Command) {
 	cmd.Flags().Int(DictionarySizeKey, DictionarySizeDefault,
 		"maximum number of top words to keep track of")
+}
+
+func IDs(cmd *cobra.Command) {
+	cmd.Flags().UintSlice(IDsKey, nil, "A list of specific article ids to check.")
 }
