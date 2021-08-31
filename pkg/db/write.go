@@ -1,58 +1,73 @@
 package db
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
 
 	"github.com/dgraph-io/badger/v3"
+	"github.com/willbeason/extract-wikipedia/pkg/protos"
 	"google.golang.org/protobuf/proto"
 )
 
-// Write writes all protos to the DB.
-//
-// Returns a WaitGroup which finishes after the last proto has been written.
-func (r *Runner) Write(protos <-chan MessageID, errs chan<- error) (*sync.WaitGroup, error) {
-	wg := sync.WaitGroup{}
+// Write writes all protos to the Runner's DB.
+func (r *Runner) Write() protos.Sink {
+	return func(ctx context.Context, ps <-chan protos.ID, errs chan<- error) (*sync.WaitGroup, error) {
+		db, err := badger.Open(badger.DefaultOptions(r.path))
+		if err != nil {
+			return nil, err
+		}
 
-	db, err := badger.Open(badger.DefaultOptions(r.path))
-	if err != nil {
-		return &wg, err
-	}
-
-	for i := 0; i < r.parallel; i++ {
-		wg.Add(1)
+		wg := sync.WaitGroup{}
+		wg.Add(r.parallel)
+		ctx, cancel := context.WithCancel(ctx)
 
 		go func() {
-			writeProtos(protos, db, errs)
-			wg.Done()
+			defer cancel()
+			defer closeDB(db, errs)
+			wg.Wait()
+
+			err = runGC(db)
+			if err != nil {
+				errs <- err
+			}
 		}()
-	}
 
-	go func() {
-		defer closeDB(db, errs)
+		for i := 0; i < r.parallel; i++ {
+			go func() {
+				perr := writeProtos(ctx, ps, db)
+				if perr != nil {
+					errs <- perr
 
-		wg.Wait()
+					cancel()
+				}
 
-		err = runGC(db)
-		if err != nil {
-			errs <- err
+				wg.Done()
+			}()
 		}
-	}()
 
-	return &wg, nil
-}
-
-func writeProtos(protos <-chan MessageID, db *badger.DB, errs chan<- error) {
-	for p := range protos {
-		err := db.Update(write(p))
-		if err != nil {
-			errs <- err
-		}
+		return &wg, nil
 	}
 }
 
-func write(m MessageID) func(txn *badger.Txn) error {
+func writeProtos(ctx context.Context, ps <-chan protos.ID, db *badger.DB) error {
+	for p := range ps {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+			err := db.Update(write(p))
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func write(m protos.ID) func(txn *badger.Txn) error {
 	return func(txn *badger.Txn) error {
 		key := toKey(m.ID())
 
@@ -79,6 +94,8 @@ func runGC(db *badger.DB) error {
 
 			break
 		}
+		// No error indicates garbage was collected, so run garbage collection again
+		// until we get ErrNoRewrite.
 	}
 
 	return nil

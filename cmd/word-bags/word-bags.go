@@ -61,7 +61,7 @@ func mainCmd() *cobra.Command {
 			errs, errsWg := jobs.Errors()
 
 			work := jobs.Walk(cmd.Context(), inDB, newPage, parallel, errs)
-			wordBags := make(chan jobs.MessageID, 100)
+			wordBags := make(chan protos.ID, 100)
 
 			workWg := jobs.RunProto(parallel, documentWordBags(converter, wordBags), work, errs)
 
@@ -105,7 +105,7 @@ func newPage() proto.Message {
 	return &documents.Page{}
 }
 
-func documentWordBags(converter ordinality.WordBagConverter, out chan<- jobs.MessageID) jobs.Proto {
+func documentWordBags(converter ordinality.WordBagConverter, out chan<- protos.ID) jobs.Proto {
 	return func(p proto.Message) error {
 		page, ok := p.(*documents.Page)
 		if !ok {

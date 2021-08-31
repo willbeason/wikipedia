@@ -10,6 +10,7 @@ import (
 	"github.com/willbeason/extract-wikipedia/pkg/flags"
 	"github.com/willbeason/extract-wikipedia/pkg/jobs"
 	"github.com/willbeason/extract-wikipedia/pkg/nlp"
+	"github.com/willbeason/extract-wikipedia/pkg/protos"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -63,7 +64,7 @@ Mainly for use in early stages of corpus analysis.`,
 				work = jobs.IDs(inDB, newPage, pageIds, errs)
 			}
 
-			normalized := make(chan jobs.MessageID, 100)
+			normalized := make(chan protos.ID, 100)
 			normalizeWg := jobs.RunProto(parallel, normalize(normalized), work, errs)
 
 			writeWg := jobs.WriteProtos(outDB, parallel, normalized, errs)
@@ -108,7 +109,7 @@ func newPage() proto.Message {
 	return &documents.Page{}
 }
 
-func normalize(out chan<- jobs.MessageID) jobs.Proto {
+func normalize(out chan<- protos.ID) jobs.Proto {
 	return func(p proto.Message) error {
 		page, ok := p.(*documents.Page)
 		if !ok {
