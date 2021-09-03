@@ -6,6 +6,8 @@ import (
 	"compress/bzip2"
 	"encoding/xml"
 	"fmt"
+	"github.com/willbeason/extract-wikipedia/pkg/db"
+	"github.com/willbeason/extract-wikipedia/pkg/protos"
 	"io"
 	"io/ioutil"
 	"os"
@@ -13,13 +15,19 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/dgraph-io/badger/v3"
 	"github.com/willbeason/extract-wikipedia/pkg/documents"
 	"github.com/willbeason/extract-wikipedia/pkg/flags"
 	"github.com/willbeason/extract-wikipedia/pkg/jobs"
 
 	"github.com/spf13/cobra"
 )
+
+func main() {
+	err := mainCmd().Execute()
+	if err != nil {
+		os.Exit(1)
+	}
+}
 
 func mainCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -29,80 +37,7 @@ func mainCmd() *cobra.Command {
   path/to/output.db`,
 		Short: `Extracts the compressed pages-articles-multistream dump of Wikipedia to an output
 Badger database, given an already-extracted index file.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			nParallel, err := cmd.Flags().GetInt(flags.ParallelKey)
-			if err != nil {
-				return err
-			}
-
-			cmd.SilenceUsage = true
-
-			repo := args[0]
-			index := args[1]
-			outDB := args[2]
-
-			fRepo, err := os.Open(repo)
-			if err != nil {
-				return err
-			}
-			defer func() {
-				err = fRepo.Close()
-			}()
-
-			fIndex, err := os.Open(index)
-			if err != nil {
-				return err
-			}
-			defer func() {
-				_ = fIndex.Close()
-			}()
-
-			rIndex := bufio.NewReader(fIndex)
-
-			errs, errsWg := jobs.Errors()
-
-			jobFiles := make(chan job)
-
-			jobSync := sync.WaitGroup{}
-			jobSync.Add(1)
-			go func() {
-				extractFile(rIndex, fRepo, jobFiles, errs)
-
-				close(jobFiles)
-				jobSync.Done()
-			}()
-
-			db, err := badger.Open(badger.DefaultOptions(outDB))
-			defer func() {
-				_ = db.Close()
-			}()
-
-			wg := sync.WaitGroup{}
-			for w := 0; w < nParallel; w++ {
-				wg.Add(1)
-				go func() {
-					worker(db, jobFiles, errs)
-					wg.Done()
-				}()
-			}
-
-			jobSync.Wait()
-			wg.Wait()
-			close(errs)
-			errsWg.Wait()
-
-			err = jobs.RunGC(db)
-			if err != nil {
-				return err
-			}
-
-			err = db.Close()
-			if err != nil {
-				return err
-			}
-
-			return fIndex.Close()
-		},
+		RunE: runCmd,
 	}
 
 	flags.Parallel(cmd)
@@ -110,15 +45,102 @@ Badger database, given an already-extracted index file.`,
 	return cmd
 }
 
-func worker(db *badger.DB, work <-chan job, errs chan<- error) {
-	for j := range work {
-		decompress(j.b, db, errs)
+func runCmd(cmd *cobra.Command, args []string) error {
+	cmd.SilenceUsage = true
+
+	parallel, err := cmd.Flags().GetInt(flags.ParallelKey)
+	if err != nil {
+		return err
+	}
+
+	repo := args[0]
+	index := args[1]
+
+	outDBPath := args[2]
+	outDB := db.NewRunner(outDBPath, parallel)
+	sink := outDB.Write()
+
+	errs, errsWg := jobs.Errors()
+	compressedItems, err := source(repo, index, errs)
+	if err != nil {
+		return err
+	}
+
+	pages := extractPages(parallel, compressedItems, errs)
+
+	outWg, err := sink(cmd.Context(), pages, errs)
+	if err != nil {
+		return err
+	}
+
+	outWg.Wait()
+	close(errs)
+	errsWg.Wait()
+
+	return nil
+}
+
+func source(repo, index string, errs chan<- error) (<-chan compressedDocument, error) {
+	fRepo, err := os.Open(repo)
+	if err != nil {
+		return nil, err
+	}
+
+	fIndex, err := os.Open(index)
+	if err != nil {
+		return nil, err
+	}
+
+	compressedItems := make(chan compressedDocument, jobs.WorkBuffer)
+	rIndex := bufio.NewReader(fIndex)
+
+	go func() {
+		defer func() {
+			err = fRepo.Close()
+			if err != nil {
+				errs <- err
+			}
+
+			err = fIndex.Close()
+			if err != nil {
+				errs <- err
+			}
+		}()
+
+		extractFile(rIndex, fRepo, compressedItems, errs)
+		close(compressedItems)
+	}()
+
+	return compressedItems, nil
+}
+
+func extractPages(parallel int, compressedItems <-chan compressedDocument, errs chan<- error) <-chan protos.ID {
+	pages := make(chan protos.ID, jobs.WorkBuffer)
+
+	wg := sync.WaitGroup{}
+	for w := 0; w < parallel; w++ {
+		wg.Add(1)
+		go func() {
+			extractPagesWorker(compressedItems, pages, errs)
+			wg.Done()
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(pages)
+	}()
+
+	return pages
+}
+
+func extractPagesWorker(compressed <-chan compressedDocument, pages chan<- protos.ID, errs chan<- error) {
+	for j := range compressed {
+		decompress(j, pages, errs)
 	}
 }
 
-type job struct {
-	b []byte
-}
+type compressedDocument []byte
 
 var (
 	nPages    = 0
@@ -133,19 +155,20 @@ func normalize(text string) string {
 	if !strings.HasSuffix(text, "</mediawiki>") {
 		text += "\n</mediawiki>\n"
 	}
+
 	return text
 }
 
-func decompress(b []byte, db *badger.DB, errs chan<- error) {
-	bz := bzip2.NewReader(bytes.NewReader(b))
+func decompress(compressed []byte, outPages chan<- protos.ID, errs chan<- error) {
+	bz := bzip2.NewReader(bytes.NewReader(compressed))
 
-	b, err := ioutil.ReadAll(bz)
+	compressed, err := ioutil.ReadAll(bz)
 	if err != nil {
 		errs <- err
 		return
 	}
 
-	text := normalize(string(b))
+	text := normalize(string(compressed))
 
 	doc := &documents.XMLDocument{}
 
@@ -156,28 +179,21 @@ func decompress(b []byte, db *badger.DB, errs chan<- error) {
 	}
 
 	for _, page := range doc.Pages {
-		if page.NS != 0 || page.Redirect.Title != "" {
+		if page.NS != documents.NamespaceArticle || page.Redirect.Title != "" {
 			// Ignore redirects and non-articles.
 			continue
 		}
 
-		err = db.Update(jobs.WriteProto(page.ToProto()))
-		if err != nil {
-			errs <- err
-		}
-		nPagesMtx.Lock()
-		if nPages%10000 == 0 {
-			fmt.Printf("%d Pages\n", nPages)
+		outPages <- page.ToProto()
 
-			if nPages%100000 == 0 {
-				err = jobs.RunGC(db)
-				if err != nil {
-					errs <- err
-				}
-			}
-		}
+		nPagesMtx.Lock()
+		n := nPages
 		nPages++
 		nPagesMtx.Unlock()
+
+		if n%10000 == 0 {
+			fmt.Printf("%d Pages\n", nPages)
+		}
 	}
 
 	if err != nil {
@@ -185,14 +201,7 @@ func decompress(b []byte, db *badger.DB, errs chan<- error) {
 	}
 }
 
-func main() {
-	err := mainCmd().Execute()
-	if err != nil {
-		os.Exit(1)
-	}
-}
-
-func extractFile(rIndex *bufio.Reader, fRepo *os.File, work chan<- job, errs chan<- error) {
+func extractFile(rIndex *bufio.Reader, fRepo *os.File, work chan<- compressedDocument, errs chan<- error) {
 	startIndex, endIndex := int64(0), int64(0)
 
 	var (
@@ -228,7 +237,7 @@ func extractFile(rIndex *bufio.Reader, fRepo *os.File, work chan<- job, errs cha
 			return
 		}
 
-		work <- job{b: outBytes}
+		work <- outBytes
 
 		startIndex = endIndex
 
@@ -245,6 +254,6 @@ func extractFile(rIndex *bufio.Reader, fRepo *os.File, work chan<- job, errs cha
 			errs <- err
 			return
 		}
-		work <- job{b: outBytes}
+		work <- outBytes
 	}
 }

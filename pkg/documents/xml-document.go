@@ -19,7 +19,7 @@ func (d *XMLDocument) ToProto() *Document {
 
 type XMLPage struct {
 	Title    string      `xml:"title"`
-	NS       uint32      `xml:"ns"`
+	NS       Namespace   `xml:"ns"`
 	ID       uint32      `xml:"id"`
 	Redirect XMLRedirect `yaml:",omitempty" xml:"redirect"`
 	Revision XMLRevision `xml:"revision"`

@@ -11,7 +11,7 @@ import (
 
 type Source func(ctx context.Context, errs chan<- error) (<-chan *documents.Page, error)
 
-func Run(ctx context.Context, source Source, parallel int, sink protos.Sink) error {
+func Run(ctx context.Context, source Source, parallel int, job func(chan<- protos.ID) jobs.Page, sink protos.Sink) error {
 	errs, errsWg := jobs.Errors()
 
 	pages, err := source(ctx, errs)
@@ -21,7 +21,7 @@ func Run(ctx context.Context, source Source, parallel int, sink protos.Sink) err
 
 	cleaned := make(chan protos.ID, jobs.WorkBuffer)
 	runner := jobs.NewRunner(parallel)
-	worker := jobs.PageWorker(pages, cleanPages(cleaned))
+	worker := jobs.PageWorker(pages, job(cleaned))
 	cleanWg := runner.Run(ctx, worker, errs)
 
 	go func() {
@@ -42,7 +42,7 @@ func Run(ctx context.Context, source Source, parallel int, sink protos.Sink) err
 	return nil
 }
 
-func cleanPages(cleaned chan<- protos.ID) jobs.Page {
+func CleanPages(cleaned chan<- protos.ID) jobs.Page {
 	return func(page *documents.Page) error {
 		page.Text = nlp.CleanArticle(page.Text)
 		cleaned <- page

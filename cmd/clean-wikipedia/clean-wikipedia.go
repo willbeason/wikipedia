@@ -37,6 +37,8 @@ func mainCmd() *cobra.Command {
 }
 
 func runCmd(cmd *cobra.Command, args []string) error {
+	cmd.SilenceUsage = true
+
 	parallel, err := cmd.Flags().GetInt(flags.ParallelKey)
 	if err != nil {
 		return err
@@ -47,7 +49,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	inDBPath := args[0]
+	inDB := args[0]
 
 	var outDBPath string
 	var sink protos.Sink
@@ -62,13 +64,13 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 	var source pages.Source
 	if len(pageIDs) == 0 {
-		source = pages.StreamDB(inDBPath, parallel)
+		source = pages.StreamDB(inDB, parallel)
 	} else {
-		source = pages.StreamDBKeys(inDBPath, parallel, pageIDs)
+		source = pages.StreamDBKeys(inDB, parallel, pageIDs)
 	}
 
 	cmd.SilenceUsage = true
 	ctx := cmd.Context()
 
-	return pages.Run(ctx, source, parallel, sink)
+	return pages.Run(ctx, source, parallel, pages.CleanPages, sink)
 }
