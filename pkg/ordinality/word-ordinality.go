@@ -1,7 +1,7 @@
 package ordinality
 
 import (
-	"github.com/willbeason/extract-wikipedia/pkg/nlp"
+	"github.com/willbeason/wikipedia/pkg/nlp"
 )
 
 // WordOrdinality is a map from a word (or n-gram) to its ordinal position in a

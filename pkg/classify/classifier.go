@@ -3,7 +3,7 @@ package classify
 import (
 	"math"
 
-	"github.com/willbeason/extract-wikipedia/pkg/ordinality"
+	"github.com/willbeason/wikipedia/pkg/ordinality"
 )
 
 const (

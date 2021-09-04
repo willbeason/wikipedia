@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/dgraph-io/badger/v3"
-	"github.com/willbeason/extract-wikipedia/pkg/protos"
+	"github.com/willbeason/wikipedia/pkg/protos"
 	"google.golang.org/protobuf/proto"
 )
 

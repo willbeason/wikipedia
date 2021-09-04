@@ -3,7 +3,7 @@ package jobs
 import (
 	"context"
 
-	"github.com/willbeason/extract-wikipedia/pkg/documents"
+	"github.com/willbeason/wikipedia/pkg/documents"
 )
 
 type Page func(page *documents.Page) error

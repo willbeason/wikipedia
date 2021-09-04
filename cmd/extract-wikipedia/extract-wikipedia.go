@@ -6,8 +6,8 @@ import (
 	"compress/bzip2"
 	"encoding/xml"
 	"fmt"
-	"github.com/willbeason/extract-wikipedia/pkg/db"
-	"github.com/willbeason/extract-wikipedia/pkg/protos"
+	"github.com/willbeason/wikipedia/pkg/db"
+	"github.com/willbeason/wikipedia/pkg/protos"
 	"io"
 	"io/ioutil"
 	"os"
@@ -15,9 +15,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/willbeason/extract-wikipedia/pkg/documents"
-	"github.com/willbeason/extract-wikipedia/pkg/flags"
-	"github.com/willbeason/extract-wikipedia/pkg/jobs"
+	"github.com/willbeason/wikipedia/pkg/documents"
+	"github.com/willbeason/wikipedia/pkg/flags"
+	"github.com/willbeason/wikipedia/pkg/jobs"
 
 	"github.com/spf13/cobra"
 )

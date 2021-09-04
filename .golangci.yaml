@@ -22,11 +22,6 @@ linters-settings:
     min-complexity: 15
   goimports:
     local-prefixes: github.com/willbeason/wikipedia
-  gomnd:
-    settings:
-      mnd:
-        ignored-functions: cobra.ExactArgs
-        ignored-numbers: [2, 3, 10]
   govet:
     check-shadowing: true
   lll:
@@ -60,7 +55,6 @@ linters:
     - goerr113
     - gofmt
     - goimports
-    - gomnd
     - goprintffuncname
     - gosec
     - gosimple

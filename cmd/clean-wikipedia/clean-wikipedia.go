@@ -5,10 +5,10 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/willbeason/extract-wikipedia/pkg/db"
-	"github.com/willbeason/extract-wikipedia/pkg/flags"
-	"github.com/willbeason/extract-wikipedia/pkg/pages"
-	"github.com/willbeason/extract-wikipedia/pkg/protos"
+	"github.com/willbeason/wikipedia/pkg/db"
+	"github.com/willbeason/wikipedia/pkg/flags"
+	"github.com/willbeason/wikipedia/pkg/pages"
+	"github.com/willbeason/wikipedia/pkg/protos"
 )
 
 // clean-wikipedia removes parts of articles we never want to analyze, such as xml tags, tables, and

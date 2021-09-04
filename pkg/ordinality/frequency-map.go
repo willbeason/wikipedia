@@ -1,11 +1,12 @@
-package nlp
+package ordinality
 
 import (
 	"fmt"
+	"github.com/willbeason/wikipedia/pkg/nlp"
 )
 
-func CollectWordCounts(wordCountsChannel <-chan map[string]uint32, known map[string]bool, countFilter uint32, sizeThreshold int, minCount uint32) <-chan *FrequencyMap {
-	result := make(chan *FrequencyMap, 100)
+func CollectWordCounts(wordCountsChannel <-chan *PageWordMap, known map[string]bool, countFilter uint32, sizeThreshold int, minCount uint32) <-chan *nlp.FrequencyMap {
+	result := make(chan *nlp.FrequencyMap, 100)
 
 	go func() {
 		counts := collectWordCounts(wordCountsChannel, known, countFilter, sizeThreshold)
@@ -19,16 +20,16 @@ func CollectWordCounts(wordCountsChannel <-chan map[string]uint32, known map[str
 	return result
 }
 
-func collectWordCounts(wordCountsChannel <-chan map[string]uint32, known map[string]bool, countFilter uint32, sizeThreshold int) *FrequencyMap {
-	knownCounts := &FrequencyMap{
+func collectWordCounts(wordCountsChannel <-chan *PageWordMap, known map[string]bool, countFilter uint32, sizeThreshold int) *nlp.FrequencyMap {
+	knownCounts := &nlp.FrequencyMap{
 		Words: make(map[string]uint32, len(known)),
 	}
-	unknownCounts := &FrequencyMap{
+	unknownCounts := &nlp.FrequencyMap{
 		Words: make(map[string]uint32),
 	}
 
 	for wordCounts := range wordCountsChannel {
-		for word, count := range wordCounts {
+		for word, count := range wordCounts.Words {
 			if known[word] {
 				knownCounts.Words[word] += count
 			} else {

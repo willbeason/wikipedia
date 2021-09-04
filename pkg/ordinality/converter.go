@@ -4,8 +4,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/willbeason/extract-wikipedia/pkg/documents"
-	"github.com/willbeason/extract-wikipedia/pkg/nlp"
+	"github.com/willbeason/wikipedia/pkg/documents"
+	"github.com/willbeason/wikipedia/pkg/nlp"
 )
 
 type WordBagConverter struct {

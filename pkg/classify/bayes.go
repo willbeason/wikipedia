@@ -4,7 +4,7 @@ import (
 	"math"
 	"sort"
 
-	"github.com/willbeason/extract-wikipedia/pkg/ordinality"
+	"github.com/willbeason/wikipedia/pkg/ordinality"
 )
 
 // Model represents log probabilities of a random word in an article of

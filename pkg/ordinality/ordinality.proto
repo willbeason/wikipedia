@@ -23,3 +23,8 @@ message WordCount {
   uint32 word = 1;
   uint32 count = 2;
 }
+
+message PageWordMap {
+  uint32 id = 1;
+  map<string, uint32> words = 2;
+}

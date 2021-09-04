@@ -3,10 +3,10 @@ package pages
 import (
 	"context"
 
-	"github.com/willbeason/extract-wikipedia/pkg/documents"
-	"github.com/willbeason/extract-wikipedia/pkg/jobs"
-	"github.com/willbeason/extract-wikipedia/pkg/nlp"
-	"github.com/willbeason/extract-wikipedia/pkg/protos"
+	"github.com/willbeason/wikipedia/pkg/documents"
+	"github.com/willbeason/wikipedia/pkg/jobs"
+	"github.com/willbeason/wikipedia/pkg/nlp"
+	"github.com/willbeason/wikipedia/pkg/protos"
 )
 
 type Source func(ctx context.Context, errs chan<- error) (<-chan *documents.Page, error)
@@ -19,17 +19,17 @@ func Run(ctx context.Context, source Source, parallel int, job func(chan<- proto
 		return err
 	}
 
-	cleaned := make(chan protos.ID, jobs.WorkBuffer)
+	out := make(chan protos.ID, jobs.WorkBuffer)
 	runner := jobs.NewRunner(parallel)
-	worker := jobs.PageWorker(pages, job(cleaned))
+	worker := jobs.PageWorker(pages, job(out))
 	cleanWg := runner.Run(ctx, worker, errs)
 
 	go func() {
 		cleanWg.Wait()
-		close(cleaned)
+		close(out)
 	}()
 
-	outWg, err := sink(ctx, cleaned, errs)
+	outWg, err := sink(ctx, out, errs)
 	if err != nil {
 		return err
 	}

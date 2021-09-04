@@ -5,9 +5,9 @@ import (
 	"math"
 	"sync"
 
-	"github.com/willbeason/extract-wikipedia/pkg/db"
-	"github.com/willbeason/extract-wikipedia/pkg/documents"
-	"github.com/willbeason/extract-wikipedia/pkg/jobs"
+	"github.com/willbeason/wikipedia/pkg/db"
+	"github.com/willbeason/wikipedia/pkg/documents"
+	"github.com/willbeason/wikipedia/pkg/jobs"
 )
 
 func StreamDB(inDBPath string, parallel int) Source {

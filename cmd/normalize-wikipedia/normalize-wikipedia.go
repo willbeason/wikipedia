@@ -1,20 +1,16 @@
 package main
 
 import (
-	"github.com/willbeason/extract-wikipedia/pkg/db"
-	"github.com/willbeason/extract-wikipedia/pkg/pages"
+	"github.com/willbeason/wikipedia/pkg/db"
+	"github.com/willbeason/wikipedia/pkg/pages"
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/willbeason/extract-wikipedia/pkg/documents"
-	"github.com/willbeason/extract-wikipedia/pkg/flags"
-	"github.com/willbeason/extract-wikipedia/pkg/jobs"
-	"github.com/willbeason/extract-wikipedia/pkg/nlp"
-	"github.com/willbeason/extract-wikipedia/pkg/protos"
-)
-
-const (
-	idsKey = "ids"
+	"github.com/willbeason/wikipedia/pkg/documents"
+	"github.com/willbeason/wikipedia/pkg/flags"
+	"github.com/willbeason/wikipedia/pkg/jobs"
+	"github.com/willbeason/wikipedia/pkg/nlp"
+	"github.com/willbeason/wikipedia/pkg/protos"
 )
 
 func mainCmd() *cobra.Command {

@@ -1,98 +1,18 @@
 package main
 
 import (
-	"fmt"
+	"github.com/willbeason/wikipedia/pkg/db"
+	"github.com/willbeason/wikipedia/pkg/pages"
+	"github.com/willbeason/wikipedia/pkg/protos"
 	"os"
 
-	"github.com/dgraph-io/badger/v3"
 	"github.com/spf13/cobra"
-	"github.com/willbeason/extract-wikipedia/pkg/documents"
-	"github.com/willbeason/extract-wikipedia/pkg/flags"
-	"github.com/willbeason/extract-wikipedia/pkg/jobs"
-	"github.com/willbeason/extract-wikipedia/pkg/nlp"
-	"github.com/willbeason/extract-wikipedia/pkg/ordinality"
-	"google.golang.org/protobuf/proto"
+	"github.com/willbeason/wikipedia/pkg/documents"
+	"github.com/willbeason/wikipedia/pkg/flags"
+	"github.com/willbeason/wikipedia/pkg/jobs"
+	"github.com/willbeason/wikipedia/pkg/nlp"
+	"github.com/willbeason/wikipedia/pkg/ordinality"
 )
-
-func mainCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Args: cobra.ExactArgs(3),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cmd.SilenceUsage = true
-
-			inDBPath := args[0]
-			inDictionary := args[1]
-			outDBPath := args[2]
-
-			inDB, err := badger.Open(badger.DefaultOptions(inDBPath))
-			defer func() {
-				_ = inDB.Close()
-			}()
-			if err != nil {
-				return err
-			}
-
-			outDB, err := badger.Open(badger.DefaultOptions(outDBPath))
-			defer func() {
-				_ = outDB.Close()
-			}()
-			if err != nil {
-				return err
-			}
-
-			parallel, err := cmd.Flags().GetInt(flags.ParallelKey)
-			if err != nil {
-				return err
-			}
-
-			dictionary, err := nlp.ReadDictionary(inDictionary)
-			if err != nil {
-				return err
-			}
-
-			converter := ordinality.WordBagConverter{
-				Tokenizer: nlp.NgramTokenizer{
-					Underlying: nlp.WordTokenizer{},
-					Dictionary: nlp.ToNgramDictionary(dictionary),
-				},
-				WordOrdinality: ordinality.NewWordOrdinality(dictionary),
-			}
-
-			errs, errsWg := jobs.Errors()
-
-			work := jobs.Walk(cmd.Context(), inDB, newPage, parallel, errs)
-			wordBags := make(chan protos.ID, 100)
-
-			workWg := jobs.RunProto(parallel, documentWordBags(converter, wordBags), work, errs)
-
-			writeWg := jobs.WriteProtos(outDB, parallel, wordBags, errs)
-
-			workWg.Wait()
-			close(wordBags)
-
-			writeWg.Wait()
-			close(errs)
-
-			errsWg.Wait()
-
-			err = inDB.Close()
-			if err != nil {
-				return err
-			}
-
-			err = outDB.Close()
-			if err != nil {
-				return err
-			}
-
-			return nil
-		},
-	}
-
-	flags.Parallel(cmd)
-
-	return cmd
-}
 
 func main() {
 	err := mainCmd().Execute()
@@ -101,20 +21,58 @@ func main() {
 	}
 }
 
-func newPage() proto.Message {
-	return &documents.Page{}
+func mainCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Args: cobra.ExactArgs(3),
+		RunE: runCmd,
+	}
+
+	flags.Parallel(cmd)
+
+	return cmd
 }
 
-func documentWordBags(converter ordinality.WordBagConverter, out chan<- protos.ID) jobs.Proto {
-	return func(p proto.Message) error {
-		page, ok := p.(*documents.Page)
-		if !ok {
-			return fmt.Errorf("got message type %T, want %T", p, &documents.Page{})
+func runCmd(cmd *cobra.Command, args []string) error {
+	cmd.SilenceUsage = true
+
+	inDB := args[0]
+	inDictionary := args[1]
+	outDBPath := args[2]
+
+	parallel, err := cmd.Flags().GetInt(flags.ParallelKey)
+	if err != nil {
+		return err
+	}
+
+	dictionary, err := nlp.ReadDictionary(inDictionary)
+	if err != nil {
+		return err
+	}
+
+	source := pages.StreamDB(inDB, parallel)
+
+	outDB := db.NewRunner(outDBPath, parallel)
+	sink := outDB.Write()
+
+	converter := ordinality.WordBagConverter{
+		Tokenizer: nlp.NgramTokenizer{
+			Underlying: nlp.WordTokenizer{},
+			Dictionary: nlp.ToNgramDictionary(dictionary),
+		},
+		WordOrdinality: ordinality.NewWordOrdinality(dictionary),
+	}
+
+	ctx := cmd.Context()
+	return pages.Run(ctx, source, parallel, documentWordBags(converter), sink)
+}
+
+func documentWordBags(converter ordinality.WordBagConverter) func(chan<- protos.ID) jobs.Page {
+	return func(out chan<- protos.ID) jobs.Page {
+		return func(page *documents.Page) error {
+			wordBag := converter.ToPageWordBag(page)
+			out <- wordBag
+
+			return nil
 		}
-
-		wordBag := converter.ToPageWordBag(page)
-		out <- wordBag
-
-		return nil
 	}
 }

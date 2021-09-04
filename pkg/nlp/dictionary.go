@@ -3,7 +3,6 @@ package nlp
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -40,28 +39,6 @@ func ReadDictionary(path string) (*Dictionary, error) {
 	}
 
 	return dictionary, nil
-}
-
-func WriteDictionary(path string, dictionary *Dictionary) error {
-	var bytes []byte
-	var err error
-
-	switch ext := filepath.Ext(path); ext {
-	case ".pb":
-		bytes, err = proto.Marshal(dictionary)
-		if err != nil {
-			return err
-		}
-	case ".json":
-		bytes, err = protojson.MarshalOptions{Indent: "  "}.Marshal(dictionary)
-		if err != nil {
-			return err
-		}
-	default:
-		return fmt.Errorf("unsupported proto extension %q", ext)
-	}
-
-	return ioutil.WriteFile(path, bytes, os.ModePerm)
 }
 
 func ToNgramDictionary(dictionary *Dictionary) map[string]bool {
