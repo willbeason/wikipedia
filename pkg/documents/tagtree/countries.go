@@ -90,12 +90,14 @@ var countriesList = []string{
 	"Ireland",
 	"Israel",
 	"Italy",
+	"Ivory Coast",
 	"Jamaica",
 	"Japan",
 	"Jordan",
 	"Kazakhstan",
 	"Kenya",
 	"Kiribati",
+	"Kosovo",
 	"Kuwait",
 	"Kyrgyzstan",
 	"Laos",
@@ -128,7 +130,7 @@ var countriesList = []string{
 	"Namibia",
 	"Nauru",
 	"Nepal",
-	"Netherlands",
+	"the Netherlands",
 	"New Zealand",
 	"Nicaragua",
 	"Niger",
@@ -144,7 +146,7 @@ var countriesList = []string{
 	"Papua New Guinea",
 	"Paraguay",
 	"Peru",
-	"Philippines",
+	"the Philippines",
 	"Poland",
 	"Portugal",
 	"Qatar",
@@ -190,9 +192,9 @@ var countriesList = []string{
 	"Tuvalu",
 	"Uganda",
 	"Ukraine",
-	"United Arab Emirates",
-	"United Kingdom",
-	"United States of America",
+	"the United Arab Emirates",
+	"the United Kingdom",
+	"the United States",
 	"Uruguay",
 	"Uzbekistan",
 	"Vanuatu",
@@ -201,9 +203,18 @@ var countriesList = []string{
 	"Yemen",
 	"Zambia",
 	"Zimbabwe",
+
+	// Continents, since Wikipedia accepts them as countries.
+	Asia,
+	Africa,
+	NorthAmerica,
+	SouthAmerica,
+	Antarctica,
+	Europe,
+	Oceania,
 }
 
-var countriesPattern = regexp.MustCompile(`(?i)` + strings.Join(countriesList, "|"))
+var countriesPattern = regexp.MustCompile(`(?i)\b` + strings.Join(countriesList, "|" + `\b`))
 
 type NodeTitleCountry struct{}
 
@@ -214,115 +225,6 @@ func (n *NodeTitleCountry) String(title string) string {
 	case 1:
 		return countries[0]
 	default:
-		return "<MULTIPLE COUNTRIES FOUD"
+		return "<MULTIPLE COUNTRIES FOUND>"
 	}
-}
-
-type Continent string
-
-const (
-	Asia         = "Asia"
-	Africa       = "Africa"
-	NorthAmerica = "North America"
-	SouthAmerica = "South America"
-	Antarctica   = "Antarctica"
-	Europe       = "Europe"
-	Oceania      = "Oceania"
-)
-
-var (
-	continentOf = map[string]string{
-		"Australia":      Oceania,
-		"Bangladesh":     Asia,
-		"Canada":         NorthAmerica,
-		"China":          Asia,
-		"France":         Europe,
-		"Germany":        Europe,
-		"India":          Asia,
-		"Italy":          Europe,
-		"Japan":          Asia,
-		"Mexico":         NorthAmerica,
-		"New Zealand":    Oceania,
-		"North Korea":    Asia,
-		"Philippines":    Asia,
-		"Romania":        Europe,
-		"Russia":         Asia,
-		"Spain":        Europe,
-		"South Korea":    Asia,
-		"Thailand":       Asia,
-		"United Kingdom": Europe,
-
-		"Netherlands": Europe,
-		"Portugal": Europe,
-		"Switzerland": Europe,
-		"Belgium": Europe,
-		"Poland": Europe,
-		"Pakistan": Asia,
-		"Austria": Europe,
-		"South Africa": Africa,
-		"Sweden": Europe,
-		"Hungary": Europe,
-		"Egypt": Africa,
-		"Niger": Africa,
-		"Turkey": Asia,
-		"Kazakhstan": Asia,
-		"Czech Republic": Europe,
-		"Indonesia": Asia,
-		"Serbia": Europe,
-		"Croatia": Europe,
-		"Bulgaria": Europe,
-		"United Arab Emirates": Asia,
-		"Vietnam": Asia,
-		"Malaysia": Asia,
-		"Slovenia": Europe,
-		"Brunei": Asia,
-		"Syria": Asia,
-		"Estonia": Europe,
-		"Malta": Europe,
-		"Mongolia": Asia,
-		"Iraq": Asia,
-		"Kenya": Africa,
-		"Montenegro": Europe,
-		"Chile": SouthAmerica,
-		"Guyana": SouthAmerica,
-		"Burundi": Africa,
-		"Chad": Africa,
-		"Mozambique": Africa,
-		"South Sudan": Africa,
-		"Moldova": Europe,
-		"Botswana": Africa,
-		"Algeria": Africa,
-		"Togo": Africa,
-		"Tajikistan": Asia,
-		"Lebanon": Asia,
-		"Cameroon": Africa,
-		"Mauritius": Africa,
-		"Ghana": Africa,
-		"Denmark": Europe,
-		"Uruguay": SouthAmerica,
-		"Nepal": Asia,
-		"Israel": Asia,
-		"Monaco": Europe,
-		"Senegal": Africa,
-		"Republic of the Congo": Africa,
-
-	}
-
-	MissedCountryContinent = map[string]int{}
-)
-
-type NodeCountry2Continent struct {
-	Value Node
-}
-
-func (n *NodeCountry2Continent) String(title string) string {
-	v := n.Value.String(title)
-
-	continent, found := continentOf[v]
-	if !found {
-		MissedCountryContinent[v]++
-		return "<MISSING COUNTRY CONTINENT>"
-	}
-
-	return continent
 }

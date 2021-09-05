@@ -171,6 +171,24 @@ func parseTag(category string) Node {
 		}
 
 		return &NodeCountry2Continent{Value: Parse(splits[1])}
+	case "country2nationality":
+		if len(splits) == 1 {
+			return &NodeCountry2Nationality{Value: &NodeString{Value: "<MISSING COUNTRY2CONTINENT NODE>"}}
+		}
+
+		return &NodeCountry2Nationality{Value: Parse(splits[1])}
+	case "continent2continental":
+		if len(splits) == 1 {
+			return &NodeContinent2Continental{Value: &NodeString{Value: "<MISSING CONTINENT NODE>"}}
+		}
+
+		return &NodeContinent2Continental{Value: Parse(splits[1])}
+	case "country2continental":
+		if len(splits) == 1 {
+			return &NodeContinent2Continental{Value: &NodeString{Value: "<MISSING CONTINENT NODE>"}}
+		}
+
+		return &NodeContinent2Continental{Value: &NodeCountry2Continent{Value: Parse(splits[1])}}
 	case "century from year":
 		if len(splits) == 1 {
 			return &NodeCentury{Value: &NodeString{Value: "<MISSING CENTURY NODE>"}}

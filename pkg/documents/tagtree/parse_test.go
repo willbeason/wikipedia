@@ -267,6 +267,48 @@ func TestParse(t *testing.T) {
 			}},
 			wantCategory: "Category:April 1960 events in North America|Canada",
 		},
+		{
+			name:     "country2nationality",
+			title:    "Category:July 2018 sports events in Switzerland",
+			category: "Category:{{title year}} in {{country2nationality|{{title country}}}} sport|{{MONTH|{{title monthname}}}}",
+			wantNode: &NodeParent{Children: []Node{
+				&NodeString{Value: "Category:"},
+				&NodeTitleYear{},
+				&NodeString{Value: " in "},
+				&NodeCountry2Nationality{Value: &NodeTitleCountry{}},
+				&NodeString{Value: " sport|"},
+				&NodeMonth{Value: &NodeTitleMonth{}},
+			}},
+			wantCategory: "Category:2018 in Swiss sport|July",
+		},
+		{
+			name:     "continent2continental",
+			title:    "Category:August 1968 sports events in Europe",
+			category: "Category:{{title year}} in {{Continent2continental|{{title country}}}} sport||{{MONTH|{{title monthname}}}}",
+			wantNode: &NodeParent{Children: []Node{
+				&NodeString{Value: "Category:"},
+				&NodeTitleYear{},
+				&NodeString{Value: " in "},
+				&NodeContinent2Continental{Value: &NodeTitleCountry{}},
+				&NodeString{Value: " sport||"},
+				&NodeMonth{Value: &NodeTitleMonth{}},
+			}},
+			wantCategory: "Category:1968 in european sport||August",
+		},
+		{
+			name:     "continent2continental",
+			title:    "Category:2021 disestablishments in Slovakia",
+			category: "Category:{{title year}} disestablishments in {{country2continent|{{title country}}}}|{{title country}}}}",
+			wantNode: &NodeParent{Children: []Node{
+				&NodeString{Value: "Category:"},
+				&NodeTitleYear{},
+				&NodeString{Value: " disestablishments in "},
+				&NodeContinent2Continental{Value: &NodeTitleCountry{}},
+				&NodeString{Value: " sport||"},
+				&NodeMonth{Value: &NodeTitleMonth{}},
+			}},
+			wantCategory: "Category:2021 disestablishments in Europe|Slovakia",
+		},
 	}
 
 	for _, tc := range tcs {

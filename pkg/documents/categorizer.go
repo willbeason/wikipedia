@@ -50,6 +50,8 @@ func (c *Categorizer) Categorize(page *Page) *Categories {
 
 	result := &Categories{Categories: make([]uint32, len(categoryLines))}
 
+	const title = "Category:Evangelicalism in Austria"
+
 	idx := 0
 	for _, line := range categoryLines {
 		//if strings.Contains(line, "MONTHNUMBER") {
@@ -73,8 +75,15 @@ func (c *Categorizer) Categorize(page *Page) *Categories {
 		}
 
 		categoryId, ok := c.TitleIndex.Titles[categoryTitle]
+
 		if !ok {
-			fmt.Printf("(%q, %q)\n%s\n\n", page.Title, line, categoryTitle)
+			categoryId, ok = c.TitleIndex.Titles[strings.ReplaceAll(categoryTitle, "-", " ")]
+		}
+
+		if !ok {
+			//if page.Title == title {
+				fmt.Printf("(%q, %q)\n%s\n\n", page.Title, line, categoryTitle)
+			//}
 
 
 			// People may misspell categories.
@@ -87,6 +96,10 @@ func (c *Categorizer) Categorize(page *Page) *Categories {
 		idx++
 	}
 
+	//if page.Title == title {
+	//	panic("DONE")
+	//}
+
 	result.Categories = result.Categories[:idx]
 
 	return result
@@ -97,6 +110,7 @@ var spaces = regexp.MustCompile(`\s+`)
 func DisambiguateTags(page, category string) string {
 	category = strings.ReplaceAll(category, "_", " ")
 	category = spaces.ReplaceAllString(category, " ")
+	category = strings.ReplaceAll(category, "&ndash;", "–")
 
 	t := tagtree.Parse(category)
 

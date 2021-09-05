@@ -96,10 +96,10 @@ func makePageCategories(titleIndex *documents.TitleIndex, pages <-chan *document
 
 		fmt.Println(documents.Missed)
 
-		freqs := make([]freq, len(tagtree.MissedCountryContinent))
+		freqs := make([]freq, len(tagtree.MissedMap))
 		idx := 0
 
-		for k, v := range tagtree.MissedCountryContinent {
+		for k, v := range tagtree.MissedMap {
 			freqs[idx] = freq{c: v, s: k}
 			idx++
 		}
@@ -109,6 +109,8 @@ func makePageCategories(titleIndex *documents.TitleIndex, pages <-chan *document
 
 		for _, f := range freqs {
 			fmt.Println(f.s, ":", f.c)
+			//fmt.Printf(`%q: "",
+//`, f.s)
 		}
 
 		results <- result
