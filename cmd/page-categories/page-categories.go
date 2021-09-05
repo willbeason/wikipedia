@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/documents"
+	"github.com/willbeason/wikipedia/pkg/documents/tagtree"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/pages"
@@ -95,10 +96,10 @@ func makePageCategories(titleIndex *documents.TitleIndex, pages <-chan *document
 
 		fmt.Println(documents.Missed)
 
-		freqs := make([]freq, len(documents.MissedMap))
+		freqs := make([]freq, len(tagtree.MissedCountryContinent))
 		idx := 0
 
-		for k, v := range documents.MissedMap {
+		for k, v := range tagtree.MissedCountryContinent {
 			freqs[idx] = freq{c: v, s: k}
 			idx++
 		}
@@ -109,7 +110,6 @@ func makePageCategories(titleIndex *documents.TitleIndex, pages <-chan *document
 		for _, f := range freqs {
 			fmt.Println(f.s, ":", f.c)
 		}
-
 
 		results <- result
 	}()
