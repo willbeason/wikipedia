@@ -3,9 +3,8 @@ package protos
 import (
 	"context"
 	"fmt"
+	"github.com/willbeason/wikipedia/pkg/documents"
 	"sync"
-
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // PrintProtos prints passed protos as JSON to the stdout.
@@ -37,12 +36,14 @@ func printProtos(ps <-chan ID, errs chan<- error) {
 }
 
 func printProto(p ID) error {
-	bytes, err := protojson.MarshalOptions{Indent: "  "}.Marshal(p)
-	if err != nil {
-		return err
-	}
+	page := p.(*documents.Page)
 
-	fmt.Println(string(bytes))
+	//bytes, err := protojson.MarshalOptions{Indent: "  "}.Marshal(p)
+	//if err != nil {
+	//	return err
+	//}
+
+	fmt.Println(string(page.Text))
 	fmt.Println()
 
 	return nil

@@ -1,0 +1,4 @@
+go run cmd/page-categories/page-categories.go \
+  C:/Users/Public/Documents/wikipedia/categories/enwiki-20210901.db \
+  C:/Users/Public/Documents/wikipedia/categories/enwiki-20210901-index.json \
+  C:/Users/Public/Documents/wikipedia/categories/enwiki-20210901-category-categories.json

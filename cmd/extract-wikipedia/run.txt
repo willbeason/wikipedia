@@ -1,4 +1,9 @@
-go run cmd/wikipedia/extract-wikipedia.go \
+go run cmd/extract-wikipedia/extract-wikipedia.go \
   C:/Users/Public/Documents/wikipedia/enwiki-20210901-pages-articles-multistream.xml.bz2 \
   C:/Users/Public/Documents/wikipedia/enwiki-20210901-pages-articles-multistream-index.txt \
   C:/Users/Public/Documents/wikipedia/extracted/enwiki-20210901.db
+
+go run cmd/extract-wikipedia/extract-wikipedia.go \
+  C:/Users/Public/Documents/wikipedia/enwiki-20210901-pages-articles-multistream.xml.bz2 \
+  C:/Users/Public/Documents/wikipedia/enwiki-20210901-pages-articles-multistream-index.txt \
+  C:/Users/Public/Documents/wikipedia/categories/enwiki-20210901.db --namespace=14

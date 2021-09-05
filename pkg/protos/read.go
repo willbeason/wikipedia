@@ -29,7 +29,7 @@ func Read(file string, out proto.Message) error {
 }
 
 func Write(path string, p proto.Message) error {
-	err := os.MkdirAll(path, os.ModePerm)
+	err := os.MkdirAll(filepath.Dir(path), os.ModePerm)
 	if err != nil {
 		return err
 	}

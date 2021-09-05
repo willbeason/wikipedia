@@ -130,6 +130,147 @@ func (x *Page) GetText() string {
 	return ""
 }
 
+type TitleIndex struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Titles map[string]uint32 `protobuf:"bytes,1,rep,name=titles,proto3" json:"titles,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
+}
+
+func (x *TitleIndex) Reset() {
+	*x = TitleIndex{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_pkg_documents_documents_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *TitleIndex) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TitleIndex) ProtoMessage() {}
+
+func (x *TitleIndex) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_documents_documents_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TitleIndex.ProtoReflect.Descriptor instead.
+func (*TitleIndex) Descriptor() ([]byte, []int) {
+	return file_pkg_documents_documents_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *TitleIndex) GetTitles() map[string]uint32 {
+	if x != nil {
+		return x.Titles
+	}
+	return nil
+}
+
+type PageCategories struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Pages map[uint32]*Categories `protobuf:"bytes,1,rep,name=pages,proto3" json:"pages,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *PageCategories) Reset() {
+	*x = PageCategories{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_pkg_documents_documents_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PageCategories) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PageCategories) ProtoMessage() {}
+
+func (x *PageCategories) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_documents_documents_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PageCategories.ProtoReflect.Descriptor instead.
+func (*PageCategories) Descriptor() ([]byte, []int) {
+	return file_pkg_documents_documents_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *PageCategories) GetPages() map[uint32]*Categories {
+	if x != nil {
+		return x.Pages
+	}
+	return nil
+}
+
+type Categories struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Categories []uint32 `protobuf:"varint,1,rep,packed,name=categories,proto3" json:"categories,omitempty"`
+}
+
+func (x *Categories) Reset() {
+	*x = Categories{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_pkg_documents_documents_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Categories) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Categories) ProtoMessage() {}
+
+func (x *Categories) ProtoReflect() protoreflect.Message {
+	mi := &file_pkg_documents_documents_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Categories.ProtoReflect.Descriptor instead.
+func (*Categories) Descriptor() ([]byte, []int) {
+	return file_pkg_documents_documents_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *Categories) GetCategories() []uint32 {
+	if x != nil {
+		return x.Categories
+	}
+	return nil
+}
+
 var File_pkg_documents_documents_proto protoreflect.FileDescriptor
 
 var file_pkg_documents_documents_proto_rawDesc = []byte{
@@ -141,9 +282,28 @@ var file_pkg_documents_documents_proto_rawDesc = []byte{
 	0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x02, 0x69, 0x64,
 	0x12, 0x14, 0x0a, 0x05, 0x74, 0x69, 0x74, 0x6c, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
 	0x05, 0x74, 0x69, 0x74, 0x6c, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x65, 0x78, 0x74, 0x18, 0x03,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x65, 0x78, 0x74, 0x42, 0x0f, 0x5a, 0x0d, 0x70, 0x6b,
-	0x67, 0x2f, 0x64, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x65, 0x78, 0x74, 0x22, 0x78, 0x0a, 0x0a, 0x54, 0x69,
+	0x74, 0x6c, 0x65, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x12, 0x2f, 0x0a, 0x06, 0x74, 0x69, 0x74, 0x6c,
+	0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x54, 0x69, 0x74, 0x6c, 0x65,
+	0x49, 0x6e, 0x64, 0x65, 0x78, 0x2e, 0x54, 0x69, 0x74, 0x6c, 0x65, 0x73, 0x45, 0x6e, 0x74, 0x72,
+	0x79, 0x52, 0x06, 0x74, 0x69, 0x74, 0x6c, 0x65, 0x73, 0x1a, 0x39, 0x0a, 0x0b, 0x54, 0x69, 0x74,
+	0x6c, 0x65, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61,
+	0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65,
+	0x3a, 0x02, 0x38, 0x01, 0x22, 0x89, 0x01, 0x0a, 0x0e, 0x50, 0x61, 0x67, 0x65, 0x43, 0x61, 0x74,
+	0x65, 0x67, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x12, 0x30, 0x0a, 0x05, 0x70, 0x61, 0x67, 0x65, 0x73,
+	0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x50, 0x61, 0x67, 0x65, 0x43, 0x61, 0x74,
+	0x65, 0x67, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x2e, 0x50, 0x61, 0x67, 0x65, 0x73, 0x45, 0x6e, 0x74,
+	0x72, 0x79, 0x52, 0x05, 0x70, 0x61, 0x67, 0x65, 0x73, 0x1a, 0x45, 0x0a, 0x0a, 0x50, 0x61, 0x67,
+	0x65, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0d, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x21, 0x0a, 0x05, 0x76, 0x61, 0x6c,
+	0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0b, 0x2e, 0x43, 0x61, 0x74, 0x65, 0x67,
+	0x6f, 0x72, 0x69, 0x65, 0x73, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01,
+	0x22, 0x2c, 0x0a, 0x0a, 0x43, 0x61, 0x74, 0x65, 0x67, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x12, 0x1e,
+	0x0a, 0x0a, 0x63, 0x61, 0x74, 0x65, 0x67, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03,
+	0x28, 0x0d, 0x52, 0x0a, 0x63, 0x61, 0x74, 0x65, 0x67, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x42, 0x0f,
+	0x5a, 0x0d, 0x70, 0x6b, 0x67, 0x2f, 0x64, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x62,
+	0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -158,18 +318,26 @@ func file_pkg_documents_documents_proto_rawDescGZIP() []byte {
 	return file_pkg_documents_documents_proto_rawDescData
 }
 
-var file_pkg_documents_documents_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_pkg_documents_documents_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_pkg_documents_documents_proto_goTypes = []interface{}{
-	(*Document)(nil), // 0: Document
-	(*Page)(nil),     // 1: Page
+	(*Document)(nil),       // 0: Document
+	(*Page)(nil),           // 1: Page
+	(*TitleIndex)(nil),     // 2: TitleIndex
+	(*PageCategories)(nil), // 3: PageCategories
+	(*Categories)(nil),     // 4: Categories
+	nil,                    // 5: TitleIndex.TitlesEntry
+	nil,                    // 6: PageCategories.PagesEntry
 }
 var file_pkg_documents_documents_proto_depIdxs = []int32{
 	1, // 0: Document.pages:type_name -> Page
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	5, // 1: TitleIndex.titles:type_name -> TitleIndex.TitlesEntry
+	6, // 2: PageCategories.pages:type_name -> PageCategories.PagesEntry
+	4, // 3: PageCategories.PagesEntry.value:type_name -> Categories
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_pkg_documents_documents_proto_init() }
@@ -202,6 +370,42 @@ func file_pkg_documents_documents_proto_init() {
 				return nil
 			}
 		}
+		file_pkg_documents_documents_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*TitleIndex); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_pkg_documents_documents_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PageCategories); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_pkg_documents_documents_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Categories); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -209,7 +413,7 @@ func file_pkg_documents_documents_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_pkg_documents_documents_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

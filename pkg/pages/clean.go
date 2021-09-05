@@ -20,8 +20,19 @@ func Run(ctx context.Context, source Source, parallel int, job func(chan<- proto
 	}
 
 	out := make(chan protos.ID, jobs.WorkBuffer)
-	runner := jobs.NewRunner(parallel)
+
+	if job == nil {
+		job = func(ids chan<- protos.ID) jobs.Page {
+			return func(page *documents.Page) error {
+				ids <- page
+				return nil
+			}
+		}
+	}
+
 	worker := jobs.PageWorker(pages, job(out))
+
+	runner := jobs.NewRunner(parallel)
 	cleanWg := runner.Run(ctx, worker, errs)
 
 	go func() {

@@ -22,6 +22,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const namespaceKey = "namespace"
+
 func main() {
 	err := mainCmd().Execute()
 	if err != nil {
@@ -41,6 +43,7 @@ Badger database, given an already-extracted index file.`,
 	}
 
 	flags.Parallel(cmd)
+	cmd.Flags().Int16(namespaceKey, int16(documents.NamespaceArticle), "")
 
 	return cmd
 }
@@ -49,6 +52,11 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 
 	parallel, err := cmd.Flags().GetInt(flags.ParallelKey)
+	if err != nil {
+		return err
+	}
+
+	ns, err := cmd.Flags().GetInt16(namespaceKey)
 	if err != nil {
 		return err
 	}
@@ -66,7 +74,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	pages := extractPages(parallel, compressedItems, errs)
+	pages := extractPages(parallel, documents.Namespace(ns), compressedItems, errs)
 
 	outWg, err := sink(cmd.Context(), pages, errs)
 	if err != nil {
@@ -112,93 +120,6 @@ func source(repo, index string, errs chan<- error) (<-chan compressedDocument, e
 	}()
 
 	return compressedItems, nil
-}
-
-func extractPages(parallel int, compressedItems <-chan compressedDocument, errs chan<- error) <-chan protos.ID {
-	pages := make(chan protos.ID, jobs.WorkBuffer)
-
-	wg := sync.WaitGroup{}
-	for w := 0; w < parallel; w++ {
-		wg.Add(1)
-		go func() {
-			extractPagesWorker(compressedItems, pages, errs)
-			wg.Done()
-		}()
-	}
-
-	go func() {
-		wg.Wait()
-		close(pages)
-	}()
-
-	return pages
-}
-
-func extractPagesWorker(compressed <-chan compressedDocument, pages chan<- protos.ID, errs chan<- error) {
-	for j := range compressed {
-		decompress(j, pages, errs)
-	}
-}
-
-type compressedDocument []byte
-
-var (
-	nPages    = 0
-	nPagesMtx = sync.Mutex{}
-)
-
-func normalize(text string) string {
-	if !strings.HasPrefix(text, "<mediawiki") {
-		text = "<mediawiki>\n" + text
-	}
-
-	if !strings.HasSuffix(text, "</mediawiki>") {
-		text += "\n</mediawiki>\n"
-	}
-
-	return text
-}
-
-func decompress(compressed []byte, outPages chan<- protos.ID, errs chan<- error) {
-	bz := bzip2.NewReader(bytes.NewReader(compressed))
-
-	compressed, err := ioutil.ReadAll(bz)
-	if err != nil {
-		errs <- err
-		return
-	}
-
-	text := normalize(string(compressed))
-
-	doc := &documents.XMLDocument{}
-
-	err = xml.Unmarshal([]byte(text), doc)
-	if err != nil {
-		errs <- err
-		return
-	}
-
-	for _, page := range doc.Pages {
-		if page.NS != documents.NamespaceArticle || page.Redirect.Title != "" {
-			// Ignore redirects and non-articles.
-			continue
-		}
-
-		outPages <- page.ToProto()
-
-		nPagesMtx.Lock()
-		n := nPages
-		nPages++
-		nPagesMtx.Unlock()
-
-		if n%10000 == 0 {
-			fmt.Printf("%d Pages\n", nPages)
-		}
-	}
-
-	if err != nil {
-		errs <- err
-	}
 }
 
 func extractFile(rIndex *bufio.Reader, fRepo *os.File, work chan<- compressedDocument, errs chan<- error) {
@@ -255,5 +176,78 @@ func extractFile(rIndex *bufio.Reader, fRepo *os.File, work chan<- compressedDoc
 			return
 		}
 		work <- outBytes
+	}
+}
+
+func extractPages(parallel int, ns documents.Namespace, compressedItems <-chan compressedDocument, errs chan<- error) <-chan protos.ID {
+	pages := make(chan protos.ID, jobs.WorkBuffer)
+
+	wg := sync.WaitGroup{}
+	for w := 0; w < parallel; w++ {
+		wg.Add(1)
+		go func() {
+			extractPagesWorker(ns, compressedItems, pages, errs)
+			wg.Done()
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(pages)
+	}()
+
+	return pages
+}
+
+func extractPagesWorker(ns documents.Namespace, compressed <-chan compressedDocument, pages chan<- protos.ID, errs chan<- error) {
+	for j := range compressed {
+		decompress(ns, j, pages, errs)
+	}
+}
+
+type compressedDocument []byte
+
+func normalize(text string) string {
+	if !strings.HasPrefix(text, "<mediawiki") {
+		text = "<mediawiki>\n" + text
+	}
+
+	if !strings.HasSuffix(text, "</mediawiki>") {
+		text += "\n</mediawiki>\n"
+	}
+
+	return text
+}
+
+func decompress(ns documents.Namespace, compressed []byte, outPages chan<- protos.ID, errs chan<- error) {
+	bz := bzip2.NewReader(bytes.NewReader(compressed))
+
+	compressed, err := ioutil.ReadAll(bz)
+	if err != nil {
+		errs <- err
+		return
+	}
+
+	text := normalize(string(compressed))
+
+	doc := &documents.XMLDocument{}
+
+	err = xml.Unmarshal([]byte(text), doc)
+	if err != nil {
+		errs <- err
+		return
+	}
+
+	for _, page := range doc.Pages {
+		if page.NS != ns || page.Redirect.Title != "" {
+			// Ignore redirects and articles in other Namespaces.
+			continue
+		}
+
+		outPages <- page.ToProto()
+	}
+
+	if err != nil {
+		errs <- err
 	}
 }

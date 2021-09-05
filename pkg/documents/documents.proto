@@ -11,3 +11,15 @@ message Page {
   string title = 2;
   string text = 3;
 }
+
+message TitleIndex {
+  map<string, uint32> titles = 1;
+}
+
+message PageCategories {
+  map<uint32, Categories> pages = 1;
+}
+
+message Categories {
+  repeated uint32 categories = 1;
+}
