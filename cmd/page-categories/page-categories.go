@@ -10,6 +10,7 @@ import (
 	"github.com/willbeason/wikipedia/pkg/pages"
 	"github.com/willbeason/wikipedia/pkg/protos"
 	"os"
+	"sort"
 )
 
 func main() {
@@ -93,8 +94,30 @@ func makePageCategories(titleIndex *documents.TitleIndex, pages <-chan *document
 		}
 
 		fmt.Println(documents.Missed)
+
+		freqs := make([]freq, len(documents.MissedMap))
+		idx := 0
+
+		for k, v := range documents.MissedMap {
+			freqs[idx] = freq{c: v, s: k}
+			idx++
+		}
+		sort.Slice(freqs, func(i, j int) bool {
+			return freqs[i].c > freqs[j].c
+		})
+
+		for _, f := range freqs {
+			fmt.Println(f.s, ":", f.c)
+		}
+
+
 		results <- result
 	}()
 
 	return results
+}
+
+type freq struct {
+	c int
+	s string
 }

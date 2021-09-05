@@ -17,6 +17,7 @@ type Categorizer struct {
 // - [[Category:Main topic classifications]]
 
 var Missed = 0
+var MissedMap = make(map[string]int)
 
 func (c *Categorizer) Categorize(page *Page) *Categories {
 	const (
@@ -72,15 +73,17 @@ func (c *Categorizer) Categorize(page *Page) *Categories {
 		if !ok {
 			// People may misspell categories.
 			Missed++
-			fmt.Printf("(%q, %q)\n%s\n\n", page.Title, line, categoryTitle)
+			lb := strings.LastIndex(categoryTitle, "{")
+			if lb != -1 {
+				MissedMap[categoryTitle[lb:]]++
+			}
+
+			//fmt.Printf("(%q, %q)\n%s\n\n", page.Title, line, categoryTitle)
+			continue
 		}
 
 		result.Categories[idx] = categoryId
 		idx++
-	}
-
-	if page.Id == 58848427 {
-		fmt.Println(result.Categories)
 	}
 
 	result.Categories = result.Categories[:idx]
