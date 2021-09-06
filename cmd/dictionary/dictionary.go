@@ -3,14 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/willbeason/wikipedia/pkg/ordinality"
-	"github.com/willbeason/wikipedia/pkg/pages"
-	"github.com/willbeason/wikipedia/pkg/protos"
 	"os"
 	"strings"
 	"sync"
 
+	"github.com/willbeason/wikipedia/pkg/ordinality"
+	"github.com/willbeason/wikipedia/pkg/pages"
+	"github.com/willbeason/wikipedia/pkg/protos"
+
 	"github.com/spf13/cobra"
+
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
@@ -48,7 +50,6 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 	inDB := args[0]
 	outDictionary := args[1]
-
 
 	parallel, err := cmd.Flags().GetInt(flags.ParallelKey)
 	if err != nil {
@@ -148,7 +149,7 @@ func getNgrams(tokenizer nlp.Tokenizer, known map[string]bool, minLen int) func(
 			}
 
 			results <- &ordinality.PageWordMap{
-				Id: page.Id,
+				Id:    page.Id,
 				Words: frequencies,
 			}
 

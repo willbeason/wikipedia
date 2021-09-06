@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
 	"github.com/willbeason/wikipedia/pkg/db"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/pages"
@@ -24,10 +25,10 @@ func main() {
 
 func mainCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Args: cobra.RangeArgs(1, 2),
-		Use:  `clean-wikipedia path/to/input path/to/output`,
+		Args:  cobra.RangeArgs(1, 2),
+		Use:   `clean-wikipedia path/to/input path/to/output`,
 		Short: `Cleans an extracted set of Wikipedia articles by removing irrelevant xml and markup.`,
-		RunE: runCmd,
+		RunE:  runCmd,
 	}
 
 	flags.Parallel(cmd)

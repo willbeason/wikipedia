@@ -3,8 +3,9 @@ package protos
 import (
 	"context"
 	"fmt"
-	"github.com/willbeason/wikipedia/pkg/documents"
 	"sync"
+
+	"github.com/willbeason/wikipedia/pkg/documents"
 )
 
 // PrintProtos prints passed protos as JSON to the stdout.

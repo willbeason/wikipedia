@@ -17,7 +17,7 @@ func (n *NodeDecade) String(title string) string {
 
 var patternDecades = regexp.MustCompile(`\d{2,3}0`)
 
-type NodeTitleDecade struct {}
+type NodeTitleDecade struct{}
 
 func (n *NodeTitleDecade) String(title string) string {
 	switch decades := patternDecades.FindAllString(title, -1); len(decades) {

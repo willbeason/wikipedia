@@ -26,12 +26,14 @@ type NodeString struct {
 	Value string
 }
 
-func(n *NodeString) String(title string) string {
+func (n *NodeString) String(title string) string {
 	return n.Value
 }
 
-type NodePageName struct {}
+type NodePageName struct{}
 
 func (n *NodePageName) String(title string) string {
+	title = strings.TrimPrefix(title, "Category:")
+
 	return title
 }

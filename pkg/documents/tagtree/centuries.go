@@ -16,8 +16,8 @@ func (n *NodeCentury) String(title string) string {
 	year := n.Value.String(title)
 
 	var century uint64
-	if strings.HasSuffix(year, "s") {
-		year = strings.TrimRight(year, "s")
+	if _, isDecade := n.Value.(*NodeTitleDecade); isDecade || strings.HasSuffix(year, "s") {
+		year = strings.TrimSuffix(year, "s")
 		nYear, err := strconv.ParseUint(year, 10, 16)
 		if err != nil {
 			return "<UNABLE TO PARSE DECADE>"
@@ -32,7 +32,7 @@ func (n *NodeCentury) String(title string) string {
 		}
 
 		century = nYear / 100
-		if nYear % 100 != 0 {
+		if nYear%100 != 0 {
 			century++
 		}
 	}
@@ -47,7 +47,7 @@ func (n *NodeCentury) String(title string) string {
 }
 
 func ordinal(n uint64) string {
-	if (n % 100) / 10 == 1 {
+	if (n%100)/10 == 1 {
 		return fmt.Sprintf("%dth", n)
 	}
 
@@ -65,7 +65,7 @@ func ordinal(n uint64) string {
 
 var patternCentury = regexp.MustCompile(`(?i)(\d+)(st|nd|rd|th)[- ]century`)
 
-type NodeTitleCentury struct {}
+type NodeTitleCentury struct{}
 
 func (n *NodeTitleCentury) String(title string) string {
 	switch centuries := patternCentury.FindAllStringSubmatch(title, -1); len(centuries) {

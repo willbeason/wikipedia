@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"os"
+	"strconv"
+
 	"github.com/spf13/cobra"
+
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/pages"
 	"github.com/willbeason/wikipedia/pkg/protos"
-	"os"
-	"strconv"
 )
 
 func main() {
@@ -21,10 +23,10 @@ func main() {
 
 func mainCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Args: cobra.ExactArgs(2),
-		Use:  `view path/to/input id`,
+		Args:  cobra.ExactArgs(2),
+		Use:   `view path/to/input id`,
 		Short: `View a specific article by its identifier`,
-		RunE: runCmd,
+		RunE:  runCmd,
 	}
 
 	flags.Parallel(cmd)

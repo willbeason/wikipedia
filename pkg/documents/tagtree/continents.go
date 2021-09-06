@@ -10,14 +10,14 @@ const (
 	Oceania      = "Oceania"
 )
 
-var continentalOf = map[string]string {
-	Asia: "asian",
-	Africa: "african",
+var continentalOf = map[string]string{
+	Asia:         "asian",
+	Africa:       "african",
 	NorthAmerica: "north american",
 	SouthAmerica: "south american",
-	Antarctica: "antarctican",
-	Europe: "european",
-	Oceania: "oceanian",
+	Antarctica:   "antarctican",
+	Europe:       "european",
+	Oceania:      "oceanian",
 }
 
 type NodeContinent2Continental struct {

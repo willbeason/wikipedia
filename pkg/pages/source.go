@@ -13,7 +13,7 @@ import (
 func StreamDB(inDBPath string, parallel int) Source {
 	return func(ctx context.Context, errs chan<- error) (<-chan *documents.Page, error) {
 		var (
-			wg *sync.WaitGroup
+			wg  *sync.WaitGroup
 			err error
 		)
 
@@ -37,7 +37,7 @@ func StreamDB(inDBPath string, parallel int) Source {
 func StreamDBKeys(inDBPath string, parallel int, keys []uint) Source {
 	return func(ctx context.Context, errs chan<- error) (<-chan *documents.Page, error) {
 		var (
-			wg *sync.WaitGroup
+			wg  *sync.WaitGroup
 			err error
 		)
 

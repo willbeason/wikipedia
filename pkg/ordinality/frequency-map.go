@@ -2,6 +2,7 @@ package ordinality
 
 import (
 	"fmt"
+
 	"github.com/willbeason/wikipedia/pkg/nlp"
 )
 

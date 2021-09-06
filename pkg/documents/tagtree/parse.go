@@ -1,6 +1,7 @@
 package tagtree
 
 import (
+	"errors"
 	"regexp"
 	"strings"
 )
@@ -26,13 +27,19 @@ func toBrace(t BraceType, startEnd []int) Brace {
 	return Brace{Type: t, Start: startEnd[0], End: startEnd[1]}
 }
 
-func toBraces(s string) []Brace {
+var errOpenClose = errors.New("different number of open and close braces")
+
+func toBraces(s string) ([]Brace, error) {
 	openTags := openTag.FindAllStringIndex(s, -1)
 	closeTags := closeTag.FindAllStringIndex(s, -1)
 
 	nTags := len(openTags)
-	if nTags == 0 || nTags != len(closeTags) {
-		return nil
+	if nTags == 0 {
+		return nil, nil
+	}
+
+	if nTags != len(closeTags) {
+		return nil, errOpenClose
 	}
 
 	result := make([]Brace, 0, nTags*2)
@@ -60,11 +67,14 @@ func toBraces(s string) []Brace {
 		closeIdx++
 	}
 
-	return result
+	return result, nil
 }
 
 func Parse(category string) Node {
-	braces := toBraces(category)
+	braces, err := toBraces(category)
+	if err != nil {
+		return &NodeString{Value: err.Error()}
+	}
 
 	if len(braces) == 0 {
 		return &NodeString{Value: category}
@@ -135,8 +145,6 @@ func Parse(category string) Node {
 
 	return parent
 }
-
-var MissedMap = map[string]int{}
 
 func parseTag(category string) Node {
 	category = strings.TrimPrefix(category, "{{")
@@ -241,6 +249,18 @@ func parseTag(category string) Node {
 		}
 
 		return &NodeMonthNumber{Value: Parse(splits[1])}
+	case "first word":
+		if len(splits) == 1 {
+			return &NodeFirstWord{Value: &NodeString{"<MISSING FIRST WORD NODE>"}}
+		}
+
+		return &NodeFirstWord{Value: Parse(splits[1])}
+	case "last word":
+		if len(splits) == 1 {
+			return &NodeLastWord{Value: &NodeString{"<MISSING LAST WORD NODE>"}}
+		}
+
+		return &NodeLastWord{Value: Parse(splits[1])}
 	case "title year+1":
 		return &NodeExpression{Value: &NodeParent{Children: []Node{
 			&NodeTitleYear{},
@@ -252,7 +272,6 @@ func parseTag(category string) Node {
 			&NodeString{Value: "-1"},
 		}}}
 	default:
-		MissedMap[splits[0]]++
 		return &NodeString{Value: category}
 	}
 }

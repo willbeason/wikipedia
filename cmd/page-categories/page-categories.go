@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/spf13/cobra"
+	"os"
+
 	"github.com/willbeason/wikipedia/pkg/documents"
-	"github.com/willbeason/wikipedia/pkg/documents/tagtree"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/pages"
 	"github.com/willbeason/wikipedia/pkg/protos"
-	"os"
-	"sort"
 )
 
 func main() {
@@ -25,10 +24,10 @@ func main() {
 
 func mainCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Args: cobra.ExactArgs(3),
-		Use:  `view path/to/input id`,
+		Args:  cobra.ExactArgs(3),
+		Use:   `view path/to/input id`,
 		Short: `View a specific article by its identifier`,
-		RunE: runCmd,
+		RunE:  runCmd,
 	}
 
 	flags.Parallel(cmd)
@@ -48,7 +47,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 	inDB := args[0]
 	inTitleIndex := args[1]
-	//outPageCategories := args[2]
+	outPageCategories := args[2]
 
 	titleIndex := &documents.TitleIndex{}
 	err = protos.Read(inTitleIndex, titleIndex)
@@ -64,16 +63,17 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 	results := makePageCategories(titleIndex, ps)
 
-	_ = <- results
-	//pageCategories := <- results
+	pageCategories := <- results
 
-	//err = protos.Write(outPageCategories, pageCategories)
-	//if err != nil {
-	//	errs <- err
-	//}
+	err = protos.Write(outPageCategories, pageCategories)
+	if err != nil {
+		errs <- err
+	}
 
 	close(errs)
 	errsWg.Wait()
+
+	fmt.Println(documents.Missed)
 
 	return nil
 }
@@ -92,25 +92,6 @@ func makePageCategories(titleIndex *documents.TitleIndex, pages <-chan *document
 
 		for page := range pages {
 			result.Pages[page.Id] = categorizer.Categorize(page)
-		}
-
-		fmt.Println(documents.Missed)
-
-		freqs := make([]freq, len(tagtree.MissedMap))
-		idx := 0
-
-		for k, v := range tagtree.MissedMap {
-			freqs[idx] = freq{c: v, s: k}
-			idx++
-		}
-		sort.Slice(freqs, func(i, j int) bool {
-			return freqs[i].c > freqs[j].c
-		})
-
-		for _, f := range freqs {
-			fmt.Println(f.s, ":", f.c)
-			//fmt.Printf(`%q: "",
-//`, f.s)
 		}
 
 		results <- result

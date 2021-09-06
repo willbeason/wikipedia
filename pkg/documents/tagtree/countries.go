@@ -50,7 +50,7 @@ var countriesList = []string{
 	"Croatia",
 	"Cuba",
 	"Cyprus",
-	"Czech Republic",
+	"the Czech Republic",
 	"Republic of the Congo",
 	"Denmark",
 	"Djibouti",
@@ -214,7 +214,7 @@ var countriesList = []string{
 	Oceania,
 }
 
-var countriesPattern = regexp.MustCompile(`(?i)\b` + strings.Join(countriesList, "|" + `\b`))
+var countriesPattern = regexp.MustCompile(`(?i)\b(` + strings.Join(countriesList, "|") + `)\b`)
 
 type NodeTitleCountry struct{}
 

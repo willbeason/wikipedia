@@ -1,8 +1,9 @@
 package tagtree
 
 import (
-	"github.com/google/go-cmp/cmp"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestParse(t *testing.T) {
@@ -174,15 +175,15 @@ func TestParse(t *testing.T) {
 		},
 		{
 			name:     "century name 4",
-			title:    "Category:1990s radio programme endings",
-			category: "Category:{{Century name from title decade|dash}} radio programme endings|{{Title decade}}",
+			title:    "Category:1990s radio program endings",
+			category: "Category:{{Century name from title decade|dash}} radio program endings|{{Title decade}}",
 			wantNode: &NodeParent{Children: []Node{
 				&NodeString{Value: "Category:"},
 				&NodeCentury{Value: &NodeTitleDecade{}, Dash: true},
-				&NodeString{Value: " radio programme endings|"},
+				&NodeString{Value: " radio program endings|"},
 				&NodeTitleDecade{},
 			}},
-			wantCategory: "Category:20th-century radio programme endings|1990",
+			wantCategory: "Category:20th-century radio program endings|1990",
 		},
 		{
 			name:     "century name 5",
@@ -296,18 +297,37 @@ func TestParse(t *testing.T) {
 			wantCategory: "Category:1968 in european sport||August",
 		},
 		{
-			name:     "continent2continental",
-			title:    "Category:2021 disestablishments in Slovakia",
-			category: "Category:{{title year}} disestablishments in {{country2continent|{{title country}}}}|{{title country}}}}",
+			name:     "first word",
+			title:    "Category:Örebro Garrison",
+			category: "Category:{{first word|{{PAGENAME}}}} Municipality",
 			wantNode: &NodeParent{Children: []Node{
 				&NodeString{Value: "Category:"},
-				&NodeTitleYear{},
-				&NodeString{Value: " disestablishments in "},
-				&NodeContinent2Continental{Value: &NodeTitleCountry{}},
-				&NodeString{Value: " sport||"},
-				&NodeMonth{Value: &NodeTitleMonth{}},
+				&NodeFirstWord{Value: &NodePageName{}},
+				&NodeString{Value: " Municipality"},
 			}},
-			wantCategory: "Category:2021 disestablishments in Europe|Slovakia",
+			wantCategory: "Category:Örebro Municipality",
+		},
+		{
+			name:     "last word",
+			title:    "Category:Örebro Garrison",
+			category: "Category:{{last word|{{PAGENAME}}}} Municipality",
+			wantNode: &NodeParent{Children: []Node{
+				&NodeString{Value: "Category:"},
+				&NodeLastWord{Value: &NodePageName{}},
+				&NodeString{Value: " Municipality"},
+			}},
+			wantCategory: "Category:Garrison Municipality",
+		},
+		{
+			name:     "first decade in century",
+			title:    "Category:2000s in space",
+			category: "Category:{{Century name from title decade}} in space",
+			wantNode: &NodeParent{Children: []Node{
+				&NodeString{Value: "Category:"},
+				&NodeCentury{Value: &NodeTitleDecade{}},
+				&NodeString{Value: " in space"},
+			}},
+			wantCategory: "Category:21st century in space",
 		},
 	}
 

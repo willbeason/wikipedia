@@ -15,7 +15,7 @@ func (n *NodeMonth) String(title string) string {
 
 var patternMonths = regexp.MustCompile(`(?i)(january|february|march|april|may|june|july|august|september|october|november|december)`)
 
-type NodeTitleMonth struct {}
+type NodeTitleMonth struct{}
 
 func (n *NodeTitleMonth) String(title string) string {
 	switch months := patternMonths.FindAllString(title, -1); len(months) {

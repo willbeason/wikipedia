@@ -2,10 +2,10 @@ package tagtree
 
 import "regexp"
 
-var titleYear = regexp.MustCompile(`\d{3,4}`)
+var titleYear = regexp.MustCompile(`\b\d{3,4}\b`)
 var titleYearRange = regexp.MustCompile(`\d{4}–\d{2,4}`)
 
-type NodeTitleYear struct {}
+type NodeTitleYear struct{}
 
 func (n *NodeTitleYear) String(title string) string {
 	switch matches := titleYear.FindAllString(title, -1); len(matches) {
@@ -18,7 +18,7 @@ func (n *NodeTitleYear) String(title string) string {
 	}
 }
 
-type NodeTitleYearRange struct {}
+type NodeTitleYearRange struct{}
 
 func (n *NodeTitleYearRange) String(title string) string {
 	switch matches := titleYearRange.FindAllString(title, -1); len(matches) {

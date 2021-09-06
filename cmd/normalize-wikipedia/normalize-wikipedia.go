@@ -1,11 +1,13 @@
 package main
 
 import (
-	"github.com/willbeason/wikipedia/pkg/db"
-	"github.com/willbeason/wikipedia/pkg/pages"
 	"os"
 
+	"github.com/willbeason/wikipedia/pkg/db"
+	"github.com/willbeason/wikipedia/pkg/pages"
+
 	"github.com/spf13/cobra"
+
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
@@ -35,7 +37,6 @@ func main() {
 		os.Exit(1)
 	}
 }
-
 
 func runCmd(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
@@ -75,7 +76,6 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 	return pages.Run(ctx, source, parallel, normalize, sink)
 }
-
 
 func normalize(out chan<- protos.ID) jobs.Page {
 	return func(page *documents.Page) error {

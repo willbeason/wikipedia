@@ -6,14 +6,15 @@ import (
 	"compress/bzip2"
 	"encoding/xml"
 	"fmt"
-	"github.com/willbeason/wikipedia/pkg/db"
-	"github.com/willbeason/wikipedia/pkg/protos"
 	"io"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/willbeason/wikipedia/pkg/db"
+	"github.com/willbeason/wikipedia/pkg/protos"
 
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"

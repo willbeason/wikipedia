@@ -19,12 +19,12 @@ const (
 	NamespaceHelpTalk
 	NamespaceCategory
 	NamespaceCategoryTalk
-	NamespacePortal = 100
-	NamespacePortalTalk = 101
-	NamespaceDraft = 118
-	NamespaceDraftTalk = 119
-	NamespaceTimedText = 710
+	NamespacePortal        = 100
+	NamespacePortalTalk    = 101
+	NamespaceDraft         = 118
+	NamespaceDraftTalk     = 119
+	NamespaceTimedText     = 710
 	NamespaceTimedTextTalk = 711
-	NamespaceModule = 828
-	NamespaceModuleTalk = 829
+	NamespaceModule        = 828
+	NamespaceModuleTalk    = 829
 )
