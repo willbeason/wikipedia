@@ -25,8 +25,6 @@ func main() {
 func mainCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Args:  cobra.ExactArgs(3),
-		Use:   `view path/to/input id`,
-		Short: `View a specific article by its identifier`,
 		RunE:  runCmd,
 	}
 

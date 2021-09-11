@@ -29,3 +29,19 @@ enum Classification {
 message ClassifiedArticles {
   map<uint32, Classification> articles = 1;
 }
+
+message ClassifiedIDs {
+  map<uint32, Classification> pages = 1;
+}
+
+message ClassifiedTitles {
+  map<string, Classification> pages = 1;
+}
+
+message PageClassificationsMap {
+  map<uint32, PageClassifications> pages = 1;
+}
+
+message PageClassifications {
+  repeated Classification classifications = 1;
+}

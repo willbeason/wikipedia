@@ -1,0 +1,11 @@
+go run cmd/category-network/category-network.go \
+  C:/Users/Public/Documents/wikipedia/categories/enwiki-20210901-category-categories.json \
+  C:/Users/Public/Documents/wikipedia/categories/enwiki-20210901-index.json \
+  C:/Users/Public/Documents/wikipedia/categories/enwiki-20210901-known-categories.json \
+  C:/Users/Public/Documents/wikipedia/categories/enwiki-20210901-page-categories.json
+
+go run cmd/category-network/category-network.go \
+  C:/Users/Public/Documents/wikipedia/categories/enwiki-20210901-category-categories.json \
+  C:/Users/Public/Documents/wikipedia/categories/enwiki-20210901-index.json \
+  C:/Users/Public/Documents/wikipedia/categories/enwiki-20210901-known-categories.json \
+  C:/Users/Public/Documents/wikipedia/categories/enwiki-20210901-page-categories.json > out.txt
