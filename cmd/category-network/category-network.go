@@ -3,29 +3,26 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/willbeason/wikipedia/pkg/classify"
-	"github.com/willbeason/wikipedia/pkg/documents"
-	"github.com/willbeason/wikipedia/pkg/flags"
-	"github.com/willbeason/wikipedia/pkg/graphs"
-	"github.com/willbeason/wikipedia/pkg/jobs"
-	"github.com/willbeason/wikipedia/pkg/protos"
 	"io/ioutil"
-	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
+
+	"github.com/spf13/cobra"
+
+	"github.com/willbeason/wikipedia/pkg/classify"
+	"github.com/willbeason/wikipedia/pkg/documents"
+	"github.com/willbeason/wikipedia/pkg/flags"
+	"github.com/willbeason/wikipedia/pkg/graphs"
+	"github.com/willbeason/wikipedia/pkg/jobs"
+	"github.com/willbeason/wikipedia/pkg/protos"
 )
 
 func main() {
 	ctx := context.Background()
-
-	go func() {
-		http.ListenAndServe("localhost:8080", nil)
-	}()
 
 	err := mainCmd().ExecuteContext(ctx)
 	if err != nil {
@@ -103,7 +100,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 		j := 0
 		for n := range g {
-			titles[i] = reverseTitles[n]
+			titles[j] = reverseTitles[n]
 			j++
 		}
 
@@ -349,7 +346,7 @@ func findAllConnectedDigraphs(parallel int, graph graphs.Directed) []map[uint32]
 
 	connectedGraphsChan := make(chan []uint32, jobs.WorkBuffer)
 
-	nProccessed := 0
+	nProcessed := 0
 	nMtx := sync.Mutex{}
 
 	work := make(chan uint32, jobs.WorkBuffer)
@@ -359,9 +356,9 @@ func findAllConnectedDigraphs(parallel int, graph graphs.Directed) []map[uint32]
 			work <- k
 
 			nMtx.Lock()
-			nProccessed++
-			if nProccessed % 10000 == 0 {
-				fmt.Println(nProccessed)
+			nProcessed++
+			if nProcessed%10000 == 0 {
+				fmt.Println(nProcessed)
 			}
 			nMtx.Unlock()
 		}
@@ -466,9 +463,11 @@ func getKey(m map[uint32]bool) *uint32 {
 }
 
 func merge(x, y int, gs []map[uint32]bool) []map[uint32]bool {
+	gsx := gs[x]
 	for k := range gs[y] {
-		gs[x][k] = true
+		gsx[k] = true
 	}
+	gs[x] = gsx
 
 	copy(gs[y:], gs[y+1:])
 	return gs[:len(gs)-1]

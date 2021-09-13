@@ -1,5 +1,7 @@
 package graphs
 
+import "fmt"
+
 type Connected map[uint32]bool
 
 // FindCycle returns a loop containing start in graph, or nil if there is no such loop.
@@ -11,34 +13,121 @@ func FindCycle(start uint32, graph Directed) []uint32 {
 	return FindPath(start, start, graph)
 }
 
-func FindPath(start, end uint32, graph Directed) []uint32 {
-	return findPath(end, graph, start, []uint32{start}, map[uint32]bool{start: true})
+type Queue struct {
+	Value    uint32
+	Next     *Queue
+	Previous *Queue
 }
 
-func findPath(end uint32, graph Directed, next uint32, stack []uint32, visited map[uint32]bool) []uint32 {
-	children, ok := graph.Nodes[next]
-	if !ok {
-		return nil
+func NewQueue(value uint32) *Queue {
+	q := &Queue{Value: value}
+	q.Next = q
+	q.Previous = q
+
+	return q
+}
+
+func (q *Queue) Enqueue(value uint32) *Queue {
+	if q == nil {
+		return NewQueue(value)
 	}
 
-	for child := range children {
-		if visited[child] {
-			// This explicitly ignores self-loops.
+	end := &Queue{
+		Value:    value,
+		Next:     q,
+		Previous: q.Previous,
+	}
+
+	q.Previous.Next = end
+	q.Previous = end
+	return q
+}
+
+func (q *Queue) Dequeue() (uint32, *Queue) {
+	if q == q.Next {
+		return q.Value, nil
+	}
+
+	q.Previous.Next = q.Next
+	q.Next.Previous = q.Previous
+
+	return q.Value, q.Next
+}
+
+func (q *Queue) Empty() bool {
+	return q == nil
+}
+
+func FindPath(start, end uint32, graph Directed) []uint32 {
+	q := NewQueue(start)
+	visited := map[uint32]uint32{}
+
+	var next uint32
+	for !q.Empty() {
+		next, q = q.Dequeue()
+
+		children, ok := graph.Nodes[next]
+		if !ok {
 			continue
 		}
 
-		if child == end {
-			// We found a path!
-			return stack
-		}
+		for child := range children {
+			if next == child {
+				// Ignore self-loops.
+				continue
+			}
 
-		visited[child] = true
+			if child == end {
+				visited[child] = next
+				return unroll(start, child, visited)
+			}
 
-		loop := findPath(end, graph, child, append(stack, child), visited)
-		if loop != nil {
-			return loop
+			if _, isVisited := visited[child]; isVisited {
+				continue
+			}
+
+			visited[child] = next
+
+			q = q.Enqueue(child)
 		}
 	}
 
 	return nil
+}
+
+func unroll(start, end uint32, visited map[uint32]uint32) []uint32 {
+	path := []uint32{end}
+	seenInPath := map[uint32]bool{end: true}
+
+	next, ok := visited[end]
+	for next != start && ok {
+		if seenInPath[next] {
+			break
+		}
+
+		seenInPath[next] = true
+
+		path = append(path, next)
+
+		next, ok = visited[next]
+	}
+
+	if next != start {
+		fmt.Println("START:", start)
+		fmt.Println("END:", end)
+
+		for k, v := range visited {
+			fmt.Println(k, ":", v)
+		}
+
+		panic("HERE")
+	}
+
+	path = append(path, start)
+
+	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
+		path[i], path[j] = path[j], path[i]
+	}
+
+	return path
 }

@@ -2,6 +2,7 @@ package classify
 
 import (
 	"fmt"
+
 	"github.com/willbeason/wikipedia/pkg/documents"
 )
 

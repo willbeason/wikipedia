@@ -1,8 +1,9 @@
 package graphs
 
 import (
-	"github.com/google/go-cmp/cmp"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestFindCycle(t *testing.T) {
@@ -19,7 +20,7 @@ func TestFindCycle(t *testing.T) {
 			want:  nil,
 		},
 		{
-			name:  "singleton no edges",
+			name: "singleton no edges",
 			graph: Directed{
 				Nodes: map[uint32]map[uint32]bool{
 					0: {},
@@ -29,17 +30,17 @@ func TestFindCycle(t *testing.T) {
 			want:  nil,
 		},
 		{
-			name:  "singleton cycle",
+			name: "singleton cycle",
 			graph: Directed{
 				Nodes: map[uint32]map[uint32]bool{
 					0: {0: true},
 				},
 			},
 			start: 0,
-			want:  []uint32{0},
+			want:  nil,
 		},
 		{
-			name:  "two disconnected nodes",
+			name: "two disconnected nodes",
 			graph: Directed{
 				Nodes: map[uint32]map[uint32]bool{
 					0: {},
@@ -50,7 +51,7 @@ func TestFindCycle(t *testing.T) {
 			want:  nil,
 		},
 		{
-			name:  "two nodes one edge",
+			name: "two nodes one edge",
 			graph: Directed{
 				Nodes: map[uint32]map[uint32]bool{
 					0: {1: true},
@@ -61,7 +62,7 @@ func TestFindCycle(t *testing.T) {
 			want:  nil,
 		},
 		{
-			name:  "two nodes cycle",
+			name: "two nodes cycle",
 			graph: Directed{
 				Nodes: map[uint32]map[uint32]bool{
 					0: {1: true},
@@ -72,7 +73,18 @@ func TestFindCycle(t *testing.T) {
 			want:  []uint32{0, 1},
 		},
 		{
-			name:  "long cycle",
+			name: "two nodes cycle and self cycle",
+			graph: Directed{
+				Nodes: map[uint32]map[uint32]bool{
+					0: {0: true, 1: true},
+					1: {0: true},
+				},
+			},
+			start: 0,
+			want:  []uint32{0, 1},
+		},
+		{
+			name: "long cycle",
 			graph: Directed{
 				Nodes: map[uint32]map[uint32]bool{
 					0: {1: true},
@@ -91,7 +103,7 @@ func TestFindCycle(t *testing.T) {
 			want:  []uint32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
 		},
 		{
-			name:  "long cycle 2",
+			name: "long cycle 2",
 			graph: Directed{
 				Nodes: map[uint32]map[uint32]bool{
 					0: {1: true},

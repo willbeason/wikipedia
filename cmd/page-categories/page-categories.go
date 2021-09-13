@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
+
+	"github.com/spf13/cobra"
 
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
@@ -24,8 +25,8 @@ func main() {
 
 func mainCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Args:  cobra.ExactArgs(3),
-		RunE:  runCmd,
+		Args: cobra.ExactArgs(3),
+		RunE: runCmd,
 	}
 
 	flags.Parallel(cmd)
@@ -61,7 +62,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 	results := makePageCategories(titleIndex, ps)
 
-	pageCategories := <- results
+	pageCategories := <-results
 
 	err = protos.Write(outPageCategories, pageCategories)
 	if err != nil {

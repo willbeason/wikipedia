@@ -1,0 +1,5 @@
+go run cmd/network-analysis/network-analysis.go \
+  C:/Users/Public/Documents/wikipedia/categories/enwiki-20210901-category-categories.json \
+  C:/Users/Public/Documents/wikipedia/categories/enwiki-20210901-index.json \
+  C:/Users/Public/Documents/wikipedia/categories/enwiki-20210901-page-graphs/000.txt \
+  C:/Users/Public/Documents/wikipedia/categories/enwiki-20210901-centrality/000.csv
