@@ -3,15 +3,13 @@ package main
 import (
 	"os"
 
-	"github.com/willbeason/wikipedia/pkg/db"
-	"github.com/willbeason/wikipedia/pkg/pages"
-
 	"github.com/spf13/cobra"
-
+	"github.com/willbeason/wikipedia/pkg/db"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/nlp"
+	"github.com/willbeason/wikipedia/pkg/pages"
 	"github.com/willbeason/wikipedia/pkg/protos"
 )
 

@@ -2,8 +2,10 @@ package tagtree
 
 import "regexp"
 
-var titleYear = regexp.MustCompile(`\b\d{3,4}\b`)
-var titleYearRange = regexp.MustCompile(`\d{4}–\d{2,4}`)
+var (
+	titleYear      = regexp.MustCompile(`\b\d{3,4}\b`)
+	titleYearRange = regexp.MustCompile(`\d{4}–\d{2,4}`)
+)
 
 type NodeTitleYear struct{}
 

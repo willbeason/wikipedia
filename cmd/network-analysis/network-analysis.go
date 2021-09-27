@@ -9,14 +9,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/willbeason/wikipedia/pkg/graphs/centrality"
-	"github.com/willbeason/wikipedia/pkg/jobs"
-
 	"github.com/spf13/cobra"
-
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/graphs"
+	"github.com/willbeason/wikipedia/pkg/graphs/centrality"
+	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/protos"
 )
 
@@ -51,7 +49,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	inCategories := args[0]
 	inTitles := args[1]
 	inNodes := args[2]
-	//outCentrality := args[3]
+	// outCentrality := args[3]
 
 	pageTitles := &documents.TitleIndex{}
 
@@ -96,9 +94,9 @@ func runCmd(cmd *cobra.Command, args []string) error {
 				continue
 			}
 
-			//title1 := centrality.Normalize(reverseTitles[id])
-			//title2 := centrality.Normalize(reverseTitles[category])
-			//fmt.Printf("  %q -+ %q,\n", title1, title2)
+			// title1 := centrality.Normalize(reverseTitles[id])
+			// title2 := centrality.Normalize(reverseTitles[category])
+			// fmt.Printf("  %q -+ %q,\n", title1, title2)
 
 			nodeEdges[category] = true
 		}
@@ -191,7 +189,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	wg := sync.WaitGroup{}
 	wg.Add(parallel)
 
-	//shortestCache := graphs.NewShortestCache(uint32(parallel))
+	// shortestCache := graphs.NewShortestCache(uint32(parallel))
 
 	for i := 0; i < parallel; i++ {
 		go func() {

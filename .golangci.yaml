@@ -32,57 +32,9 @@ linters-settings:
     locale: US
 
 linters:
-  disable-all: true
-  enable:
-    - asciicheck
-    - bodyclose
-    - deadcode
-    - depguard
-    - dogsled
-    - dupl
-    - errcheck
-    - errname
-    - exportloopref
-    - exhaustive
-    - funlen
-    - gochecknoglobals
-    - gochecknoinits
-    - gocognit
-    - goconst
-    - gocritic
-    - gocyclo
-    - godot
-    - goerr113
-    - gofmt
-    - goimports
-    - goprintffuncname
-    - gosec
-    - gosimple
-    - govet
-    - ineffassign
-    - lll
-    - misspell
-    - nakedret
-    - nestif
-    - noctx
-    - nolintlint
-    - prealloc
-    - revive
-    - rowserrcheck
-    - staticcheck
-    - structcheck
-    - stylecheck
-    - typecheck
-    - unconvert
-    - unparam
-    - unused
-    - varcheck
-    - whitespace
-    - wsl
-
-  # don't enable:
-  # - scopelint
-  # - godox
-  # - interfacer
-  # - maligned
-  # - testpackage
+  enable-all: true
+  disable:
+   - golint
+   - interfacer
+   - maligned
+   - scopelint

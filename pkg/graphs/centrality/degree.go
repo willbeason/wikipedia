@@ -29,8 +29,8 @@ func OutDegree(id uint32, graph *graphs.Directed) int {
 
 func Normalize(title string) string {
 	title = strings.TrimPrefix(title, "category:")
-	//title = strings.TrimSuffix(title, ", california")
-	//title = strings.TrimSuffix(title, " (california)")
+	// title = strings.TrimSuffix(title, ", california")
+	// title = strings.TrimSuffix(title, " (california)")
 	title = strings.Title(title)
 	title = strings.ReplaceAll(title, " Of", " of")
 	title = strings.ReplaceAll(title, " In", " in")

@@ -23,7 +23,6 @@ func shortestPaths(g *graphs.Directed) <-chan []uint32 {
 	result := make(chan []uint32, jobs.WorkBuffer)
 
 	go func() {
-
 	}()
 
 	return result

@@ -13,14 +13,12 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/db"
-	"github.com/willbeason/wikipedia/pkg/protos"
-
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
-
-	"github.com/spf13/cobra"
+	"github.com/willbeason/wikipedia/pkg/protos"
 )
 
 const namespaceKey = "namespace"

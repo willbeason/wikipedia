@@ -4,11 +4,9 @@ import (
 	"regexp"
 )
 
-var (
-	// XMLTagRegex tries to find XML tags which are still present in the corpus. Useful for finding
-	// problematic tags that we want to avoid.
-	XMLTagRegex = regexp.MustCompile(`<[a-z][a-z0-9]+`)
-)
+// XMLTagRegex tries to find XML tags which are still present in the corpus. Useful for finding
+// problematic tags that we want to avoid.
+var XMLTagRegex = regexp.MustCompile(`<[a-z][a-z0-9]+`)
 
 type XMLTokenizer struct{}
 

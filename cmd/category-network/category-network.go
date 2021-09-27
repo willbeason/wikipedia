@@ -12,7 +12,6 @@ import (
 	"sync"
 
 	"github.com/spf13/cobra"
-
 	"github.com/willbeason/wikipedia/pkg/classify"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
@@ -97,7 +96,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		ignoredArticlesMap[id] = true
 	}
 
-	//known2 := knownClassifications.ToClassifiedIDs(pageTitles.Titles).Pages
+	// known2 := knownClassifications.ToClassifiedIDs(pageTitles.Titles).Pages
 
 	graph := make(map[uint32]map[uint32]bool, len(pageCategories.Pages))
 	for page, categories := range pageCategories.Pages {
@@ -145,7 +144,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 	fmt.Println(len(connectedGraphs))
 
-	//classifications := buildMap(known2, reverseTitles, pageCategories)
+	// classifications := buildMap(known2, reverseTitles, pageCategories)
 
 	// Post-classification analysis.
 
@@ -245,7 +244,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	//	}
 	//}
 
-	//return protos.Write(outClassifications, classifications)
+	// return protos.Write(outClassifications, classifications)
 	return nil
 }
 
@@ -341,7 +340,7 @@ func shortestTo(pageId uint32, want classify.Classification, pageCategories *doc
 		toVisit = nextToVisit
 	}
 
-	//fmt.Println("NO PATH")
+	// fmt.Println("NO PATH")
 	return nil
 }
 

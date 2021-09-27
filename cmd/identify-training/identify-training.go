@@ -8,14 +8,13 @@ import (
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/spf13/cobra"
-	"google.golang.org/protobuf/proto"
-
 	"github.com/willbeason/wikipedia/pkg/classify"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/nlp"
 	"github.com/willbeason/wikipedia/pkg/ordinality"
 	"github.com/willbeason/wikipedia/pkg/protos"
+	"google.golang.org/protobuf/proto"
 )
 
 func mainCmd() *cobra.Command {
