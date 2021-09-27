@@ -119,6 +119,7 @@ func unroll(start, end uint32, visited map[uint32]uint32) []uint32 {
 		for k, v := range visited {
 			fmt.Println(k, ":", v)
 		}
+		fmt.Println(path)
 
 		panic("HERE")
 	}

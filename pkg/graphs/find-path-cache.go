@@ -23,6 +23,10 @@ func FindDistance(start, end uint32, graph Directed, cache *ShortestCache) int {
 				continue
 			}
 
+			if _, isVisited := visited[child]; isVisited {
+				continue
+			}
+
 			seenDist, seen := cache.Get(child, end)
 
 			if child == end || seen {
@@ -33,10 +37,6 @@ func FindDistance(start, end uint32, graph Directed, cache *ShortestCache) int {
 				cache.Add(start, end, dist)
 
 				return dist
-			}
-
-			if _, isVisited := visited[child]; isVisited {
-				continue
 			}
 
 			visited[child] = next

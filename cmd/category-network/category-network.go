@@ -77,12 +77,40 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		reverseTitles[id] = title
 	}
 
+	ignoredArticlesBytes, err := ioutil.ReadFile("./data/ignored-articles.txt")
+	if err != nil {
+		return err
+	}
+	ignoredArticles := strings.Split(string(ignoredArticlesBytes), "\n")
+	ignoredArticlesMap := make(map[uint32]bool, len(ignoredArticles))
+	for _, title := range ignoredArticles {
+		title = strings.TrimSpace(title)
+		if title == "" {
+			continue
+		}
+
+		id, ok := pageTitles.Titles[title]
+		if !ok {
+			panic(fmt.Sprintf("%q", title))
+		}
+
+		ignoredArticlesMap[id] = true
+	}
+
 	//known2 := knownClassifications.ToClassifiedIDs(pageTitles.Titles).Pages
 
 	graph := make(map[uint32]map[uint32]bool, len(pageCategories.Pages))
 	for page, categories := range pageCategories.Pages {
+		if ignoredArticlesMap[page] {
+			continue
+		}
+
 		edges := make(map[uint32]bool, len(categories.Categories))
 		for _, c := range categories.Categories {
+			if ignoredArticlesMap[c] {
+				continue
+			}
+
 			edges[c] = true
 		}
 

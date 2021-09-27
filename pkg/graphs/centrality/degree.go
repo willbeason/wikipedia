@@ -1,8 +1,9 @@
 package centrality
 
 import (
-	"github.com/willbeason/wikipedia/pkg/graphs"
 	"strings"
+
+	"github.com/willbeason/wikipedia/pkg/graphs"
 )
 
 func InDegree(id uint32, graph *graphs.Directed) int {

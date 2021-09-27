@@ -2,22 +2,39 @@ package centrality
 
 import "github.com/willbeason/wikipedia/pkg/graphs"
 
-func ClosenessHarmonic(id uint32, graph *graphs.Directed, cache *graphs.ShortestCache) (closeness, harmonic float64) {
+func ClosenessHarmonic(id uint32, graph *graphs.Directed) (closeness, harmonic float64) {
 	closeness = 0.0
 	harmonic = 0.0
 
-	for j := range graph.Nodes {
-		if id == j {
-			continue
+	curDistance := 1
+	visited := make(map[uint32]bool, len(graph.Nodes))
+	visited[id] = true
+
+	curLayer := graph.Nodes[id]
+	nextLayer := make(map[uint32]bool)
+
+	for len(curLayer) > 0 {
+		for n := range curLayer {
+			if visited[n] {
+				continue
+			}
+
+			visited[n] = true
+
+			for child := range graph.Nodes[n] {
+				if !visited[child] {
+					nextLayer[child] = true
+				}
+			}
+
+			closeness += float64(curDistance)
+			harmonic += 1.0 / float64(curDistance)
 		}
 
-		dist := graphs.FindDistance(id, j, *graph, cache)
-		if dist == 0 {
-			continue
-		}
+		curDistance++
 
-		closeness += float64(dist)
-		harmonic += 1.0 / float64(dist)
+		curLayer = nextLayer
+		nextLayer = make(map[uint32]bool)
 	}
 
 	closeness = 1.0 / closeness

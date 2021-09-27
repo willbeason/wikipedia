@@ -3,14 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/willbeason/wikipedia/pkg/graphs/centrality"
-	"github.com/willbeason/wikipedia/pkg/jobs"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
+
+	"github.com/willbeason/wikipedia/pkg/graphs/centrality"
+	"github.com/willbeason/wikipedia/pkg/jobs"
 
 	"github.com/spf13/cobra"
 
@@ -51,7 +51,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	inCategories := args[0]
 	inTitles := args[1]
 	inNodes := args[2]
-	outCentrality := args[3]
+	//outCentrality := args[3]
 
 	pageTitles := &documents.TitleIndex{}
 
@@ -105,6 +105,10 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 		graph.Nodes[id] = nodeEdges
 	}
+
+	runMarkhov(graph, reverseTitles)
+
+	return nil
 
 	err = protos.Write("data/ignored-relationships-000.json", ignored)
 	if err != nil {
@@ -187,9 +191,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	wg := sync.WaitGroup{}
 	wg.Add(parallel)
 
-	shortestCache := &graphs.ShortestCache{
-		Distance: make(map[graphs.FromTo]int, len(graph.Nodes)*len(graph.Nodes)/2),
-	}
+	//shortestCache := graphs.NewShortestCache(uint32(parallel))
 
 	for i := 0; i < parallel; i++ {
 		go func() {
@@ -201,7 +203,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 					OutDegree: centrality.OutDegree(id, graph),
 				}
 
-				row.Closeness, row.Harmonic = centrality.ClosenessHarmonic(id, graph, shortestCache)
+				row.Closeness, row.Harmonic = centrality.ClosenessHarmonic(id, graph)
 
 				rowsChan <- row
 
@@ -223,59 +225,68 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		}()
 	}
 
-	go func() {
-		wg.Wait()
-		close(rowsChan)
-	}()
-
-	rows := make([]Row, len(ids))
-	idx := 0
-
-	for row := range rowsChan {
-		fmt.Println(idx)
-		rows[idx] = row
-		idx++
-	}
-
-
-	//for id := range ids {
-	//	cycle := graphs.FindPath(id, id, *graph)
+	//go func() {
+	//	wg.Wait()
+	//	close(rowsChan)
+	//}()
+	//
+	//rows := make([]Row, len(ids))
+	//idx := 0
+	//
+	//for row := range rowsChan {
+	//	fmt.Println(idx)
+	//
+	//	rows[idx] = row
+	//	idx++
+	//}
+	//
+	//
+	//var longestCycle []uint32
+	//
+	//for i, row := range rows {
+	//	cycle := graphs.FindPath(row.ID, row.ID, *graph)
 	//	if len(cycle) == 0 {
 	//		continue
 	//	}
 	//
-	//	for _, n := range cycle {
-	//		rows[rowID[n]].Cycle++
+	//	if len(cycle) > len(longestCycle) {
+	//		longestCycle = cycle
 	//	}
+	//
+	//	rows[i].Cycle = len(cycle)
 	//}
-
-	fmt.Println("Sorting")
-
-	sort.Slice(rows, func(i, j int) bool {
-		if rows[i].Closeness != rows[j].Closeness {
-			return rows[i].Closeness > rows[j].Closeness
-		}
-		return rows[i].Title < rows[j].Title
-	})
-
-	lines := make([]string, len(rows)+1)
-	lines[0] = "ID,Title,InDegree,OutDegree,Closeness,Harmonic,Cycle"
-
-	for i, row := range rows {
-		lines[i+1] = row.String()
-	}
-
-	err = os.MkdirAll(filepath.Dir(outCentrality), os.ModePerm)
-	if err != nil {
-		return err
-	}
-
-	outBytes := []byte(strings.Join(lines, "\n"))
-
-	err = ioutil.WriteFile(outCentrality, outBytes, os.ModePerm)
-	if err != nil {
-		return err
-	}
+	//
+	//for _, id := range longestCycle {
+	//	fmt.Println(reverseTitles[id])
+	//}
+	//
+	//fmt.Println("Sorting")
+	//
+	//sort.Slice(rows, func(i, j int) bool {
+	//	if rows[i].Closeness != rows[j].Closeness {
+	//		return rows[i].Closeness > rows[j].Closeness
+	//	}
+	//	return rows[i].Title < rows[j].Title
+	//})
+	//
+	//lines := make([]string, len(rows)+1)
+	//lines[0] = "ID,Title,InDegree,OutDegree,Closeness,Harmonic,Cycle"
+	//
+	//for i, row := range rows {
+	//	lines[i+1] = row.String()
+	//}
+	//
+	//err = os.MkdirAll(filepath.Dir(outCentrality), os.ModePerm)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//outBytes := []byte(strings.Join(lines, "\n"))
+	//
+	//err = ioutil.WriteFile(outCentrality, outBytes, os.ModePerm)
+	//if err != nil {
+	//	return err
+	//}
 
 	return nil
 }
@@ -287,7 +298,7 @@ type Row struct {
 	OutDegree int
 	Closeness float64
 	Harmonic  float64
-	Cycle int
+	Cycle     int
 }
 
 func (r *Row) String() string {
@@ -323,4 +334,24 @@ func toIDs(categories []string, titles map[string]uint32) map[uint32]bool {
 	}
 
 	return result
+}
+
+func runMarkhov(g *graphs.Directed, reverseTitles map[uint32]string) {
+	weights := centrality.Markhov(g, 1e-10, 1000)
+
+	nodes := make([]uint32, len(g.Nodes))
+	idx := 0
+
+	for n := range g.Nodes {
+		nodes[idx] = n
+		idx++
+	}
+
+	sort.Slice(nodes, func(i, j int) bool {
+		return weights[nodes[i]] > weights[nodes[j]]
+	})
+
+	for _, n := range nodes[:200] {
+		fmt.Println(n, reverseTitles[n], weights[n])
+	}
 }
