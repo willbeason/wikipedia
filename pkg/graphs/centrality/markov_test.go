@@ -9,7 +9,7 @@ import (
 	"github.com/willbeason/wikipedia/pkg/graphs"
 )
 
-func TestMarkhov(t *testing.T) {
+func TestMarkov(t *testing.T) {
 	tcs := []struct {
 		name  string
 		graph *graphs.Directed
@@ -44,7 +44,7 @@ func TestMarkhov(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			got := Markhov(tc.graph, 0.001, 100)
+			got := Markov(tc.graph, 0.001, 100)
 
 			if diff := cmp.Diff(tc.want, got, cmpopts.EquateApprox(0.001, 0.0)); diff != "" {
 				t.Error(diff)

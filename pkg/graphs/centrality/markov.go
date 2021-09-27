@@ -7,7 +7,7 @@ import (
 	"github.com/willbeason/wikipedia/pkg/graphs"
 )
 
-func Markhov(g *graphs.Directed, threshold float64, maxIters int) map[uint32]float64 {
+func Markov(g *graphs.Directed, threshold float64, maxIters int) map[uint32]float64 {
 	next := make(map[uint32]float64, len(g.Nodes))
 
 	for n := range g.Nodes {
