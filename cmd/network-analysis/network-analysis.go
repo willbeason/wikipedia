@@ -106,7 +106,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		graph.Nodes[id] = nodeEdges
 	}
 
-	runMarkhov(graph, reverseTitles)
+	runMarkov(graph, reverseTitles)
 
 	return nil
 
@@ -336,8 +336,8 @@ func toIDs(categories []string, titles map[string]uint32) map[uint32]bool {
 	return result
 }
 
-func runMarkhov(g *graphs.Directed, reverseTitles map[uint32]string) {
-	weights := centrality.Markhov(g, 1e-10, 1000)
+func runMarkov(g *graphs.Directed, reverseTitles map[uint32]string) {
+	weights := centrality.Markov(g, 1e-10, 1000)
 
 	nodes := make([]uint32, len(g.Nodes))
 	idx := 0
