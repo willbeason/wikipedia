@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -9,7 +10,7 @@ import (
 	"github.com/willbeason/wikipedia/pkg/flags"
 )
 
-var version string
+var version = "dirty"
 
 func main() {
 	ctx := context.Background()
@@ -35,6 +36,8 @@ func mainCmd() *cobra.Command {
 
 func runCmd(cmd *cobra.Command, _ []string) error {
 	cmd.SilenceUsage = true
+
+	fmt.Println("hello")
 
 	return nil
 }
