@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/spf13/cobra"
+
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/graphs"

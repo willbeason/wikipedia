@@ -1,14 +1,15 @@
 linters-settings:
-  dupl:
-    threshold: 100
+  cyclop:
+    package-average: 5.0
   funlen:
     lines: 100
     statements: 50
   gci:
-    local-prefixes: github.com/golangci/golangci-lint
+    local-prefixes: github.com/willbeason/wikipedia
+  gocognit:
+    min-complexity: 10
   goconst:
-    min-len: 2
-    min-occurrences: 2
+    numbers: true
   gocritic:
     enabled-tags:
       - diagnostic
@@ -16,20 +17,26 @@ linters-settings:
       - opinionated
       - performance
       - style
-    disabled-checks:
-      - octalLiteral
   gocyclo:
-    min-complexity: 15
+    min-complexity: 10
+  gofumpt:
+    lang-version: "1.17"
   goimports:
     local-prefixes: github.com/willbeason/wikipedia
+  gosimple:
+    go: "1.17"
   govet:
     check-shadowing: true
   lll:
     line-length: 150
-  maligned:
-    suggest-new: true
   misspell:
     locale: US
+  staticcheck:
+    go: "1.17"
+  stylecheck:
+    go: "1.17"
+  unused:
+    go: "1.17"
 
 linters:
   enable-all: true
