@@ -17,7 +17,7 @@ const (
 )
 
 func Parallel(cmd *cobra.Command) {
-	cmd.Flags().Int("parallel", runtime.NumCPU(),
+	cmd.PersistentFlags().Int("parallel", runtime.NumCPU(),
 		"number of concurrent workers to run on jobs; defaults to number of available logical CPUs")
 }
 
@@ -27,5 +27,5 @@ func DictionarySize(cmd *cobra.Command) {
 }
 
 func IDs(cmd *cobra.Command) {
-	cmd.Flags().UintSlice(IDsKey, nil, "A list of specific article ids to check.")
+	cmd.PersistentFlags().UintSlice(IDsKey, nil, "A list of specific article ids to check.")
 }

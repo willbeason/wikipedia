@@ -31,6 +31,10 @@ linters-settings:
     line-length: 150
   misspell:
     locale: US
+  gomnd:
+    settings:
+      mnd:
+        ignored-functions: [mainCmd]
   staticcheck:
     go: "1.17"
   stylecheck:
@@ -42,6 +46,7 @@ linters:
   enable-all: true
   disable:
    - golint
+   - exhaustivestruct
    - interfacer
    - maligned
    - scopelint
