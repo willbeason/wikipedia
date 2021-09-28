@@ -9,7 +9,7 @@ import (
 	"github.com/willbeason/wikipedia/pkg/flags"
 )
 
-const version = "v0.1.0"
+var version string
 
 func main() {
 	ctx := context.Background()
@@ -22,9 +22,10 @@ func main() {
 
 func mainCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   `wikoptica subcommand`,
-		Short: `Run wikoptica analysis on a Wikipedia corpus`,
-		RunE:  runCmd,
+		Version: version,
+		Use:     `wikoptica subcommand`,
+		Short:   `Run wikoptica analysis on a Wikipedia corpus`,
+		RunE:    runCmd,
 	}
 
 	flags.Parallel(cmd)
