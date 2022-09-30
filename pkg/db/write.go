@@ -9,6 +9,7 @@ import (
 	"github.com/dgraph-io/badger/v3"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/willbeason/wikipedia/pkg/protos"
 )
 
 // Write writes all protos to the Runner's DB.

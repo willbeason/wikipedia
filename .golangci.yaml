@@ -10,6 +10,7 @@ linters-settings:
     min-complexity: 10
   goconst:
     numbers: true
+    min-len: 4
   gocritic:
     enabled-tags:
       - diagnostic
@@ -34,13 +35,18 @@ linters-settings:
   gomnd:
     settings:
       mnd:
-        ignored-functions: [mainCmd]
+        ignored-functions: mainCmd
   staticcheck:
     go: "1.17"
   stylecheck:
     go: "1.17"
   unused:
     go: "1.17"
+
+issues:
+  exclude-rules:
+    - path: '(.+)_test\.go'
+      text: "varnamelen"
 
 linters:
   enable-all: true
@@ -50,3 +56,40 @@ linters:
    - interfacer
    - maligned
    - scopelint
+   - structcheck
+   - ifshort
+   - varcheck
+   - nosnakecase
+   - deadcode
+   # To re-enable
+   - varnamelen
+   - wrapcheck
+   - paralleltest
+   - forbidigo
+   - gocognit
+   - gomnd
+   - gochecknoglobals
+   - exhaustruct
+   - funlen
+   - gocyclo
+   - cyclop
+   - maintidx
+   - ireturn
+   - lll
+   - prealloc
+   - unused
+   - gocritic
+   - gosec
+   - makezero
+   - unparam
+   - wsl
+   - contextcheck
+   - forcetypeassert
+   - ineffassign
+   - nlreturn
+   - errorlint
+   - goerr113
+   - staticcheck
+   - tagliatelle
+   - testpackage
+   - nonamedreturns

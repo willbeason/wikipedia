@@ -1,57 +1,59 @@
-package classify
+package classify_test
 
 import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+
+	"github.com/willbeason/wikipedia/pkg/classify"
 )
 
 func TestLogDistribution_ToDistribution(t *testing.T) {
 	tcs := []struct {
 		name            string
-		logDistribution LogDistribution
-		want            Distribution
+		logDistribution classify.LogDistribution
+		want            classify.Distribution
 	}{
 		{
 			name:            "nil distribution",
 			logDistribution: nil,
-			want:            Distribution{},
+			want:            classify.Distribution{},
 		},
 		{
 			name:            "empty distribution",
-			logDistribution: LogDistribution{},
-			want:            Distribution{},
+			logDistribution: classify.LogDistribution{},
+			want:            classify.Distribution{},
 		},
 		{
 			name:            "one entry",
-			logDistribution: LogDistribution{0.0},
-			want:            Distribution{1.0},
+			logDistribution: classify.LogDistribution{0.0},
+			want:            classify.Distribution{1.0},
 		},
 		{
 			name:            "one entry very negative",
-			logDistribution: LogDistribution{-1000.0},
-			want:            Distribution{1.0},
+			logDistribution: classify.LogDistribution{-1000.0},
+			want:            classify.Distribution{1.0},
 		},
 		{
 			name:            "three entries",
-			logDistribution: LogDistribution{0.0, -1.0, -2.0},
-			want:            Distribution{0.665, 0.244, 0.090},
+			logDistribution: classify.LogDistribution{0.0, -1.0, -2.0},
+			want:            classify.Distribution{0.665, 0.244, 0.090},
 		},
 		{
 			name:            "three entries offset",
-			logDistribution: LogDistribution{-100.0, -101.0, -102.0},
-			want:            Distribution{0.665, 0.244, 0.090},
+			logDistribution: classify.LogDistribution{-100.0, -101.0, -102.0},
+			want:            classify.Distribution{0.665, 0.244, 0.090},
 		},
 		{
 			name:            "extreme differences",
-			logDistribution: LogDistribution{0.0, -10.0, -20.0},
-			want:            Distribution{1.000, 0.000, 0.000},
+			logDistribution: classify.LogDistribution{0.0, -10.0, -20.0},
+			want:            classify.Distribution{1.000, 0.000, 0.000},
 		},
 		{
 			name:            "extreme differences",
-			logDistribution: LogDistribution{0.0, -1000.0, -2000.0},
-			want:            Distribution{1.000, 0.000, 0.000},
+			logDistribution: classify.LogDistribution{0.0, -1000.0, -2000.0},
+			want:            classify.Distribution{1.000, 0.000, 0.000},
 		},
 	}
 
@@ -69,8 +71,8 @@ func TestLogDistribution_ToDistribution(t *testing.T) {
 func TestDistribution_Normalize(t *testing.T) {
 	tcs := []struct {
 		name   string
-		before Distribution
-		want   Distribution
+		before classify.Distribution
+		want   classify.Distribution
 	}{
 		{
 			name:   "nil distribution",
@@ -79,38 +81,38 @@ func TestDistribution_Normalize(t *testing.T) {
 		},
 		{
 			name:   "empty distribution",
-			before: Distribution{},
-			want:   Distribution{},
+			before: classify.Distribution{},
+			want:   classify.Distribution{},
 		},
 		{
 			name:   "zero distribution one entry",
-			before: Distribution{0.0},
-			want:   Distribution{0.0},
+			before: classify.Distribution{0.0},
+			want:   classify.Distribution{0.0},
 		},
 		{
 			name:   "zero distribution three entries",
-			before: Distribution{0.0, 0.0, 0.0},
-			want:   Distribution{0.0, 0.0, 0.0},
+			before: classify.Distribution{0.0, 0.0, 0.0},
+			want:   classify.Distribution{0.0, 0.0, 0.0},
 		},
 		{
 			name:   "identity distribution",
-			before: Distribution{1.0},
-			want:   Distribution{1.0},
+			before: classify.Distribution{1.0},
+			want:   classify.Distribution{1.0},
 		},
 		{
 			name:   "one small element",
-			before: Distribution{0.01},
-			want:   Distribution{1.0},
+			before: classify.Distribution{0.01},
+			want:   classify.Distribution{1.0},
 		},
 		{
 			name:   "three equal elements",
-			before: Distribution{1.0, 1.0, 1.0},
-			want:   Distribution{0.333, 0.333, 0.333},
+			before: classify.Distribution{1.0, 1.0, 1.0},
+			want:   classify.Distribution{0.333, 0.333, 0.333},
 		},
 		{
 			name:   "three unequal elements",
-			before: Distribution{3.0, 2.0, 1.0},
-			want:   Distribution{0.5, 0.333, 0.167},
+			before: classify.Distribution{3.0, 2.0, 1.0},
+			want:   classify.Distribution{0.5, 0.333, 0.167},
 		},
 	}
 

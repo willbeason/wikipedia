@@ -1,9 +1,11 @@
-package nlp
+package nlp_test
 
 import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+
+	"github.com/willbeason/wikipedia/pkg/nlp"
 )
 
 func TestNgramTokenizer_Tokenize(t *testing.T) {
@@ -78,8 +80,8 @@ func TestNgramTokenizer_Tokenize(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tokenizer := NgramTokenizer{
-				Underlying: WordTokenizer{},
+			tokenizer := nlp.NgramTokenizer{
+				Underlying: nlp.WordTokenizer{},
 				Dictionary: tc.dictionary,
 			}
 

@@ -2,7 +2,6 @@ package protos
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -11,7 +10,7 @@ import (
 )
 
 func Read(file string, out proto.Message) error {
-	bytes, err := ioutil.ReadFile(file)
+	bytes, err := os.ReadFile(file)
 	if err != nil {
 		return err
 	}
@@ -51,5 +50,5 @@ func Write(path string, p proto.Message) error {
 		return fmt.Errorf("unsupported proto extension %q", ext)
 	}
 
-	return ioutil.WriteFile(path, bytes, os.ModePerm)
+	return os.WriteFile(path, bytes, os.ModePerm)
 }

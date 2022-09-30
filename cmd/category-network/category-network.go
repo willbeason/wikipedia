@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	_ "net/http/pprof"
 	"os"
 	"path/filepath"
@@ -77,7 +76,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		reverseTitles[id] = title
 	}
 
-	ignoredArticlesBytes, err := ioutil.ReadFile("./data/ignored-articles.txt")
+	ignoredArticlesBytes, err := os.ReadFile("./data/ignored-articles.txt")
 	if err != nil {
 		return err
 	}
@@ -136,116 +135,17 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		bytes := []byte(strings.Join(titles, "\n"))
 
 		file := filepath.Join(outClassifications, fmt.Sprintf("%03d.txt", i))
-		err = ioutil.WriteFile(file, bytes, os.ModePerm)
+
+		err = os.WriteFile(file, bytes, os.ModePerm)
 		if err != nil {
 			return err
 		}
+
 		fmt.Println("Wrote to", file)
 	}
 
 	fmt.Println(len(connectedGraphs))
 
-	// classifications := buildMap(known2, reverseTitles, pageCategories)
-
-	// Post-classification analysis.
-
-	//all := 0
-	//alls := make(chan uint32, 100)
-	//
-	//go func() {
-	//	solos := make(map[classify.Classification]uint32)
-	//
-	//	for id, c := range classifications.Pages {
-	//		cl := onlyUnknown(c.Classifications)
-	//		if cl == nil {
-	//
-	//			nHas := 0
-	//			for i, cc := range c.Classifications {
-	//				if i == int(cc) {
-	//					nHas++
-	//					if nHas >= 14 {
-	//						break
-	//					}
-	//				}
-	//			}
-	//			if nHas >= 14 {
-	//				alls <- id
-	//				all++
-	//			}
-	//
-	//			continue
-	//		}
-	//		solos[*cl]++
-	//	}
-	//	close(alls)
-	//
-	//	for i := int32(0); i < 20; i++ {
-	//		fmt.Println(classify.Classification_name[i], solos[classify.Classification(i)])
-	//	}
-	//	fmt.Println("ALL", all)
-	//	fmt.Println()
-	//}()
-	//
-	//shortestWg := sync.WaitGroup{}
-	//shortestWg.Add(parallel)
-	//
-	//paths := make(chan []uint32)
-	//
-	//for i := 0; i < parallel; i++ {
-	//	go func() {
-	//		for id := range alls {
-	//			for c := classify.Classification_PHILOSOPHY; c <= classify.Classification_INFORMATION_SCIENCE; c++ {
-	//				paths <- shortestTo(id, c, pageCategories, known2)
-	//			}
-	//		}
-	//
-	//		shortestWg.Done()
-	//	}()
-	//}
-	//
-	//go func() {
-	//	shortestWg.Wait()
-	//	close(paths)
-	//}()
-	//
-	//nodeFrequency := make(map[uint32]uint32)
-	//
-	//fmt.Println("Combining paths")
-	//nCombined := 0
-	//
-	//for path := range paths {
-	//	for _, id := range path {
-	//		nodeFrequency[id]++
-	//	}
-	//	nCombined++
-	//	if nCombined%1000 == 0 {
-	//		fmt.Println("Combined", nCombined)
-	//	}
-	//}
-	//
-	//fmt.Println("Combined paths")
-	//
-	//sortedList := make([]f, len(nodeFrequency))
-	//idx := 0
-	//
-	//for id, count := range nodeFrequency {
-	//	sortedList[idx] = f{id: id, count: count}
-	//	idx++
-	//}
-	//
-	//sort.Slice(sortedList, func(i, j int) bool {
-	//	return sortedList[i].count > sortedList[j].count
-	//})
-	//
-	//for _, entry := range sortedList[:100] {
-	//	if _, isKnown := known2[entry.id]; isKnown {
-	//		fmt.Println("KNOWN", reverseTitles[entry.id], ":", entry.count)
-	//	} else {
-	//		fmt.Println(reverseTitles[entry.id], ":", entry.count)
-	//	}
-	//}
-
-	// return protos.Write(outClassifications, classifications)
 	return nil
 }
 
@@ -265,12 +165,8 @@ func buildMap(known map[uint32]classify.Classification, reverseTitles map[uint32
 
 	n := 0
 
-	for pageId, categories := range pageCategories.Pages {
-		//if pageId != 48628332 {
-		//	continue
-		//}
-
-		result.AddPage(known, reverseTitles, pageId, categories.Categories, pageCategories)
+	for pageID, categories := range pageCategories.Pages {
+		result.AddPage(known, reverseTitles, pageID, categories.Categories, pageCategories)
 
 		n++
 		if n%10000 == 0 {
@@ -304,18 +200,20 @@ func coreClassification(c classify.Classification) *classify.PageClassifications
 	return &classify.PageClassifications{Classifications: result}
 }
 
-func shortestTo(pageId uint32, want classify.Classification, pageCategories *documents.PageCategories, known map[uint32]classify.Classification) []uint32 {
+func shortestTo(pageID uint32, want classify.Classification, pageCategories *documents.PageCategories, known map[uint32]classify.Classification) []uint32 {
 	visited := make(map[uint32]uint32)
 
 	toVisit := map[uint32]bool{
-		pageId: true,
+		pageID: true,
 	}
+
 	var nextToVisit map[uint32]bool
 
 	depth := 0
 
 	for len(toVisit) > 0 {
 		depth++
+
 		nextToVisit = make(map[uint32]bool)
 
 		for k := range toVisit {
@@ -328,7 +226,7 @@ func shortestTo(pageId uint32, want classify.Classification, pageCategories *doc
 			}
 
 			for _, c := range pageCategories.Pages[k].Categories {
-				if _, seen := visited[c]; seen || c == pageId {
+				if _, seen := visited[c]; seen || c == pageID {
 					continue
 				}
 
@@ -356,12 +254,12 @@ func unwind(k uint32, visited map[uint32]uint32, depth int) []uint32 {
 		next, found = visited[next]
 	}
 
-	//for i, j := 0, len(result)-1; i < j; i, j = i+1, j-1 {
+	// for i, j := 0, len(result)-1; i < j; i, j = i+1, j-1 {
 	//	result[i], result[j] = result[j], result[i]
 	//}
 
-	//fmt.Println("Length:", len(result))
-	//for _, id := range result {
+	// fmt.Println("Length:", len(result))
+	// for _, id := range result {
 	//	fmt.Println(reverseTitles[id])
 	//}
 
@@ -390,6 +288,7 @@ func findAllConnectedDigraphs(parallel int, graph graphs.Directed) []map[uint32]
 			}
 			nMtx.Unlock()
 		}
+
 		close(work)
 	}()
 
@@ -402,6 +301,7 @@ func findAllConnectedDigraphs(parallel int, graph graphs.Directed) []map[uint32]
 				inCyclesMtx.RLock()
 				seen := inCycles[k]
 				inCyclesMtx.RUnlock()
+
 				if seen {
 					continue
 				}
@@ -457,12 +357,14 @@ func findAllConnectedDigraphs(parallel int, graph graphs.Directed) []map[uint32]
 			to := graphs.FindPath(*iStart, *jStart, graph)
 			if len(to) == 0 {
 				j++
+
 				continue
 			}
 
 			from := graphs.FindPath(*jStart, *iStart, graph)
 			if len(from) == 0 {
 				j++
+
 				continue
 			}
 
@@ -476,6 +378,7 @@ func findAllConnectedDigraphs(parallel int, graph graphs.Directed) []map[uint32]
 	})
 
 	fmt.Println("Found", len(connectedGraphs), "connected graphs")
+
 	if len(connectedGraphs) > 0 {
 		fmt.Println("Largest connected graph is of size", len(connectedGraphs[0]))
 	}
@@ -487,6 +390,7 @@ func getKey(m map[uint32]bool) *uint32 {
 	for k := range m {
 		return &k
 	}
+
 	return nil
 }
 
@@ -498,5 +402,6 @@ func merge(x, y int, gs []map[uint32]bool) []map[uint32]bool {
 	gs[x] = gsx
 
 	copy(gs[y:], gs[y+1:])
+
 	return gs[:len(gs)-1]
 }

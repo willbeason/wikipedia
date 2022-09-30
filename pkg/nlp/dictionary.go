@@ -2,7 +2,7 @@ package nlp
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -18,7 +18,7 @@ func ReadDictionary(path string) (*Dictionary, error) {
 		return dictionary, nil
 	}
 
-	bytes, err := ioutil.ReadFile(path)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

@@ -265,7 +265,7 @@ var file_pkg_nlp_nlp_proto_goTypes = []interface{}{
 	(*Dictionary)(nil),     // 3: nlp.Dictionary
 	nil,                    // 4: nlp.FrequencyMap.WordsEntry
 }
-var file_pkg_nlp_nlp_proto_depIdxs = []int32{
+var file_pkg_nlp_nlp_proto_depIDxs = []int32{
 	4, // 0: nlp.FrequencyMap.words:type_name -> nlp.FrequencyMap.WordsEntry
 	2, // 1: nlp.FrequencyTable.words:type_name -> nlp.WordCount
 	2, // [2:2] is the sub-list for method output_type
@@ -341,11 +341,11 @@ func file_pkg_nlp_nlp_proto_init() {
 			NumServices:   0,
 		},
 		GoTypes:           file_pkg_nlp_nlp_proto_goTypes,
-		DependencyIndexes: file_pkg_nlp_nlp_proto_depIdxs,
+		DependencyIndexes: file_pkg_nlp_nlp_proto_depIDxs,
 		MessageInfos:      file_pkg_nlp_nlp_proto_msgTypes,
 	}.Build()
 	File_pkg_nlp_nlp_proto = out.File
 	file_pkg_nlp_nlp_proto_rawDesc = nil
 	file_pkg_nlp_nlp_proto_goTypes = nil
-	file_pkg_nlp_nlp_proto_depIdxs = nil
+	file_pkg_nlp_nlp_proto_depIDxs = nil
 }

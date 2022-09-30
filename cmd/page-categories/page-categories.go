@@ -59,6 +59,9 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	errs, errsWg := jobs.Errors()
 
 	ps, err := source(ctx, errs)
+	if err != nil {
+		return err
+	}
 
 	results := makePageCategories(titleIndex, ps)
 

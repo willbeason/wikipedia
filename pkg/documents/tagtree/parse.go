@@ -9,6 +9,7 @@ import (
 var (
 	openTag  = regexp.MustCompile(`{{`)
 	closeTag = regexp.MustCompile(`}}`)
+	dash     = "dash"
 )
 
 type Brace struct {
@@ -44,27 +45,27 @@ func toBraces(s string) ([]Brace, error) {
 
 	result := make([]Brace, 0, nTags*2)
 
-	openIdx := 0
-	closeIdx := 0
+	openIDx := 0
+	closeIDx := 0
 
-	for openIdx != nTags && closeIdx != nTags {
-		if openTags[openIdx][0] < closeTags[closeIdx][0] {
-			result = append(result, toBrace(BraceOpen, openTags[openIdx]))
-			openIdx++
+	for openIDx != nTags && closeIDx != nTags {
+		if openTags[openIDx][0] < closeTags[closeIDx][0] {
+			result = append(result, toBrace(BraceOpen, openTags[openIDx]))
+			openIDx++
 		} else {
-			result = append(result, toBrace(BraceClose, closeTags[closeIdx]))
-			closeIdx++
+			result = append(result, toBrace(BraceClose, closeTags[closeIDx]))
+			closeIDx++
 		}
 	}
 
-	for openIdx != nTags {
-		result = append(result, toBrace(BraceOpen, openTags[openIdx]))
-		openIdx++
+	for openIDx != nTags {
+		result = append(result, toBrace(BraceOpen, openTags[openIDx]))
+		openIDx++
 	}
 
-	for closeIdx != nTags {
-		result = append(result, toBrace(BraceClose, closeTags[closeIdx]))
-		closeIdx++
+	for closeIDx != nTags {
+		result = append(result, toBrace(BraceClose, closeTags[closeIDx]))
+		closeIDx++
 	}
 
 	return result, nil
@@ -104,10 +105,10 @@ func Parse(category string) Node {
 		return result
 	}
 
-	sIdx := braces[0].Start
+	sIDx := braces[0].Start
 	parent := &NodeParent{
 		Children: []Node{
-			&NodeString{Value: category[:sIdx]},
+			&NodeString{Value: category[:sIDx]},
 		},
 	}
 
@@ -117,11 +118,11 @@ func Parse(category string) Node {
 		switch brace.Type {
 		case BraceOpen:
 			if level == 0 {
-				if sIdx != braces[i].Start {
-					parent.Children = append(parent.Children, &NodeString{Value: category[sIdx:braces[i].Start]})
+				if sIDx != braces[i].Start {
+					parent.Children = append(parent.Children, &NodeString{Value: category[sIDx:braces[i].Start]})
 				}
 
-				sIdx = braces[i].Start
+				sIDx = braces[i].Start
 			}
 
 			level++
@@ -129,8 +130,8 @@ func Parse(category string) Node {
 			level--
 
 			if level == 0 {
-				parent.Children = append(parent.Children, parseTag(category[sIdx:braces[i].End]))
-				sIdx = braces[i].End
+				parent.Children = append(parent.Children, parseTag(category[sIDx:braces[i].End]))
+				sIDx = braces[i].End
 			} else if level < 0 {
 				return &NodeString{Value: category}
 			}
@@ -139,8 +140,8 @@ func Parse(category string) Node {
 		}
 	}
 
-	if sIdx != len(category) {
-		parent.Children = append(parent.Children, &NodeString{Value: category[sIdx:]})
+	if sIDx != len(category) {
+		parent.Children = append(parent.Children, &NodeString{Value: category[sIDx:]})
 	}
 
 	return parent
@@ -202,19 +203,22 @@ func parseTag(category string) Node {
 			return &NodeCentury{Value: &NodeString{Value: "<MISSING CENTURY NODE>"}}
 		}
 
-		dash := splits[len(splits)-1] == "dash"
+		dash := splits[len(splits)-1] == dash
+
 		return &NodeCentury{
 			Value: Parse(splits[1]),
 			Dash:  dash,
 		}
 	case "century name from title year":
-		dash := splits[len(splits)-1] == "dash"
+		dash := splits[len(splits)-1] == dash
+
 		return &NodeCentury{Value: &NodeTitleYear{}, Dash: dash}
 	case "century name from title decade":
-		dash := splits[len(splits)-1] == "dash"
+		dash := splits[len(splits)-1] == dash
+
 		return &NodeCentury{Value: &NodeTitleDecade{}, Dash: dash}
 	case "century name from decade or year":
-		dash := splits[len(splits)-1] == "dash"
+		dash := splits[len(splits)-1] == dash
 
 		if len(splits) == 1 {
 			return &NodeCentury{Value: &NodeString{Value: "<MISSING CENTURY NODE>"}}

@@ -1,7 +1,5 @@
 package graphs
 
-import "fmt"
-
 type Connected map[uint32]bool
 
 // FindCycle returns a loop containing start in graph, or nil if there is no such loop.
@@ -20,7 +18,8 @@ type Queue struct {
 }
 
 func NewQueue(value uint32) *Queue {
-	q := &Queue{Value: value}
+	q := &Queue{Value: value, Next: nil, Previous: nil}
+
 	q.Next = q
 	q.Previous = q
 
@@ -40,6 +39,7 @@ func (q *Queue) Enqueue(value uint32) *Queue {
 
 	q.Previous.Next = end
 	q.Previous = end
+
 	return q
 }
 
@@ -59,12 +59,12 @@ func (q *Queue) Empty() bool {
 }
 
 func FindPath(start, end uint32, graph Directed) []uint32 {
-	q := NewQueue(start)
+	toVisit := NewQueue(start)
 	visited := map[uint32]uint32{}
 
 	var next uint32
-	for !q.Empty() {
-		next, q = q.Dequeue()
+	for !toVisit.Empty() {
+		next, toVisit = toVisit.Dequeue()
 
 		children, ok := graph.Nodes[next]
 		if !ok {
@@ -79,6 +79,7 @@ func FindPath(start, end uint32, graph Directed) []uint32 {
 
 			if child == end {
 				visited[child] = next
+
 				return unroll(start, child, visited)
 			}
 
@@ -88,7 +89,7 @@ func FindPath(start, end uint32, graph Directed) []uint32 {
 
 			visited[child] = next
 
-			q = q.Enqueue(child)
+			toVisit = toVisit.Enqueue(child)
 		}
 	}
 
@@ -99,8 +100,8 @@ func unroll(start, end uint32, visited map[uint32]uint32) []uint32 {
 	path := []uint32{end}
 	seenInPath := map[uint32]bool{end: true}
 
-	next, ok := visited[end]
-	for next != start && ok {
+	next, found := visited[end]
+	for next != start && found {
 		if seenInPath[next] {
 			break
 		}
@@ -109,19 +110,7 @@ func unroll(start, end uint32, visited map[uint32]uint32) []uint32 {
 
 		path = append(path, next)
 
-		next, ok = visited[next]
-	}
-
-	if next != start {
-		fmt.Println("START:", start)
-		fmt.Println("END:", end)
-
-		for k, v := range visited {
-			fmt.Println(k, ":", v)
-		}
-		fmt.Println(path)
-
-		panic("HERE")
+		next, found = visited[next]
 	}
 
 	path = append(path, start)

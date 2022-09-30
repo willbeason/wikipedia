@@ -52,15 +52,15 @@ func mainCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("unable to read training data: %w", err)
 			}
-			trainingPageIds := make([]uint, len(known.Articles))
+			trainingPageIDs := make([]uint, len(known.Articles))
 
 			i := 0
 			for k := range known.Articles {
-				trainingPageIds[i] = uint(k)
+				trainingPageIDs[i] = uint(k)
 				i++
 			}
 
-			trainingWork := jobs.IDs(inDB, newWordBag, trainingPageIds, errs)
+			trainingWork := jobs.IDs(inDB, newWordBag, trainingPageIDs, errs)
 			trainingData := make(chan *classify.WordBagClassification, 100)
 			trainingWorkWg := jobs.RunProto(parallel, readTrainingData(known.Articles, trainingData), trainingWork, errs)
 
@@ -79,14 +79,14 @@ func mainCmd() *cobra.Command {
 
 			var ids []uint
 			for _, articleIDString := range strings.Split(articleIDsString, ",") {
-				articleID, err := strconv.ParseUint(articleIDString, 10, 32)
-				if err != nil {
+				articleID, err2 := strconv.ParseUint(articleIDString, 10, 32)
+				if err2 != nil {
 					return fmt.Errorf("article ID %s is not a valid uint32", articleIDString)
 				}
 				ids = append(ids, uint(articleID))
 			}
 
-			findWork := jobs.IDs(inDB, newWordBag, trainingPageIds, errs)
+			findWork := jobs.IDs(inDB, newWordBag, trainingPageIDs, errs)
 			foundChan := make(chan *ordinality.PageWordBag, 100)
 			findWorkWg := jobs.RunProto(parallel, findPage(foundChan), findWork, errs)
 
@@ -158,7 +158,6 @@ func readTrainingData(known map[uint32]classify.Classification, trainingData cha
 			return fmt.Errorf("unknown classification for article ID %d", wordBag.Id)
 		}
 
-		// fmt.Printf("Found article %d: %q to classify as %s\n", wordBag.Id, wordBag.Title, classification)
 		trainingData <- &classify.WordBagClassification{
 			Classification: classification,
 			PageWordBag:    wordBag,

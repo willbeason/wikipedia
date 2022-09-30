@@ -39,12 +39,7 @@ func printProtos(ps <-chan ID, errs chan<- error) {
 func printProto(p ID) error {
 	page := p.(*documents.Page)
 
-	//bytes, err := protojson.MarshalOptions{Indent: "  "}.Marshal(p)
-	//if err != nil {
-	//	return err
-	//}
-
-	fmt.Println(string(page.Text))
+	fmt.Println(page.Text)
 	fmt.Println()
 
 	return nil

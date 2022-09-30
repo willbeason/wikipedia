@@ -1,27 +1,33 @@
-package graphs
+package graphs_test
 
 import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+
+	"github.com/willbeason/wikipedia/pkg/graphs"
 )
 
 func TestFindCycle(t *testing.T) {
+	t.Parallel()
+
 	tcs := []struct {
 		name  string
-		graph Directed
+		graph graphs.Directed
 		start uint32
 		want  []uint32
 	}{
 		{
-			name:  "empty graph",
-			graph: Directed{},
+			name: "empty graph",
+			graph: graphs.Directed{
+				Nodes: nil,
+			},
 			start: 0,
 			want:  nil,
 		},
 		{
 			name: "singleton no edges",
-			graph: Directed{
+			graph: graphs.Directed{
 				Nodes: map[uint32]map[uint32]bool{
 					0: {},
 				},
@@ -31,7 +37,7 @@ func TestFindCycle(t *testing.T) {
 		},
 		{
 			name: "singleton cycle",
-			graph: Directed{
+			graph: graphs.Directed{
 				Nodes: map[uint32]map[uint32]bool{
 					0: {0: true},
 				},
@@ -41,7 +47,7 @@ func TestFindCycle(t *testing.T) {
 		},
 		{
 			name: "two disconnected nodes",
-			graph: Directed{
+			graph: graphs.Directed{
 				Nodes: map[uint32]map[uint32]bool{
 					0: {},
 					1: {},
@@ -52,7 +58,7 @@ func TestFindCycle(t *testing.T) {
 		},
 		{
 			name: "two nodes one edge",
-			graph: Directed{
+			graph: graphs.Directed{
 				Nodes: map[uint32]map[uint32]bool{
 					0: {1: true},
 					1: {},
@@ -63,7 +69,7 @@ func TestFindCycle(t *testing.T) {
 		},
 		{
 			name: "two nodes cycle",
-			graph: Directed{
+			graph: graphs.Directed{
 				Nodes: map[uint32]map[uint32]bool{
 					0: {1: true},
 					1: {0: true},
@@ -74,7 +80,7 @@ func TestFindCycle(t *testing.T) {
 		},
 		{
 			name: "two nodes cycle and self cycle",
-			graph: Directed{
+			graph: graphs.Directed{
 				Nodes: map[uint32]map[uint32]bool{
 					0: {0: true, 1: true},
 					1: {0: true},
@@ -85,7 +91,7 @@ func TestFindCycle(t *testing.T) {
 		},
 		{
 			name: "long cycle",
-			graph: Directed{
+			graph: graphs.Directed{
 				Nodes: map[uint32]map[uint32]bool{
 					0: {1: true},
 					1: {2: true},
@@ -104,7 +110,7 @@ func TestFindCycle(t *testing.T) {
 		},
 		{
 			name: "long cycle 2",
-			graph: Directed{
+			graph: graphs.Directed{
 				Nodes: map[uint32]map[uint32]bool{
 					0: {1: true},
 					1: {2: true},
@@ -124,8 +130,12 @@ func TestFindCycle(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
-			got := FindCycle(tc.start, tc.graph)
+			t.Parallel()
+
+			got := graphs.FindCycle(tc.start, tc.graph)
 
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Error(diff)

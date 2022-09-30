@@ -1,7 +1,7 @@
 package graphs
 
 func FindDistance(start, end uint32, graph Directed, cache *ShortestCache) int {
-	q := NewQueue(start)
+	toVisit := NewQueue(start)
 	visited := map[uint32]uint32{}
 
 	for child := range graph.Nodes[start] {
@@ -9,8 +9,8 @@ func FindDistance(start, end uint32, graph Directed, cache *ShortestCache) int {
 	}
 
 	var next uint32
-	for !q.Empty() {
-		next, q = q.Dequeue()
+	for !toVisit.Empty() {
+		next, toVisit = toVisit.Dequeue()
 
 		children, ok := graph.Nodes[next]
 		if !ok {
@@ -43,7 +43,7 @@ func FindDistance(start, end uint32, graph Directed, cache *ShortestCache) int {
 
 			cache.AddNext(start, next, child)
 
-			q = q.Enqueue(child)
+			toVisit = toVisit.Enqueue(child)
 		}
 	}
 

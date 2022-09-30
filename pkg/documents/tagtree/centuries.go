@@ -16,8 +16,10 @@ func (n *NodeCentury) String(title string) string {
 	year := n.Value.String(title)
 
 	var century uint64
+
 	if _, isDecade := n.Value.(*NodeTitleDecade); isDecade || strings.HasSuffix(year, "s") {
 		year = strings.TrimSuffix(year, "s")
+
 		nYear, err := strconv.ParseUint(year, 10, 16)
 		if err != nil {
 			return "<UNABLE TO PARSE DECADE>"

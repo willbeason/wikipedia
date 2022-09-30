@@ -8,7 +8,7 @@ import (
 type Distribution []float64
 
 func (d Distribution) Normalize() {
-	if d == nil || len(d) == 0 {
+	if len(d) == 0 {
 		return
 	}
 
@@ -40,7 +40,7 @@ type LogDistribution []float64
 
 // ToDistribution returns an equivalent normalized Distribution.
 func (d LogDistribution) ToDistribution() Distribution {
-	if d == nil || len(d) == 0 {
+	if len(d) == 0 {
 		return Distribution{}
 	}
 

@@ -27,7 +27,7 @@ type PageWordBag struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Id is the unique identifier of the page.
+	// ID is the unique identifier of the page.
 	Id uint32 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Title is the textual title of the page.
 	Title string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
@@ -67,7 +67,7 @@ func (*PageWordBag) Descriptor() ([]byte, []int) {
 	return file_pkg_ordinality_ordinality_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *PageWordBag) GetId() uint32 {
+func (x *PageWordBag) GetID() uint32 {
 	if x != nil {
 		return x.Id
 	}
@@ -186,7 +186,7 @@ func (*PageWordMap) Descriptor() ([]byte, []int) {
 	return file_pkg_ordinality_ordinality_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *PageWordMap) GetId() uint32 {
+func (x *PageWordMap) GetID() uint32 {
 	if x != nil {
 		return x.Id
 	}
@@ -248,7 +248,7 @@ var file_pkg_ordinality_ordinality_proto_goTypes = []interface{}{
 	(*PageWordMap)(nil), // 2: ordinality.PageWordMap
 	nil,                 // 3: ordinality.PageWordMap.WordsEntry
 }
-var file_pkg_ordinality_ordinality_proto_depIdxs = []int32{
+var file_pkg_ordinality_ordinality_proto_depIDxs = []int32{
 	1, // 0: ordinality.PageWordBag.words:type_name -> ordinality.WordCount
 	3, // 1: ordinality.PageWordMap.words:type_name -> ordinality.PageWordMap.WordsEntry
 	2, // [2:2] is the sub-list for method output_type
@@ -312,11 +312,11 @@ func file_pkg_ordinality_ordinality_proto_init() {
 			NumServices:   0,
 		},
 		GoTypes:           file_pkg_ordinality_ordinality_proto_goTypes,
-		DependencyIndexes: file_pkg_ordinality_ordinality_proto_depIdxs,
+		DependencyIndexes: file_pkg_ordinality_ordinality_proto_depIDxs,
 		MessageInfos:      file_pkg_ordinality_ordinality_proto_msgTypes,
 	}.Build()
 	File_pkg_ordinality_ordinality_proto = out.File
 	file_pkg_ordinality_ordinality_proto_rawDesc = nil
 	file_pkg_ordinality_ordinality_proto_goTypes = nil
-	file_pkg_ordinality_ordinality_proto_depIdxs = nil
+	file_pkg_ordinality_ordinality_proto_depIDxs = nil
 }

@@ -40,12 +40,12 @@ func (c *ShortestCache) Get(from, to uint32) (int, bool) {
 }
 
 func (c *ShortestCache) Add(from, to uint32, dist int) {
-	ft := FromTo{From: from, To: to}
+	path := FromTo{From: from, To: to}
 
 	shard := from % c.shards
 
 	c.locks[shard].RLock()
-	_, exists := c.distance[shard][ft]
+	_, exists := c.distance[shard][path]
 	c.locks[shard].RUnlock()
 
 	if exists {
@@ -54,7 +54,7 @@ func (c *ShortestCache) Add(from, to uint32, dist int) {
 
 	c.locks[shard].Lock()
 	d := c.distance[shard]
-	d[ft] = dist
+	d[path] = dist
 	c.distance[shard] = d
 	c.locks[shard].Unlock()
 }

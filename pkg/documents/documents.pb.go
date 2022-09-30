@@ -109,7 +109,7 @@ func (*Page) Descriptor() ([]byte, []int) {
 	return file_pkg_documents_documents_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *Page) GetId() uint32 {
+func (x *Page) GetID() uint32 {
 	if x != nil {
 		return x.Id
 	}
@@ -328,7 +328,7 @@ var file_pkg_documents_documents_proto_goTypes = []interface{}{
 	nil,                    // 5: TitleIndex.TitlesEntry
 	nil,                    // 6: PageCategories.PagesEntry
 }
-var file_pkg_documents_documents_proto_depIdxs = []int32{
+var file_pkg_documents_documents_proto_depIDxs = []int32{
 	1, // 0: Document.pages:type_name -> Page
 	5, // 1: TitleIndex.titles:type_name -> TitleIndex.TitlesEntry
 	6, // 2: PageCategories.pages:type_name -> PageCategories.PagesEntry
@@ -418,11 +418,11 @@ func file_pkg_documents_documents_proto_init() {
 			NumServices:   0,
 		},
 		GoTypes:           file_pkg_documents_documents_proto_goTypes,
-		DependencyIndexes: file_pkg_documents_documents_proto_depIdxs,
+		DependencyIndexes: file_pkg_documents_documents_proto_depIDxs,
 		MessageInfos:      file_pkg_documents_documents_proto_msgTypes,
 	}.Build()
 	File_pkg_documents_documents_proto = out.File
 	file_pkg_documents_documents_proto_rawDesc = nil
 	file_pkg_documents_documents_proto_goTypes = nil
-	file_pkg_documents_documents_proto_depIdxs = nil
+	file_pkg_documents_documents_proto_depIDxs = nil
 }

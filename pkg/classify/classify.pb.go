@@ -457,7 +457,7 @@ var file_pkg_classify_classify_proto_goTypes = []interface{}{
 	nil,                            // 8: ClassifiedTitles.PagesEntry
 	nil,                            // 9: PageClassificationsMap.PagesEntry
 }
-var file_pkg_classify_classify_proto_depIdxs = []int32{
+var file_pkg_classify_classify_proto_depIDxs = []int32{
 	6, // 0: ClassifiedArticles.articles:type_name -> ClassifiedArticles.ArticlesEntry
 	7, // 1: ClassifiedIDs.pages:type_name -> ClassifiedIDs.PagesEntry
 	8, // 2: ClassifiedTitles.pages:type_name -> ClassifiedTitles.PagesEntry
@@ -552,12 +552,12 @@ func file_pkg_classify_classify_proto_init() {
 			NumServices:   0,
 		},
 		GoTypes:           file_pkg_classify_classify_proto_goTypes,
-		DependencyIndexes: file_pkg_classify_classify_proto_depIdxs,
+		DependencyIndexes: file_pkg_classify_classify_proto_depIDxs,
 		EnumInfos:         file_pkg_classify_classify_proto_enumTypes,
 		MessageInfos:      file_pkg_classify_classify_proto_msgTypes,
 	}.Build()
 	File_pkg_classify_classify_proto = out.File
 	file_pkg_classify_classify_proto_rawDesc = nil
 	file_pkg_classify_classify_proto_goTypes = nil
-	file_pkg_classify_classify_proto_depIdxs = nil
+	file_pkg_classify_classify_proto_depIDxs = nil
 }

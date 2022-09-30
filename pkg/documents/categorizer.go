@@ -68,10 +68,10 @@ func (c *Categorizer) Categorize(page *Page) *Categories {
 			continue
 		}
 
-		categoryId, ok := c.TitleIndex.Titles[categoryTitle]
+		categoryID, ok := c.TitleIndex.Titles[categoryTitle]
 
 		if !ok {
-			categoryId, ok = c.TitleIndex.Titles[strings.ReplaceAll(categoryTitle, "-", " ")]
+			categoryID, ok = c.TitleIndex.Titles[strings.ReplaceAll(categoryTitle, "-", " ")]
 		}
 
 		if !ok {
@@ -81,7 +81,7 @@ func (c *Categorizer) Categorize(page *Page) *Categories {
 			continue
 		}
 
-		result.Categories[idx] = categoryId
+		result.Categories[idx] = categoryID
 		idx++
 	}
 

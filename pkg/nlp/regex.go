@@ -12,7 +12,7 @@ const (
 	PercentToken    = "_percent_"
 	DateToken       = "_date_"
 	MathToken       = "_math_"
-	HieroglyphToken = "_hieroglyph_" // nolint:gosec // This is a reference to egyptian hieroglyphs.
+	HieroglyphToken = "_hieroglyph_" //nolint:gosec // This is a reference to egyptian hieroglyphs.
 )
 
 const (

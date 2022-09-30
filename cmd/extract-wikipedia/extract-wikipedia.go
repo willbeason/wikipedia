@@ -7,7 +7,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -123,7 +122,7 @@ func source(repo, index string, errs chan<- error) (<-chan compressedDocument, e
 }
 
 func extractFile(rIndex *bufio.Reader, fRepo *os.File, work chan<- compressedDocument, errs chan<- error) {
-	startIndex, endIndex := int64(0), int64(0)
+	var startIndex, endIndex int64
 
 	var (
 		lineBytes []byte
@@ -170,7 +169,7 @@ func extractFile(rIndex *bufio.Reader, fRepo *os.File, work chan<- compressedDoc
 	if err == io.EOF {
 		fmt.Println("got last file")
 
-		outBytes, err = ioutil.ReadAll(fRepo)
+		outBytes, err = io.ReadAll(fRepo)
 		if err != nil {
 			errs <- err
 			return
@@ -222,7 +221,7 @@ func normalize(text string) string {
 func decompress(ns documents.Namespace, compressed []byte, outPages chan<- protos.ID, errs chan<- error) {
 	bz := bzip2.NewReader(bytes.NewReader(compressed))
 
-	compressed, err := ioutil.ReadAll(bz)
+	compressed, err := io.ReadAll(bz)
 	if err != nil {
 		errs <- err
 		return

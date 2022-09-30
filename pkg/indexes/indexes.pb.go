@@ -168,7 +168,7 @@ var file_pkg_indexes_indexes_proto_goTypes = []interface{}{
 	(*Index)(nil), // 0: Index
 	(*Entry)(nil), // 1: Entry
 }
-var file_pkg_indexes_indexes_proto_depIdxs = []int32{
+var file_pkg_indexes_indexes_proto_depIDxs = []int32{
 	1, // 0: Index.entries:type_name -> Entry
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
@@ -219,11 +219,11 @@ func file_pkg_indexes_indexes_proto_init() {
 			NumServices:   0,
 		},
 		GoTypes:           file_pkg_indexes_indexes_proto_goTypes,
-		DependencyIndexes: file_pkg_indexes_indexes_proto_depIdxs,
+		DependencyIndexes: file_pkg_indexes_indexes_proto_depIDxs,
 		MessageInfos:      file_pkg_indexes_indexes_proto_msgTypes,
 	}.Build()
 	File_pkg_indexes_indexes_proto = out.File
 	file_pkg_indexes_indexes_proto_rawDesc = nil
 	file_pkg_indexes_indexes_proto_goTypes = nil
-	file_pkg_indexes_indexes_proto_depIdxs = nil
+	file_pkg_indexes_indexes_proto_depIDxs = nil
 }
