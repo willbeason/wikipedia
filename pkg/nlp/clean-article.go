@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// ignoredTags are tags we can safely strip out, retaining the contents.
+// ignoredTags are XML tags we can safely strip out, retaining the contents.
 func ignoredTags() []string {
 	return []string{
 		"a",

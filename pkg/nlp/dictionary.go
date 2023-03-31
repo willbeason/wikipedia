@@ -2,13 +2,17 @@ package nlp
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+)
+
+const (
+	protobuf = ".pb"
+	json     = ".json"
 )
 
 // ReadDictionary reads a Dictionary proto from a file.
@@ -19,18 +23,18 @@ func ReadDictionary(path string) (*Dictionary, error) {
 		return dictionary, nil
 	}
 
-	bytes, err := ioutil.ReadFile(path)
+	bytes, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
 	switch ext := filepath.Ext(path); ext {
-	case ".pb":
+	case protobuf:
 		err = proto.Unmarshal(bytes, dictionary)
 		if err != nil {
 			return nil, err
 		}
-	case ".json":
+	case json:
 		err = protojson.Unmarshal(bytes, dictionary)
 		if err != nil {
 			return nil, err
@@ -47,12 +51,12 @@ func WriteDictionary(path string, dictionary *Dictionary) error {
 	var err error
 
 	switch ext := filepath.Ext(path); ext {
-	case ".pb":
+	case protobuf:
 		bytes, err = proto.Marshal(dictionary)
 		if err != nil {
 			return err
 		}
-	case ".json":
+	case json:
 		bytes, err = protojson.MarshalOptions{Indent: "  "}.Marshal(dictionary)
 		if err != nil {
 			return err
@@ -61,7 +65,7 @@ func WriteDictionary(path string, dictionary *Dictionary) error {
 		return fmt.Errorf("unsupported proto extension %q", ext)
 	}
 
-	return ioutil.WriteFile(path, bytes, os.ModePerm)
+	return os.WriteFile(path, bytes, os.ModePerm)
 }
 
 func ToNgramDictionary(dictionary *Dictionary) map[string]bool {

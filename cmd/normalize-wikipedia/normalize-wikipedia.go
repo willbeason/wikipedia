@@ -19,7 +19,7 @@ const (
 
 func mainCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Args: cobra.MinimumNArgs(2),
+		Args: cobra.MinimumNArgs(1),
 		Use:  `normalize-wikipedia path/to/input path/to/output`,
 		Short: `Normalizes text in Wikipedia by making all text lowercase and replacing certain sequences
 (e.g. numbers, dates) with normalized tokens.
@@ -39,7 +39,6 @@ func main() {
 		os.Exit(1)
 	}
 }
-
 
 func runCmd(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
@@ -79,7 +78,6 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 	return pages.Run(ctx, source, parallel, normalize, sink)
 }
-
 
 func normalize(out chan<- protos.ID) jobs.Page {
 	return func(page *documents.Page) error {

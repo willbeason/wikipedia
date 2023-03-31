@@ -2,15 +2,15 @@ package protos
 
 import (
 	"fmt"
-	"io/ioutil"
 	"path/filepath"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"os"
 )
 
 func Read(file string, out proto.Message) error {
-	bytes, err := ioutil.ReadFile(file)
+	bytes, err := os.ReadFile(file)
 	if err != nil {
 		return err
 	}
