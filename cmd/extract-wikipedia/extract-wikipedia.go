@@ -6,14 +6,14 @@ import (
 	"compress/bzip2"
 	"encoding/xml"
 	"fmt"
-	"github.com/willbeason/extract-wikipedia/pkg/db"
-	"github.com/willbeason/extract-wikipedia/pkg/protos"
 	"io"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/willbeason/extract-wikipedia/pkg/db"
+	"github.com/willbeason/extract-wikipedia/pkg/protos"
 
 	"github.com/willbeason/extract-wikipedia/pkg/documents"
 	"github.com/willbeason/extract-wikipedia/pkg/flags"
@@ -62,6 +62,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 	errs, errsWg := jobs.Errors()
 	compressedItems, err := source(repo, index, errs)
+
 	if err != nil {
 		return err
 	}
@@ -120,6 +121,7 @@ func extractPages(parallel int, compressedItems <-chan compressedDocument, errs 
 	wg := sync.WaitGroup{}
 	for w := 0; w < parallel; w++ {
 		wg.Add(1)
+
 		go func() {
 			extractPagesWorker(compressedItems, pages, errs)
 			wg.Done()
@@ -162,7 +164,7 @@ func normalize(text string) string {
 func decompress(compressed []byte, outPages chan<- protos.ID, errs chan<- error) {
 	bz := bzip2.NewReader(bytes.NewReader(compressed))
 
-	compressed, err := ioutil.ReadAll(bz)
+	compressed, err := io.ReadAll(bz)
 	if err != nil {
 		errs <- err
 		return
@@ -249,7 +251,7 @@ func extractFile(rIndex *bufio.Reader, fRepo *os.File, work chan<- compressedDoc
 	if err == io.EOF {
 		fmt.Println("got last file")
 
-		outBytes, err = ioutil.ReadAll(fRepo)
+		outBytes, err = io.ReadAll(fRepo)
 		if err != nil {
 			errs <- err
 			return
