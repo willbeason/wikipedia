@@ -7,6 +7,7 @@ var (
 	titleYearRange = regexp.MustCompile(`\d{4}–\d{2,4}`)
 )
 
+// NodeTitleYear represents a category which programmatically refers to the year in the article's title.
 type NodeTitleYear struct{}
 
 func (n *NodeTitleYear) String(title string) string {
@@ -20,6 +21,7 @@ func (n *NodeTitleYear) String(title string) string {
 	}
 }
 
+// NodeTitleYearRange represents a category which programmatically refers to a range of years in the article's title.
 type NodeTitleYearRange struct{}
 
 func (n *NodeTitleYearRange) String(title string) string {

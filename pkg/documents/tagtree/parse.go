@@ -28,7 +28,7 @@ func toBrace(t BraceType, startEnd []int) Brace {
 	return Brace{Type: t, Start: startEnd[0], End: startEnd[1]}
 }
 
-var errOpenClose = errors.New("different number of open and close braces")
+var ErrOpenClose = errors.New("different number of open and close braces")
 
 func toBraces(s string) ([]Brace, error) {
 	openTags := openTag.FindAllStringIndex(s, -1)
@@ -40,7 +40,7 @@ func toBraces(s string) ([]Brace, error) {
 	}
 
 	if nTags != len(closeTags) {
-		return nil, errOpenClose
+		return nil, ErrOpenClose
 	}
 
 	result := make([]Brace, 0, nTags*2)
@@ -74,7 +74,7 @@ func toBraces(s string) ([]Brace, error) {
 func Parse(category string) Node {
 	braces, err := toBraces(category)
 	if err != nil {
-		return &NodeString{Value: err.Error()}
+		return &NodeError{Value: err}
 	}
 
 	if len(braces) == 0 {

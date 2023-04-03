@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 
 	"github.com/willbeason/wikipedia/pkg/documents/tagtree"
 )
@@ -43,7 +44,7 @@ func TestParse(t *testing.T) {
 		{
 			name:     "open close mismatch",
 			category: "Category:{{Philosophy",
-			wantNode: &tagtree.NodeString{Value: "Category:{{Philosophy"},
+			wantNode: &tagtree.NodeError{Value: tagtree.ErrOpenClose},
 		},
 		{
 			name:     "first close before first open",
@@ -337,7 +338,7 @@ func TestParse(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			gotNode := tagtree.Parse(tc.category)
 
-			if diff := cmp.Diff(tc.wantNode, gotNode); diff != "" {
+			if diff := cmp.Diff(tc.wantNode, gotNode, cmpopts.EquateErrors()); diff != "" {
 				t.Fatal(diff)
 			}
 
@@ -347,7 +348,7 @@ func TestParse(t *testing.T) {
 				wantCategory = tc.category
 			}
 
-			if diff := cmp.Diff(wantCategory, gotCategory); diff != "" {
+			if diff := cmp.Diff(wantCategory, gotCategory, cmpopts.EquateErrors()); diff != "" {
 				t.Fatal(diff)
 			}
 		})

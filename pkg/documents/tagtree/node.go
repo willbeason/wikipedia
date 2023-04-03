@@ -4,10 +4,12 @@ import (
 	"strings"
 )
 
+// Node is a part of a referenced Category.
 type Node interface {
 	String(title string) string
 }
 
+// A NodeParent is made of.
 type NodeParent struct {
 	Children []Node
 }
@@ -28,6 +30,14 @@ type NodeString struct {
 
 func (n *NodeString) String(title string) string {
 	return n.Value
+}
+
+type NodeError struct {
+	Value error
+}
+
+func (n *NodeError) String(title string) string {
+	return n.Value.Error()
 }
 
 type NodePageName struct{}
