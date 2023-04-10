@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"sort"
 	"strings"
@@ -60,19 +61,25 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 	ctx := cmd.Context()
 
+	fmt.Println("here before wordsets")
 	wordSets := make(chan documents.WordSet)
 
-	f, err := os.Open(outDBPath)
+	fmt.Println("here before open out")
+	f, err := os.Create(outDBPath)
+
 	if err != nil {
-		return nil
+		return err
 	}
 
+	defer f.Close()
+
+	fmt.Println("here before wg")
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 
 	go func() {
 		for ws := range wordSets {
-			_, err2 := f.WriteString(ws.String())
+			_, err2 := f.WriteString(ws.String() + "\n")
 			if err2 != nil {
 				panic(err2)
 			}
@@ -81,10 +88,14 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		wg.Done()
 	}()
 
-	err = pages.Run(ctx, source, parallel, run(dictionary, wordSets), protos.NoSink)
+	fmt.Println("here before run")
+	err = pages.Run(ctx, source, parallel, run(dictionary, wordSets), protos.PrintProtos)
 	if err != nil {
 		return err
 	}
+	close(wordSets)
+
+	fmt.Println("here before wait write")
 
 	wg.Wait()
 
