@@ -102,7 +102,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	//	return counts[i].Count > counts[j].Count
 	// })
 	//
-	//for _, c := range counts {
+	// for _, c := range counts {
 	//	fmt.Println(c.Word, ":", c.Count)
 	//}
 
@@ -177,16 +177,16 @@ func run() (map[Gender]int, map[string]int, map[string]int, func(chan<- protos.I
 	men := map[string]int{}
 	women := map[string]int{}
 
-	infoboxNames := strings.Split(infoboxTypes, "\n")
-	infoboxString := strings.Join(infoboxNames, "|")
-
-	var validInfoboxes = regexp.MustCompile("infobox (" + infoboxString + ")")
+	personInfoboxes, err := documents.NewInfoboxChecker(documents.PersonInfoboxes)
+	if err != nil {
+		panic(err)
+	}
 
 	return found, men, women, func(ids chan<- protos.ID) jobs.Page {
 		return func(page *documents.Page) error {
 			text := strings.ToLower(page.Text)
 
-			if !validInfoboxes.MatchString(text) {
+			if !personInfoboxes.Matches(page.Text) {
 				return nil
 			}
 
@@ -195,9 +195,9 @@ func run() (map[Gender]int, map[string]int, map[string]int, func(chan<- protos.I
 			f := make(map[string]int)
 
 			tokenizer := nlp.WordTokenizer{}
-			words := tokenizer.Tokenize(text)
+			documentWords := tokenizer.Tokenize(text)
 
-			for _, word := range words {
+			for _, word := range documentWords {
 				f[word]++
 			}
 
@@ -286,161 +286,3 @@ func determineGender(text string) Gender {
 
 	return Unknown
 }
-
-const infoboxTypes = `person
-football biography
-officeholder
-musical artist
-sportsperson
-writer
-scientist
-military person
-cricketer
-baseball biography
-artist
-basketball biography
-nfl biography
-ice hockey player
-christian leader
-rugby biography
-afl biography
-college coach
-academic
-tennis biography
-rugby league biography
-swimmer
-nfl player
-boxer
-saint
-golfer
-noble
-figure skater
-criminal
-professional wrestler
-diocese
-volleyball biography
-racing driver
-comics creator
-gymnast
-gaa player
-religious biography
-politician
-athlete
-badminton player
-philosopher
-chess player
-gridiron football person
-pageant titleholder
-curler
-nobility
-cfl biography
-skier
-model
-judge
-monarch
-speed skater
-college football player
-economist
-medical person
-serial killer
-gaelic athletic association player
-field hockey player
-sailor
-youtube personality
-playboy playmate
-nascar driver
-volleyball player
-motorcycle rider
-speedway rider
-chef
-bishopstyles
-horseracing personality
-clergy
-npb player
-darts player
-football official
-engineer
-squash player
-scholar
-table tennis player
-president
-cfl player
-jewish leader
-governor
-mayor
-astronaut
-poker player
-snooker player
-indian politician
-presenter
-actor
-dancer
-mlb player
-fencer
-police officer
-netball biography
-fashion designer
-sumo wrestler
-nba biography
-prime minister
-wrestling team
-ice hockey biography
-chess biography
-pharaoh
-ambassador
-lacrosse player
-hindu leader
-le mans driver
-musician
-latter day saint biography
-bishop styles
-water polo biography
-wrc driver
-minister
-canadianmp
-biathlete
-state representative
-cardinal styles
-bodybuilder
-aviator
-classical composer
-shogi professional
-ski jumper
-theologian
-spy
-bishop
-go player
-climber
-soldier
-murderer
-egyptian dignitary
-patriarch
-author
-champ car driver
-pro gaming player
-pool player
-surfer
-equestrian
-congressman
-sport wrestler
-motocross rider
-twitch streamer
-lds biography
-actress
-biography
-itf women
-comedian
-video game player
-basketball player
-triathlete
-rebbe
-journalist
-first lady
-archbishop
-state senator
-mass murderer
-bandy biography
-roman emperor
-sports announcer
-historian
-mountaineer`

@@ -2,7 +2,6 @@ package documents
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -27,7 +26,7 @@ func WriteFrequencyTable(out string, t FrequencyTable) error {
 		return err
 	}
 
-	return ioutil.WriteFile(out, bytes, os.ModePerm)
+	return os.WriteFile(out, bytes, os.ModePerm)
 }
 
 func ReadFrequencyTables(paths ...string) (*FrequencyTable, error) {

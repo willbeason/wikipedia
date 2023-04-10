@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"os"
+
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
-	"os"
 )
 
 func Read(file string, out proto.Message) error {
