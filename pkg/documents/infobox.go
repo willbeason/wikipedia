@@ -21,7 +21,7 @@ func NewInfoboxChecker(want []string) (*InfoboxChecker, error) {
 }
 
 func (r *InfoboxChecker) Matches(rawText string) bool {
-	return r.r.MatchString(rawText)
+	return r.r.MatchString(strings.ToLower(rawText))
 }
 
 var PersonInfoboxes = []string{"person", //nolint:gochecknoglobals Will fix later.
