@@ -64,7 +64,7 @@ func NewPerceptron(dictionary []string, bias float64) *Perceptron {
 	return result
 }
 
-func (p *Perceptron) ToDatum(words []string, label Prediction) Datum {
+func (p *Perceptron) ToDatum(words []string, label Gender) Datum {
 	result := Datum{
 		Label: label,
 	}
@@ -89,7 +89,7 @@ func (p *Perceptron) ToDatum(words []string, label Prediction) Datum {
 
 type Datum struct {
 	Words []int
-	Label Prediction
+	Label Gender
 }
 
 // Train makes a single training run.

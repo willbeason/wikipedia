@@ -12,7 +12,6 @@ import (
 	"github.com/willbeason/extract-wikipedia/pkg/protos"
 	"io"
 	"os"
-	"regexp"
 	"strings"
 	"sync"
 )
@@ -101,10 +100,10 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Println(Female, ":", genderCounts[Female])
-	fmt.Println(Male, ":", genderCounts[Male])
-	fmt.Println(Multiple, ":", genderCounts[Multiple])
-	fmt.Println(Unknown, ":", genderCounts[Unknown])
+	fmt.Println(nlp.Female, ":", genderCounts[nlp.Female])
+	fmt.Println(nlp.Male, ":", genderCounts[nlp.Male])
+	fmt.Println(nlp.Multiple, ":", genderCounts[nlp.Multiple])
+	fmt.Println(nlp.Unknown, ":", genderCounts[nlp.Unknown])
 
 	menTable := &nlp.FrequencyTable{}
 	for word, count := range men {
@@ -121,7 +120,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	// For normalizing for equal counts between men and women.
-	ratio := float64(genderCounts[Male]) / float64(genderCounts[Female]) // scientist
+	ratio := float64(genderCounts[nlp.Male]) / float64(genderCounts[nlp.Female]) // scientist
 
 	womenTable := &nlp.FrequencyTable{}
 	for word, count := range women {
@@ -135,30 +134,30 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		})
 	}
 
-	size := uint32(genderCounts[Male])
+	size := uint32(genderCounts[nlp.Male])
 	wbs := nlp.MostAccurateWords(menTable, womenTable, size, size)
 
 	for i := 0; i < 1000; i++ {
 		wb := wbs[i]
 		if wb.Prediction == nlp.Female {
-			fmt.Printf("%s => %s : %.02f%%\n", wb.Word, Female, wb.Accuracy*100)
+			fmt.Printf("%s => %s : %.02f%%\n", wb.Word, nlp.Female, wb.Accuracy*100)
 		} else {
-			fmt.Printf("%s => %s : %.02f%%\n", wb.Word, Male, wb.Accuracy*100)
+			fmt.Printf("%s => %s : %.02f%%\n", wb.Word, nlp.Male, wb.Accuracy*100)
 		}
 	}
 
 	return nil
 }
 
-func run() (map[Gender]int, map[string]int, map[string]int, func(chan<- protos.ID) jobs.Page) {
+func run() (map[nlp.Gender]int, map[string]int, map[string]int, func(chan<- protos.ID) jobs.Page) {
 	mtx := sync.Mutex{}
 
-	found := make(map[Gender]int)
+	found := make(map[nlp.Gender]int)
 
 	men := map[string]int{}
 	women := map[string]int{}
 
-	return found, men, women, func(ids chan<- protos.ID) jobs.Page {
+	return found, men, women, func(_ chan<- protos.ID) jobs.Page {
 
 		return func(page *documents.Page) error {
 			text := strings.ToLower(page.Text)
@@ -166,7 +165,7 @@ func run() (map[Gender]int, map[string]int, map[string]int, func(chan<- protos.I
 				return nil
 			}
 
-			gender := determineGender(page.Text)
+			gender := nlp.DetermineGender(page.Text)
 
 			f := make(map[string]int)
 
@@ -182,12 +181,12 @@ func run() (map[Gender]int, map[string]int, map[string]int, func(chan<- protos.I
 			found[gender]++
 
 			switch gender {
-			case Male:
+			case nlp.Male:
 				//fmt.Println("Men", nMen)
 				for word, _ := range f {
 					men[word] += 1
 				}
-			case Female:
+			case nlp.Female:
 				//fmt.Println("Women", nWomen)
 				for word, _ := range f {
 					women[word] += 1
@@ -198,68 +197,4 @@ func run() (map[Gender]int, map[string]int, map[string]int, func(chan<- protos.I
 			return nil
 		}
 	}
-}
-
-type Gender string
-
-const (
-	Male      Gender = "male"
-	Female           = "female"
-	Nonbinary        = "nonbinary"
-	Multiple         = "multiple"
-	Unknown          = "unknown"
-)
-
-var (
-	categoryRegex = regexp.MustCompile("\\[\\[Category:.+]]")
-	womenRegex    = regexp.MustCompile("\\b(women|female)\\b")
-	menRegex      = regexp.MustCompile("\\b(men|male)\\b")
-
-	femalePronouns    = regexp.MustCompile("\\b(she|hers|her|herself)\\b")
-	malePronouns      = regexp.MustCompile("\\b(he|his|him|himself)\\b")
-	nonbinaryPronouns = regexp.MustCompile("\\b(they|their|theirs|them|themself)\\b")
-)
-
-func determineGender(text string) Gender {
-	categories := categoryRegex.FindAllString(text, -1)
-
-	foundMale := false
-	foundFemale := false
-	foundNonbinary := false
-
-	for _, category := range categories {
-		category = strings.ToLower(category)
-		if womenRegex.MatchString(category) {
-			foundFemale = true
-		} else if menRegex.MatchString(category) {
-			foundMale = true
-		}
-	}
-
-	femaleUsages := len(femalePronouns.FindAllString(text, -1))
-	maleUsages := len(malePronouns.FindAllString(text, -1))
-	nonbinaryUsages := len(nonbinaryPronouns.FindAllString(text, -1))
-
-	switch {
-	case femaleUsages > maleUsages && femaleUsages > nonbinaryUsages:
-		foundFemale = true
-	case maleUsages > femaleUsages && maleUsages > nonbinaryUsages:
-		foundMale = true
-	case nonbinaryUsages > femaleUsages && nonbinaryUsages > maleUsages:
-		foundNonbinary = true
-	}
-
-	switch {
-	case foundMale && foundFemale || foundMale && foundNonbinary || foundFemale && foundNonbinary:
-		return Multiple
-	case foundMale:
-		return Male
-	case foundFemale:
-		return Female
-	case foundNonbinary:
-		return Nonbinary
-	}
-
-	// No signals.
-	return Unknown
 }

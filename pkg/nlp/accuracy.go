@@ -5,16 +5,9 @@ import (
 	"sort"
 )
 
-type Prediction int
-
-const (
-	Female = 0
-	Male   = 1
-)
-
 type WordAccuracy struct {
 	Word       string
-	Prediction Prediction
+	Prediction Gender
 	Accuracy   float64
 }
 

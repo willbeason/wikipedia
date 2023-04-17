@@ -13,6 +13,7 @@ import (
 const (
 	protobuf = ".pb"
 	json     = ".json"
+	txt      = ".txt"
 )
 
 // ReadDictionary reads a Dictionary proto from a file.
@@ -39,6 +40,8 @@ func ReadDictionary(path string) (*Dictionary, error) {
 		if err != nil {
 			return nil, err
 		}
+	case txt:
+		dictionary = readTxtDictionary(bytes)
 	default:
 		return nil, fmt.Errorf("unsupported proto extension %q", ext)
 	}
@@ -53,16 +56,15 @@ func WriteDictionary(path string, dictionary *Dictionary) error {
 	switch ext := filepath.Ext(path); ext {
 	case protobuf:
 		bytes, err = proto.Marshal(dictionary)
-		if err != nil {
-			return err
-		}
 	case json:
 		bytes, err = protojson.MarshalOptions{Indent: "  "}.Marshal(dictionary)
-		if err != nil {
-			return err
-		}
+	case txt:
+		bytes = writeTxtDictionary(dictionary)
 	default:
 		return fmt.Errorf("unsupported proto extension %q", ext)
+	}
+	if err != nil {
+		return err
 	}
 
 	return os.WriteFile(path, bytes, os.ModePerm)
@@ -80,4 +82,40 @@ func ToNgramDictionary(dictionary *Dictionary) map[string]bool {
 	}
 
 	return result
+}
+
+func readTxtDictionary(bytes []byte) *Dictionary {
+	words := strings.Split(string(bytes), "\n")
+	for i, w := range words {
+		words[i] = strings.TrimSpace(w)
+	}
+
+	return &Dictionary{Words: words}
+}
+
+func writeTxtDictionary(d *Dictionary) []byte {
+	return []byte(strings.Join(d.Words, "\n"))
+}
+
+func (d *Dictionary) ToSet() map[string]bool {
+	result := make(map[string]bool, len(d.Words))
+
+	for _, w := range d.Words {
+		result[w] = true
+	}
+
+	return result
+}
+
+func DictionaryFromSet(words map[string]bool) *Dictionary {
+	ws := make([]string, 0, len(words))
+	
+	for w := range words {
+		ws = append(ws, w)
+	}
+
+	return &Dictionary{
+		Words: ws,
+	}
+
 }

@@ -3,6 +3,7 @@ package documents
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -19,15 +20,61 @@ type WordSet struct {
 	Words []uint32
 }
 
-func ReadWordSet(line string) (*WordSet, error) {
+func (ws *WordSet) ToSet() map[uint32]bool {
+	result := make(map[uint32]bool, len(ws.Words))
+
+	for _, w := range ws.Words {
+		result[w] = true
+	}
+
+	return result
+}
+
+func (ws *WordSet) ToBits(length int) []bool {
+	result := make([]bool, length)
+
+	for _, w := range ws.Words {
+		result[w] = true
+	}
+
+	return result
+}
+
+func ReadWordSets(path string) ([]WordSet, error) {
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	lines := strings.Split(string(bytes), "\n")
+	result := make([]WordSet, 0, len(lines))
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		ws, err2 := ReadWordSet(line)
+		if err2 != nil {
+			return nil, err2
+		}
+
+		result = append(result, ws)
+	}
+
+	return result, nil
+}
+
+func ReadWordSet(line string) (WordSet, error) {
 	parts := strings.Split(line, ":")
 	if len(parts) != 2 {
-		return nil, errors.New("invalid line")
+		return WordSet{}, errors.New("invalid line for word set")
 	}
 
 	id, err := strconv.ParseUint(parts[0], 10, 32)
 	if err != nil {
-		return nil, err
+		return WordSet{}, err
 	}
 
 	wordStrings := strings.Split(parts[1], ",")
@@ -36,12 +83,12 @@ func ReadWordSet(line string) (*WordSet, error) {
 	for i, w := range wordStrings {
 		n, err := strconv.ParseUint(w, 10, 32)
 		if err != nil {
-			return nil, err
+			return WordSet{}, err
 		}
 		words[i] = uint32(n)
 	}
 
-	return &WordSet{ID: uint32(id), Words: words}, nil
+	return WordSet{ID: uint32(id), Words: words}, nil
 }
 
 func (ws WordSet) String() string {

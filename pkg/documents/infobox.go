@@ -12,7 +12,7 @@ type InfoboxChecker struct {
 func NewInfoboxChecker(want []string) (*InfoboxChecker, error) {
 	infoboxString := strings.Join(want, "|")
 
-	validInfoboxes, err := regexp.Compile("infobox (" + infoboxString + ")")
+	validInfoboxes, err := regexp.Compile("infobox (" + infoboxString + ")\n")
 	if err != nil {
 		return nil, err
 	}
@@ -24,10 +24,11 @@ func (r *InfoboxChecker) Matches(rawText string) bool {
 	return r.r.MatchString(strings.ToLower(rawText))
 }
 
-var PersonInfoboxes = []string{"person", //nolint:gochecknoglobals Will fix later.
+var PersonInfoboxes = []string{
+	"person", //nolint:gochecknoglobals Will fix later.
 	"football biography",
 	"officeholder",
-	"musical artist",
+	//"musical artist", // incorrectly used for bands
 	"sportsperson",
 	"writer",
 	"scientist",
@@ -101,6 +102,7 @@ var PersonInfoboxes = []string{"person", //nolint:gochecknoglobals Will fix late
 	"scholar",
 	"table tennis player",
 	"president",
+	"president styles",
 	"cfl player",
 	"jewish leader",
 	"governor",
@@ -120,7 +122,7 @@ var PersonInfoboxes = []string{"person", //nolint:gochecknoglobals Will fix late
 	"sumo wrestler",
 	"nba biography",
 	"prime minister",
-	"wrestling team",
+	//"wrestling team",
 	"ice hockey biography",
 	"chess biography",
 	"pharaoh",
@@ -181,4 +183,6 @@ var PersonInfoboxes = []string{"person", //nolint:gochecknoglobals Will fix late
 	"sports announcer",
 	"historian",
 	"mountaineer",
+	//
+
 }

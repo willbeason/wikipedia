@@ -191,7 +191,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 type LabeledWordBag struct {
 	ID      uint32
-	Label   nlp.Prediction
+	Label   nlp.Gender
 	WordBag []string
 }
 
