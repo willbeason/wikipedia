@@ -109,7 +109,7 @@ func (d *Dictionary) ToSet() map[string]bool {
 
 func DictionaryFromSet(words map[string]bool) *Dictionary {
 	ws := make([]string, 0, len(words))
-	
+
 	for w := range words {
 		ws = append(ws, w)
 	}

@@ -54,6 +54,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	inDB := args[0]
 
 	var outDBPath string
+
 	var sink protos.Sink
 
 	if len(args) > 1 {

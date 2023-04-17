@@ -2,6 +2,10 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"strings"
+	"sync"
+
 	"github.com/spf13/cobra"
 	"github.com/willbeason/extract-wikipedia/pkg/documents"
 	"github.com/willbeason/extract-wikipedia/pkg/flags"
@@ -9,9 +13,6 @@ import (
 	"github.com/willbeason/extract-wikipedia/pkg/nlp"
 	"github.com/willbeason/extract-wikipedia/pkg/pages"
 	"github.com/willbeason/extract-wikipedia/pkg/protos"
-	"os"
-	"strings"
-	"sync"
 )
 
 func mainCmd() *cobra.Command {
@@ -47,7 +48,11 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	source := pages.StreamDB(inDB, parallel)
 
 	dictionaryFile := args[1]
+
 	dictionary, err := nlp.ReadDictionary(dictionaryFile)
+	if err != nil {
+		return err
+	}
 
 	ctx := cmd.Context()
 
@@ -57,10 +62,16 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	defer outFile.Close()
 
-	wg := sync.WaitGroup{}
-	wg.Add(1)
+	defer func(outFile *os.File) {
+		err2 := outFile.Close()
+		if err2 != nil {
+			panic(err2)
+		}
+	}(outFile)
+
+	writeFileWaitGroup := sync.WaitGroup{}
+	writeFileWaitGroup.Add(1)
 
 	go func() {
 		_, err2 := outFile.WriteString("ID,Gender,Size\n")
@@ -70,13 +81,14 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 		for gs := range sizes {
 			s := fmt.Sprintf("%d,%s,%d\n", gs.ID, gs.Gender, gs.Size)
+
 			_, err2 = outFile.WriteString(s)
 			if err2 != nil {
 				panic(err2)
 			}
 		}
 
-		wg.Done()
+		writeFileWaitGroup.Done()
 	}()
 
 	err = pages.Run(ctx, source, parallel, run(dictionary, sizes), protos.PrintProtos)
@@ -86,7 +98,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 	close(sizes)
 
-	wg.Wait()
+	writeFileWaitGroup.Wait()
 
 	return nil
 }
@@ -127,16 +139,13 @@ func run(dictionary *nlp.Dictionary, sizes chan GenderSize) func(chan<- protos.I
 				}
 			}
 
-			gs := GenderSize{
+			sizes <- GenderSize{
 				ID:     page.Id,
 				Gender: gender,
 				Size:   len(seen),
 			}
 
-			sizes <- gs
-
 			return nil
 		}
 	}
-
 }

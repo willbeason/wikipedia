@@ -39,16 +39,37 @@ linters-settings:
 linters:
   disable-all: true
   enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    # Optional Linters
+    - asasalint
     - asciicheck
+    - bidichk
     - bodyclose
+    - containedctx
+    - contextcheck
+    - cyclop
     - depguard
     - dogsled
     - dupl
-    - errcheck
+    - dupword
+    - durationcheck
+    - errchkjson
     - errname
-    - exportloopref
+    - errorlint
+    - execinquery
     - exhaustive
+    - exportloopref
+    - forbidigo
+    - forcetypeassert
     - funlen
+    - gci
+    - gocheckcompilerdirectives
     - gochecknoglobals
     - gochecknoinits
     - gocognit
@@ -56,35 +77,45 @@ linters:
     - gocritic
     - gocyclo
     - godot
+    - godox
     - goerr113
     - gofmt
     - goimports
     - gomnd
+    - gomoddirectives
     - goprintffuncname
     - gosec
-    - gosimple
-    - govet
-    - ineffassign
+    - interfacebloat
+    - ireturn
     - lll
+    - maintidx
+    - makezero
     - misspell
     - nakedret
     - nestif
+    - nilerr
+    - nilnil
     - noctx
     - nolintlint
+    - nonamedreturns
+    - nosprintfhostport
+    - paralleltest
     - prealloc
+    - predeclared
+    - reassign
     - revive
     - rowserrcheck
-    - staticcheck
     - stylecheck
+    - tagliatelle
+    - tenv
+    - testableexamples
+    - testpackage
+    - thelper
+    - tparallel
     - unconvert
     - unparam
-    - unused
+    - usestdlibvars
+    - varnamelen
+    - wastedassign
     - whitespace
     - wsl
-
-  # don't enable:
-  # - scopelint
-  # - godox
-  # - interfacer
-  # - maligned
-  # - testpackage
