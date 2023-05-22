@@ -14,7 +14,7 @@ import (
 //
 // Returns a WaitGroup which finishes after the last Value from the DB has been
 // processed.
-func (r *Runner) Process(ctx context.Context, process Process, errs chan<- error) (*sync.WaitGroup, error) {
+func (r *Runner) Process(ctx context.Context, cancel context.CancelCauseFunc, process Process) (*sync.WaitGroup, error) {
 	dbOpts := badger.DefaultOptions(r.path).WithNumGoroutines(r.parallel)
 
 	db, err := badger.Open(dbOpts)
@@ -26,12 +26,18 @@ func (r *Runner) Process(ctx context.Context, process Process, errs chan<- error
 	wg.Add(1)
 
 	go func() {
-		defer wg.Done()
-		defer closeDB(db, errs)
+		defer func() {
+			err2 := db.Close()
+			if err2 != nil {
+				cancel(err2)
+			}
+
+			wg.Done()
+		}()
 
 		err = r.process(ctx, db, process)
 		if err != nil {
-			errs <- err
+			cancel(err)
 		}
 	}()
 
@@ -53,7 +59,8 @@ func send(process Process) func(buf *z.Buffer) error {
 			return err
 		}
 
-		for _, kv := range list.GetKv() {
+		kvs := list.GetKv()
+		for _, kv := range kvs {
 			value := kv.GetValue()
 
 			err = process(value)

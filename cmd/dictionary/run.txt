@@ -1,3 +1,0 @@
-go run cmd/dictionary/dictionary.go \
-  C:/Users/Public/Documents/wikipedia/normalized/enwiki-20210901.db \
-  C:/Users/Public/Documents/wikipedia/dictionary/out-10000.json

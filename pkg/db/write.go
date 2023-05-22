@@ -1,71 +1,18 @@
 package db
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"sync"
-
 	"github.com/dgraph-io/badger/v3"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/willbeason/wikipedia/pkg/protos"
 )
 
-// Write writes all protos to the Runner's DB.
-func (r *Runner) Write() protos.Sink {
-	return func(ctx context.Context, ps <-chan protos.ID, errs chan<- error) (*sync.WaitGroup, error) {
-		db, err := badger.Open(badger.DefaultOptions(r.path))
-		if err != nil {
-			return nil, err
-		}
-
-		wg := sync.WaitGroup{}
-		wg.Add(r.parallel)
-		ctx, cancel := context.WithCancel(ctx)
-
-		go func() {
-			defer cancel()
-			defer closeDB(db, errs)
-			wg.Wait()
-
-			err = runGC(db)
-			if err != nil {
-				errs <- err
-			}
-		}()
-
-		for i := 0; i < r.parallel; i++ {
-			go func() {
-				perr := writeProtos(ctx, ps, db)
-				if perr != nil {
-					errs <- perr
-
-					cancel()
-				}
-
-				wg.Done()
-			}()
-		}
-
-		return &wg, nil
+func WriteProto(db *badger.DB) func(p protos.ID) error {
+	return func(p protos.ID) error {
+		return db.Update(write(p))
 	}
-}
-
-func writeProtos(ctx context.Context, ps <-chan protos.ID, db *badger.DB) error {
-	for p := range ps {
-		select {
-		case <-ctx.Done():
-			return nil
-		default:
-			err := db.Update(write(p))
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }
 
 func write(m protos.ID) func(txn *badger.Txn) error {
@@ -81,7 +28,7 @@ func write(m protos.ID) func(txn *badger.Txn) error {
 	}
 }
 
-func runGC(db *badger.DB) error {
+func RunGC(db *badger.DB) error {
 	const discardRatio = 0.5
 
 	for {

@@ -12,31 +12,29 @@ import (
 // threads.
 //
 // Returns a WaitGroup which finishes after the last id has been processed.
-func (r *Runner) ProcessIDs(ctx context.Context, process Process, ids <-chan uint32, errs chan<- error) (*sync.WaitGroup, error) {
+func (r *Runner) ProcessIDs(ctx context.Context, cancel context.CancelCauseFunc, process Process, ids <-chan uint32) (*sync.WaitGroup, error) {
 	db, err := badger.Open(badger.DefaultOptions(r.path))
 	if err != nil {
 		return nil, err
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
-
 	wg := sync.WaitGroup{}
 	wg.Add(r.parallel)
 
 	go func() {
-		defer cancel()
-		defer closeDB(db, errs)
+		defer func() {
+			err2 := db.Close()
+			if err2 != nil {
+				cancel(err2)
+			}
+		}()
+
 		wg.Wait()
 	}()
 
 	for i := 0; i < r.parallel; i++ {
 		go func() {
-			perr := processIDs(ctx, db, ids, process)
-			if perr != nil {
-				cancel()
-				errs <- perr
-			}
-
+			processIDs(ctx, cancel, db, ids, process)
 			wg.Done()
 		}()
 	}
@@ -44,20 +42,20 @@ func (r *Runner) ProcessIDs(ctx context.Context, process Process, ids <-chan uin
 	return &wg, nil
 }
 
-func processIDs(ctx context.Context, db *badger.DB, ids <-chan uint32, process Process) error {
+func processIDs(ctx context.Context, cancel context.CancelCauseFunc, db *badger.DB, ids <-chan uint32, process Process) {
 	for id := range ids {
 		select {
 		case <-ctx.Done():
-			return nil
+			return
 		default:
 			err := db.View(processID(id, process))
 			if err != nil {
-				return err
+				cancel(err)
 			}
 		}
 	}
 
-	return nil
+	return
 }
 
 func processID(id uint32, process Process) func(txn *badger.Txn) error {

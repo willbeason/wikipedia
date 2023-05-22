@@ -1,3 +1,0 @@
-go run cmd/normalize-wikipedia/normalize-wikipedia.go \
-  C:/Users/Public/Documents/wikipedia/cleaned/enwiki-20210901.db \
-  C:/Users/Public/Documents/wikipedia/normalized/enwiki-20210901.db

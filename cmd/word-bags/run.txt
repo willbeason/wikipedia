@@ -1,4 +1,0 @@
-go run cmd/word-bags/word-bags.go \
-  C:/Users/Public/Documents/wikipedia/normalized/enwiki-20210901.db \
-  C:/Users/Public/Documents/wikipedia/dictionary/out-10000.json \
-  C:/Users/Public/Documents/wikipedia/word-bags-10000/enwiki-20210801.db

@@ -1,6 +1,8 @@
 package documents
 
-import "google.golang.org/protobuf/proto"
+import (
+	"google.golang.org/protobuf/proto"
+)
 
 func ReadPages(pages chan<- *Page) func([]byte) error {
 	return func(bytes []byte) error {

@@ -1,3 +1,0 @@
-go run cmd/view/view.go \
-  C:/Users/Public/Documents/wikipedia/categories/enwiki-20210901.db \
-  691810

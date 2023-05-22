@@ -2,8 +2,6 @@ package db
 
 import (
 	"encoding/binary"
-
-	"github.com/dgraph-io/badger/v3"
 )
 
 func NewRunner(path string, parallel int) *Runner {
@@ -25,11 +23,4 @@ func toKey(id uint32) []byte {
 	binary.LittleEndian.PutUint32(key, id)
 
 	return key
-}
-
-func closeDB(db *badger.DB, errs chan<- error) {
-	err := db.Close()
-	if err != nil {
-		errs <- err
-	}
 }

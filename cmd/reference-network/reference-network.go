@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/pages"
-	"github.com/willbeason/wikipedia/pkg/protos"
 	"os"
 	"sync"
 )
@@ -47,46 +47,30 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 	source := pages.StreamDB(inDB, parallel)
 
-	return pages.Run(cmd.Context(), source, parallel, idName(), protos.NoSink)
-}
+	ctx, cancel := context.WithCancelCause(cmd.Context())
 
-// namesToIDs
-func namesToIDs(ctx context.Context, parallel int, source pages.Source) (map[string]uint32, error) {
-	result := make(map[string]uint32)
-
-	err := pages.Run(ctx, source, parallel, idName(), idNameMapSink(result))
-
+	docs, err := source(ctx, cancel)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return result, nil
-}
+	result := make(map[string]uint32)
+	resultMtx := sync.Mutex{}
 
-func idNameMapSink(out map[string]uint32) protos.Sink {
-	return func(ctx context.Context, ids <-chan protos.ID, errors chan<- error) (*sync.WaitGroup, error) {
-		wg := sync.WaitGroup{}
-		wg.Add(1)
+	resultWork := jobs.Reduce(jobs.WorkBuffer, docs, func(page *documents.Page) error {
+		resultMtx.Lock()
+		result[page.Title] = page.Id
+		resultMtx.Unlock()
 
-		go func() {
-			for id := range ids {
-				page := id.(*documents.Page)
-				out[page.Title] = page.Id
-			}
+		return nil
+	})
 
-			wg.Done()
-		}()
+	runner := jobs.NewRunner()
 
-		return &wg, nil
-	}
-}
+	resultWg := runner.Run(ctx, cancel, resultWork)
+	resultWg.Wait()
 
-func idName() func(chan<- protos.ID) jobs.Page {
-	return func(ids chan<- protos.ID) jobs.Page {
-		return func(page *documents.Page) error {
-			// We don't need the page text for this step.
-			page.Text = ""
-			return nil
-		}
-	}
+	fmt.Println(len(result))
+
+	return nil
 }
