@@ -70,8 +70,5 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		source = pages.StreamDBKeys(inDB, parallel, pageIDs)
 	}
 
-	cmd.SilenceUsage = true
-	ctx := cmd.Context()
-
-	return pages.Run(ctx, source, parallel, pages.CleanPages, sink)
+	return pages.Run(cmd.Context(), source, parallel, pages.CleanPages, sink)
 }

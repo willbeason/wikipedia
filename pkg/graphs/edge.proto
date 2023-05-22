@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+option go_package = "pkg/graphs";
+
+// Edges is the set of references in a document by their ID.
+message Edges {
+  // id is the unique identifier of the document.
+  uint32 id = 1;
+
+  // references is the unique identifiers of referenced documents.
+  repeated uint32 references = 2;
+}
