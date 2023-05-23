@@ -9,6 +9,7 @@ import (
 	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/pages"
 	"os"
+	"regexp"
 	"sync"
 )
 
@@ -49,28 +50,80 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 	ctx, cancel := context.WithCancelCause(cmd.Context())
 
+	idMap := make(map[string]uint32)
+	titleMap := make(map[uint32]string)
+	resultMtx := sync.Mutex{}
+
 	docs, err := source(ctx, cancel)
 	if err != nil {
 		return err
 	}
 
-	result := make(map[string]uint32)
-	resultMtx := sync.Mutex{}
-
-	resultWork := jobs.Reduce(jobs.WorkBuffer, docs, func(page *documents.Page) error {
+	idMapWork := jobs.Reduce(jobs.WorkBuffer, docs, func(page *documents.Page) error {
 		resultMtx.Lock()
-		result[page.Title] = page.Id
+		idMap[page.Title] = page.Id
+		titleMap[page.Id] = page.Title
 		resultMtx.Unlock()
 
 		return nil
 	})
 
 	runner := jobs.NewRunner()
+	idMapWg := runner.Run(ctx, cancel, idMapWork)
+	idMapWg.Wait()
 
-	resultWg := runner.Run(ctx, cancel, resultWork)
-	resultWg.Wait()
+	network := make(map[uint32][]uint32)
+	networkMtx := sync.Mutex{}
 
-	fmt.Println(len(result))
+	source2 := pages.StreamDB(inDB, parallel)
+	docs2, err := source2(ctx, cancel)
+	if err != nil {
+		return err
+	}
 
-	return nil
+	networkWork := jobs.Reduce(jobs.WorkBuffer, docs2, func(page *documents.Page) error {
+		from, foundFrom := idMap[page.Title]
+		if !foundFrom {
+			return fmt.Errorf("did not add ID for %q", page.Title)
+		}
+
+		matches := linkRegex.FindAllString(page.Text, -1)
+		var tos []uint32
+		for _, match := range matches {
+			to, foundTo := idMap[match]
+			if !foundTo {
+				return fmt.Errorf("did not add ID for %q", page.Title)
+			}
+
+			tos = append(tos, to)
+		}
+
+		networkMtx.Lock()
+		network[from] = tos
+		networkMtx.Unlock()
+
+		return nil
+	})
+
+	networkWg := runner.Run(ctx, cancel, networkWork)
+	networkWg.Wait()
+
+	fmt.Println(len(idMap))
+	fmt.Println("Nodes:", len(network))
+
+	totalEdges := 0
+	singletons := 0
+
+	for _, edges := range network {
+		totalEdges += len(edges)
+		if len(edges) == 0 {
+			singletons++
+		}
+	}
+	fmt.Println("Edges", totalEdges)
+	fmt.Println("Singletons", singletons)
+
+	return ctx.Err()
 }
+
+var linkRegex = regexp.MustCompile(`\[\[[^]]+]]`)
