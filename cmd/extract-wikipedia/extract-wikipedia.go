@@ -259,7 +259,7 @@ func decompress(ns documents.Namespace, compressed []byte, outPages chan<- proto
 		return err
 	}
 
-	infoboxChecker, err := documents.NewInfoboxChecker(documents.PersonInfoboxes)
+	//infoboxChecker, err := documents.NewInfoboxChecker(documents.PersonInfoboxes)
 
 	for _, page := range doc.Pages {
 		if page.NS != ns || page.Redirect.Title != "" {
@@ -269,10 +269,10 @@ func decompress(ns documents.Namespace, compressed []byte, outPages chan<- proto
 
 		pageProto := page.ToProto()
 
-		// Exclude non-biographies.
-		if !infoboxChecker.Matches(pageProto.Text) {
-			continue
-		}
+		//// Exclude non-biographies.
+		//if !infoboxChecker.Matches(pageProto.Text) {
+		//	continue
+		//}
 
 		outPages <- pageProto
 	}

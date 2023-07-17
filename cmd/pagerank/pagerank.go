@@ -57,11 +57,10 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	idMap := make(map[string]uint32)
 	titleMap := make(map[uint32]string)
 
+	biographies := make(map[uint32]bool)
 	female := make(map[uint32]bool)
 	male := make(map[uint32]bool)
-
-	living := make(map[uint32]bool)
-	dead := make(map[uint32]bool)
+	unknown := make(map[uint32]bool)
 
 	resultMtx := sync.Mutex{}
 
@@ -70,24 +69,34 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	checker, err := documents.NewInfoboxChecker(documents.PersonInfoboxes)
+	if err != nil {
+		return err
+	}
+
 	idMapWork := jobs.Reduce(jobs.WorkBuffer, docs, func(page *documents.Page) error {
+		if !checker.Matches(page.Text) {
+			resultMtx.Lock()
+			idMap[page.Title] = page.Id
+			titleMap[page.Id] = page.Title
+			resultMtx.Unlock()
+			return nil
+		}
+
 		gender := nlp.DetermineGender(page.Text)
 
 		resultMtx.Lock()
 		idMap[page.Title] = page.Id
 		titleMap[page.Id] = page.Title
+
+		biographies[page.Id] = true
 		switch gender {
 		case nlp.Female:
 			female[page.Id] = true
 		case nlp.Male:
 			male[page.Id] = true
-		}
-
-		switch {
-		case isDead(page.Text):
-			dead[page.Id] = true
-		case isLiving(page.Text):
-			living[page.Id] = true
+		default:
+			unknown[page.Id] = true
 		}
 
 		resultMtx.Unlock()
@@ -100,14 +109,11 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	// Must fully wait for ID Map to be created and the Badger database closed before opening another connection.
 	idMapWg.Wait()
 
-	fmt.Println("Biographies:", len(idMap))
+	fmt.Println("Articles:", len(idMap))
+	fmt.Println("Biographies:", len(female)+len(male)+len(unknown))
 	fmt.Println("Women:", len(female))
 	fmt.Println("Men:", len(male))
-	fmt.Println("Unknown", len(idMap)-len(female)-len(male))
-
-	fmt.Println("Living:", len(living))
-	fmt.Println("Dead:", len(dead))
-	fmt.Println("Unknown:", len(idMap)-len(living)-len(dead))
+	fmt.Println("Unknown", len(unknown))
 
 	network := make(map[uint32][]uint32)
 	networkMtx := sync.Mutex{}
@@ -211,19 +217,19 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 			beforePageRanks := make([]PageRank, len(weights))
 			{
-				i := 0
+				j := 0
 				for id, rank := range weights {
-					beforePageRanks[i] = PageRank{id: id, rank: rank}
-					i++
+					beforePageRanks[j] = PageRank{id: id, rank: rank}
+					j++
 				}
 			}
 
 			afterPageRanks := make([]PageRank, len(nextWeights))
 			{
-				i := 0
+				j := 0
 				for id, rank := range nextWeights {
-					afterPageRanks[i] = PageRank{id: id, rank: rank}
-					i++
+					afterPageRanks[j] = PageRank{id: id, rank: rank}
+					j++
 				}
 			}
 
@@ -266,18 +272,31 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	femaleBins := make([]int, len(bins)+1)
 	maleBins := make([]int, len(bins)+1)
 
-	for i, pageRank := range pageRanks {
-		if !dead[pageRank.id] {
+	femaleTraffic := 0.0
+	maleTraffic := 0.0
+
+	// Only track biographies.
+	n := 0
+	for _, pageRank := range pageRanks {
+		if !biographies[pageRank.id] {
 			continue
 		}
 
-		bin := toBin(i)
+		bin := toBin(n)
 		if female[pageRank.id] {
 			femaleBins[bin]++
+			femaleTraffic += pageRank.rank
 		} else if male[pageRank.id] {
 			maleBins[bin]++
+			maleTraffic += pageRank.rank
 		}
+
+		n++
 	}
+
+	fmt.Printf("Female Rank: %.08f", femaleTraffic)
+	fmt.Printf("Male Rank:   %.08f", maleTraffic)
+	fmt.Printf("Disparity:   %.08f", maleTraffic/femaleTraffic)
 
 	for i := 0; i <= len(bins); i++ {
 		fmt.Printf("%d,%d,%d\n", i, femaleBins[i], maleBins[i])
@@ -288,24 +307,6 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
-}
-
-var death = regexp.MustCompile(`death_date +=[^\n]+\d`)
-
-func isLiving(text string) bool {
-	if death.MatchString(text) {
-		return false
-	}
-
-	if strings.Contains(text, "birth_date") {
-		return true
-	}
-
-	return false
-}
-
-func isDead(text string) bool {
-	return death.MatchString(text)
 }
 
 var bins = []int{

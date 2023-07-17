@@ -15,8 +15,6 @@ import (
 	"sync"
 )
 
-// clean-wikipedia removes parts of articles we never want to analyze, such as xml tags, tables, and
-// formatting directives.
 func main() {
 	err := mainCmd().Execute()
 	if err != nil {
@@ -56,6 +54,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	titleMap := make(map[uint32]string)
 	female := make(map[uint32]bool)
 	male := make(map[uint32]bool)
+	unknown := make(map[uint32]bool)
 	resultMtx := sync.Mutex{}
 
 	docs, err := source(ctx, cancel)
@@ -63,7 +62,21 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	checker, err := documents.NewInfoboxChecker(documents.PersonInfoboxes)
+	if err != nil {
+		return err
+	}
+
 	idMapWork := jobs.Reduce(jobs.WorkBuffer, docs, func(page *documents.Page) error {
+		if !checker.Matches(page.Text) {
+			// Not a biography.
+			resultMtx.Lock()
+			idMap[page.Title] = page.Id
+			titleMap[page.Id] = page.Title
+			resultMtx.Unlock()
+			return nil
+		}
+
 		gender := nlp.DetermineGender(page.Text)
 
 		resultMtx.Lock()
@@ -74,6 +87,8 @@ func runCmd(cmd *cobra.Command, args []string) error {
 			female[page.Id] = true
 		case nlp.Male:
 			male[page.Id] = true
+		default:
+			unknown[page.Id] = true
 		}
 		resultMtx.Unlock()
 
@@ -88,7 +103,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	fmt.Println("Biographies:", len(idMap))
 	fmt.Println("Women:", len(female))
 	fmt.Println("Men:", len(male))
-	fmt.Println("Unknown:", len(idMap)-len(female)-len(male))
+	fmt.Println("Unknown:", len(unknown))
 
 	network := make(map[uint32][]uint32)
 	networkMtx := sync.Mutex{}
@@ -135,44 +150,43 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	networkWg := runner.Run(ctx, cancel, networkWork)
 	networkWg.Wait()
 
+	if ctx.Err() != nil {
+		return context.Cause(ctx)
+	}
+
 	fmt.Println("Nodes:", len(network))
 
 	totalEdges := 0
-	f2f := 0
-	f2m := 0
-	f2u := 0
-	m2f := 0
-	m2m := 0
-	m2u := 0
-	u2f := 0
-	u2m := 0
-	u2u := 0
+
+	matrix := make(map[FromTo]uint64)
+
 	singletons := 0
 
 	for id, edges := range network {
 		totalEdges += len(edges)
 
 		for _, edge := range edges {
-			switch {
-			case female[id] && female[edge]:
-				f2f++
-			case female[id] && male[edge]:
-				f2m++
-			case female[id]:
-				f2u++
-			case male[id] && female[edge]:
-				m2f++
-			case male[id] && male[edge]:
-				m2m++
-			case male[id]:
-				m2u++
-			case female[edge]:
-				u2f++
-			case male[edge]:
-				u2m++
-			default:
-				u2u++
+			from := NonBiography
+			if female[id] {
+				from = Female
+			} else if male[id] {
+				from = Male
+			} else if unknown[id] {
+				from = Unknown
 			}
+
+			to := NonBiography
+			if female[edge] {
+				to = Female
+			} else if male[edge] {
+				to = Male
+			} else if unknown[edge] {
+				to = Unknown
+			}
+
+			ft := FromTo{From: from, To: to}
+
+			matrix[ft]++
 		}
 
 		if len(edges) == 0 {
@@ -180,25 +194,43 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	unknown := len(network) - len(female) - len(male)
+	order := []Class{Female, Male, Unknown, NonBiography}
 
 	fmt.Println("Edges", totalEdges)
 	fmt.Println("Singletons", singletons)
-	fmt.Println("Avg F2F", float64(f2f)/float64(len(female)))
-	fmt.Println("Avg F2M", float64(f2m)/float64(len(female)))
-	fmt.Println("Avg F2U", float64(f2u)/float64(len(female)))
-	fmt.Println("Avg M2F", float64(m2f)/float64(len(male)))
-	fmt.Println("Avg M2M", float64(m2m)/float64(len(male)))
-	fmt.Println("Avg M2U", float64(m2u)/float64(len(male)))
-	fmt.Println("Avg U2F", float64(u2f)/float64(unknown))
-	fmt.Println("Avg U2M", float64(u2m)/float64(unknown))
-	fmt.Println("Avg U2U", float64(u2u)/float64(unknown))
 
-	if ctx.Err() != nil {
-		return context.Cause(ctx)
+	columnSize := make([]uint64, len(order))
+
+	for row := range order {
+		for column := range order {
+			ft := FromTo{From: order[column], To: order[row]}
+			columnSize[column] += matrix[ft]
+		}
+	}
+
+	for row := range order {
+		for column := range order {
+			ft := FromTo{From: order[column], To: order[row]}
+			fmt.Printf("%.05f,", float64(matrix[ft])/float64(columnSize[column]))
+		}
+		fmt.Printf("\n")
 	}
 
 	return nil
 }
 
 var linkRegex = regexp.MustCompile(`\[\[[^]]+]]`)
+
+type Class string
+
+var (
+	Female       Class = "female"
+	Male         Class = "male"
+	Unknown      Class = "unknown"
+	NonBiography Class = "non-biography"
+)
+
+type FromTo struct {
+	From Class
+	To   Class
+}
