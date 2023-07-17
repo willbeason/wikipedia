@@ -9,6 +9,7 @@ import (
 	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/nlp"
 	"github.com/willbeason/wikipedia/pkg/pages"
+	"math"
 	"os"
 	"regexp"
 	"strings"
@@ -88,7 +89,6 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	fmt.Println("Biographies:", len(idMap))
 	fmt.Println("Women:", len(female))
 	fmt.Println("Men:", len(male))
-	fmt.Println("Unknown:", len(idMap)-len(female)-len(male))
 
 	network := make(map[uint32][]uint32)
 	networkMtx := sync.Mutex{}
@@ -107,7 +107,11 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		}
 
 		matches := linkRegex.FindAllString(page.Text, -1)
-		var tos []uint32
+
+		// Force-exclude self reference.
+		tos := []uint32{}
+		seen := map[uint32]bool{from: true}
+
 		for _, match := range matches {
 			// Strip square brackets.
 			match = match[2 : len(match)-2]
@@ -117,10 +121,17 @@ func runCmd(cmd *cobra.Command, args []string) error {
 				match = match[:idx]
 			}
 
+			// Ignore references to non-biographies.
 			to, foundTo := idMap[match]
 			if !foundTo {
 				continue
 			}
+
+			// Don't add duplicates.
+			if seen[to] {
+				continue
+			}
+			seen[to] = true
 
 			tos = append(tos, to)
 		}
@@ -137,62 +148,51 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 	fmt.Println("Nodes:", len(network))
 
-	totalEdges := 0
-	f2f := 0
-	f2m := 0
-	f2u := 0
-	m2f := 0
-	m2m := 0
-	m2u := 0
-	u2f := 0
-	u2m := 0
-	u2u := 0
-	singletons := 0
+	// Initialize the network so every node has equal weight.
+	weights := make(map[uint32]float64, len(network))
+	startWeight := 1.0 / float64(len(network))
+	for id := range network {
+		weights[id] = startWeight
+	}
 
-	for id, edges := range network {
-		totalEdges += len(edges)
+	fw, mw := RelativeWeights(female, male, weights)
+	fmt.Printf("Start (%.03f, %.03f)\n", fw, mw)
 
-		for _, edge := range edges {
-			switch {
-			case female[id] && female[edge]:
-				f2f++
-			case female[id] && male[edge]:
-				f2m++
-			case female[id]:
-				f2u++
-			case male[id] && female[edge]:
-				m2f++
-			case male[id] && male[edge]:
-				m2m++
-			case male[id]:
-				m2u++
-			case female[edge]:
-				u2f++
-			case male[edge]:
-				u2m++
-			default:
-				u2u++
+	for i := 0; i < 40; i++ {
+		nextWeights := make(map[uint32]float64, len(network))
+		dampWeight := (1.0 - damping) / float64(len(network))
+
+		for id, tos := range network {
+			var linkToWeight float64
+
+			if len(tos) > 0 {
+				linkToWeight = damping * weights[id] / float64(len(tos))
+			} else {
+				// This article links to nowhere, so all weight goes to damping.
+				dampWeight += damping * weights[id] / float64(len(network))
+			}
+
+			// Add weight from links.
+			for _, to := range tos {
+				nextWeights[to] += linkToWeight
 			}
 		}
 
-		if len(edges) == 0 {
-			singletons++
+		// Add random traversal weight.
+		for id := range network {
+			nextWeights[id] += dampWeight
 		}
+
+		diffs := 0.0
+		for id, before := range weights {
+			diffs += math.Abs(before - nextWeights[id])
+		}
+		fmt.Printf("Distance %d %.03f\n", i, diffs)
+
+		weights = nextWeights
+		fwi, mwi := RelativeWeights(female, male, weights)
+		fmt.Printf("Iteration %d (%.03f, %.03f)\n", i, fwi, mwi)
 	}
-
-	unknown := len(network) - len(female) - len(male)
-
-	fmt.Println("Edges", totalEdges)
-	fmt.Println("Singletons", singletons)
-	fmt.Println("Avg F2F", float64(f2f)/float64(len(female)))
-	fmt.Println("Avg F2M", float64(f2m)/float64(len(female)))
-	fmt.Println("Avg F2U", float64(f2u)/float64(len(female)))
-	fmt.Println("Avg M2F", float64(m2f)/float64(len(male)))
-	fmt.Println("Avg M2M", float64(m2m)/float64(len(male)))
-	fmt.Println("Avg M2U", float64(m2u)/float64(len(male)))
-	fmt.Println("Avg U2F", float64(u2f)/float64(unknown))
-	fmt.Println("Avg U2M", float64(u2m)/float64(unknown))
-	fmt.Println("Avg U2U", float64(u2u)/float64(unknown))
 
 	if ctx.Err() != nil {
 		return context.Cause(ctx)
@@ -201,4 +201,21 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+const damping = 0.99
+
 var linkRegex = regexp.MustCompile(`\[\[[^]]+]]`)
+
+func RelativeWeights(female, male map[uint32]bool, weights map[uint32]float64) (float64, float64) {
+	femaleWeight := 0.0
+	maleWeight := 0.0
+
+	for id, weight := range weights {
+		if female[id] {
+			femaleWeight += weight
+		} else if male[id] {
+			maleWeight += weight
+		}
+	}
+
+	return femaleWeight, maleWeight
+}
