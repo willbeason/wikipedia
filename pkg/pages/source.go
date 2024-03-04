@@ -2,6 +2,7 @@ package pages
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"sync"
 
@@ -46,7 +47,7 @@ func StreamDBKeys(inDBPath string, parallel int, keys []uint) Source {
 
 		wg, err = inDB.ProcessIDs(ctx, documents.ReadPages(pages), toUint32Chan(keys), errs)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("streaming keys %v: %w", keys, err)
 		}
 
 		go func() {

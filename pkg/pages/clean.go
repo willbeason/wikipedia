@@ -2,7 +2,6 @@ package pages
 
 import (
 	"context"
-
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/nlp"
