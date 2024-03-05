@@ -13,7 +13,8 @@ const (
 	DictionarySizeKey     = "dictionary-size"
 	DictionarySizeDefault = 50000
 
-	IDsKey = "ids"
+	IDsKey    = "ids"
+	TitlesKey = "titles"
 )
 
 func Parallel(cmd *cobra.Command) {
@@ -28,4 +29,8 @@ func DictionarySize(cmd *cobra.Command) {
 
 func IDs(cmd *cobra.Command) {
 	cmd.PersistentFlags().UintSlice(IDsKey, nil, "A list of specific article ids to check.")
+}
+
+func Titles(cmd *cobra.Command) {
+	cmd.PersistentFlags().StringSlice(TitlesKey, nil, "A list of specific article titles to check.")
 }

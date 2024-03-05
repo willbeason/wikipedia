@@ -127,6 +127,29 @@ func Map[FROM, TO any](buffer int, in <-chan FROM, fn func(FROM) (TO, error)) (<
 	return out, work
 }
 
+// ForEach performs an action for each item, returning nothing.
+func ForEach[FROM any](buffer int, in <-chan FROM, fn func(FROM) error) WorkQueue {
+	work := make(chan Work, buffer)
+
+	go func() {
+		for i := range in {
+			x := i
+			work <- func() error {
+				err := fn(x)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			}
+		}
+
+		close(work)
+	}()
+
+	return work
+}
+
 // Reduce consumes a channel.
 func Reduce[T any](buffer int, in <-chan T, fn func(T) error) WorkQueue {
 	work := make(chan Work, buffer)
