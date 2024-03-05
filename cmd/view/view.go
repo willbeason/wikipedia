@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strconv"
 
@@ -50,6 +51,9 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	if _, err = os.Stat(inDB); err != nil {
+		return fmt.Errorf("unable to open %q: %w", inDB, err)
+	}
 	source := pages.StreamDBKeys(inDB, parallel, []uint{uint(id)})
 
 	return pages.Run(ctx, source, parallel, nil, protos.PrintProtos)

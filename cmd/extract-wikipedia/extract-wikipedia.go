@@ -37,12 +37,13 @@ func mainCmd() *cobra.Command {
   path/to/pages-articles-multistream-index.txt \
   path/to/output.db`,
 		Short: `Extracts the compressed pages-articles-multistream dump of Wikipedia to an output
-Badger database, given an already-extracted index file.`,
+Badger database, given an already-extracted index file. Excludes all redirect pages.`,
 		RunE: runCmd,
 	}
 
 	flags.Parallel(cmd)
-	cmd.Flags().Int16(namespaceKey, int16(documents.NamespaceArticle), "")
+	cmd.Flags().Int16(namespaceKey, int16(documents.NamespaceArticle),
+		"The Namespace of pages to keep. Defaults to Articles.")
 
 	return cmd
 }
@@ -218,6 +219,7 @@ func normalize(text string) string {
 	return text
 }
 
+// decompress extracts pages of the passed Namespace which are not redirects.
 func decompress(ns documents.Namespace, compressed []byte, outPages chan<- protos.ID, errs chan<- error) {
 	bz := bzip2.NewReader(bytes.NewReader(compressed))
 
