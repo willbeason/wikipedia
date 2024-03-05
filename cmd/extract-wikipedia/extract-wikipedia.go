@@ -6,8 +6,10 @@ import (
 	"compress/bzip2"
 	"encoding/xml"
 	"fmt"
+	"github.com/willbeason/wikipedia/pkg/environment"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -32,7 +34,6 @@ func main() {
 
 func mainCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Args: cobra.ExactArgs(3),
 		Use: `extract-wikipedia path/to/pages-articles-multistream.xml.bz2 \
   path/to/pages-articles-multistream-index.txt \
   path/to/output.db`,
@@ -61,10 +62,27 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	repo := args[0]
-	index := args[1]
+	repo := ""
+	if len(args) > 0 {
+		repo = args[0]
+	} else {
+		repo = filepath.Join(environment.WikiPath, "dump", "pages-articles-multistream.xml.bz2")
+	}
 
-	outDBPath := args[2]
+	index := ""
+	if len(args) > 1 {
+		index = args[1]
+	} else {
+		index = filepath.Join(environment.WikiPath, "dump", "pages-articles-multistream-index.txt")
+	}
+
+	outDBPath := ""
+	if len(args) > 2 {
+		outDBPath = args[2]
+	} else {
+		outDBPath = filepath.Join(environment.WikiPath, "extracted.db")
+	}
+
 	outDB := db.NewRunner(outDBPath, parallel)
 	sink := outDB.Write()
 
