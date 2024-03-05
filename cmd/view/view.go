@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/documents"
-	"github.com/willbeason/wikipedia/pkg/jobs"
-	"os"
-
+	"github.com/willbeason/wikipedia/pkg/environment"
 	"github.com/willbeason/wikipedia/pkg/flags"
+	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/pages"
+	"google.golang.org/protobuf/encoding/protojson"
+	"os"
+	"path/filepath"
 )
 
 func main() {
@@ -23,7 +25,6 @@ func main() {
 
 func mainCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Args:  cobra.ExactArgs(1),
 		Use:   `view path/to/input`,
 		Short: `View specific articles by identifier (--ids) or title (--titles)`,
 		RunE:  runCmd,
@@ -54,14 +55,37 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	if len(titles) > 0 {
+		indexFilepath := filepath.Join(environment.WikiPath, environment.TitleIndex)
+		indexBytes, err2 := os.ReadFile(indexFilepath)
+		if err2 != nil {
+			return err2
+		}
 
+		index := documents.TitleIndex{}
+		err2 = protojson.Unmarshal(indexBytes, &index)
+		if err2 != nil {
+			return err2
+		}
+
+		for _, title := range titles {
+			id, found := index.Titles[title]
+			if !found {
+				return fmt.Errorf("unable to find article of title %q", title)
+			}
+			pageIDs = append(pageIDs, uint(id))
+		}
 	}
 
-	if len(pageIDs) == 0 && len(titles) == 0 {
+	if len(pageIDs) == 0 {
 		return fmt.Errorf("must specify at least one ID or title")
 	}
 
-	inDB := args[0]
+	inDB := ""
+	if len(args) > 0 {
+		inDB = args[0]
+	} else {
+		inDB = filepath.Join(environment.WikiPath, "extracted.db")
+	}
 
 	if _, err = os.Stat(inDB); err != nil {
 		return fmt.Errorf("unable to open %q: %w", inDB, err)
@@ -79,6 +103,9 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 	ps, err := source(ctx, cancel)
 	printWork := jobs.ForEach(jobs.WorkBuffer, ps, func(from *documents.Page) error {
+		fmt.Println(from.Id)
+		fmt.Println(from.Title)
+		fmt.Println(from.Text)
 		return nil
 	})
 

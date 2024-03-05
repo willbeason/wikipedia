@@ -4,11 +4,12 @@ import (
 	"context"
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/documents"
+	"github.com/willbeason/wikipedia/pkg/environment"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/pages"
 	"github.com/willbeason/wikipedia/pkg/protos"
 	"os"
-	"strings"
+	"path/filepath"
 )
 
 func main() {
@@ -22,7 +23,6 @@ func main() {
 
 func mainCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Args:  cobra.ExactArgs(1),
 		Use:   `view path/to/input`,
 		Short: `View specific articles by identifier (--ids) or title (--titles)`,
 		RunE:  runCmd,
@@ -45,8 +45,19 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	inDB := args[0]
-	out := args[1]
+	inDB := ""
+	if len(args) > 0 {
+		inDB = args[0]
+	} else {
+		inDB = filepath.Join(environment.WikiPath, "extracted.db")
+	}
+
+	out := ""
+	if len(args) > 1 {
+		out = args[1]
+	} else {
+		out = filepath.Join(environment.WikiPath, environment.TitleIndex)
+	}
 
 	source := pages.StreamDB(inDB, parallel)
 
@@ -76,8 +87,7 @@ func makeIndex(pages <-chan *documents.Page) <-chan *documents.TitleIndex {
 		}
 
 		for page := range pages {
-			title := strings.ToLower(page.Title)
-			result.Titles[title] = page.Id
+			result.Titles[page.Title] = page.Id
 		}
 
 		results <- result
