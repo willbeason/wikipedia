@@ -53,7 +53,7 @@ func ignoredTags() []string {
 var (
 
 	// CommentRegex matches commented-out text. Such text is not shown on pages
-	// and is generally either off-topic or low quality.
+	// and is generally either off-first-links or low quality.
 	//
 	// Obviously not perfect and can match non-comments in rare cases.
 	CommentRegex = regexp.MustCompile("(?s)<!--.*?-->")
@@ -111,7 +111,7 @@ func keepReplacing(pattern *regexp.Regexp, text, replace string) string {
 // 	return text
 // }
 
-// CleanArticle2 removes all parts of Wikipedia we never want to analyze.
+// CleanArticle removes all parts of Wikipedia we never want to analyze.
 func CleanArticle(text string) string {
 	sections := strings.Split(text, "\n\n")
 

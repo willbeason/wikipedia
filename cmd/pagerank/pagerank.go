@@ -17,8 +17,6 @@ import (
 	"sync"
 )
 
-// clean-wikipedia removes parts of articles we never want to analyze, such as xml tags, tables, and
-// formatting directives.
 func main() {
 	err := mainCmd().Execute()
 	if err != nil {
@@ -134,7 +132,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		matches := linkRegex.FindAllString(page.Text, -1)
 
 		// Force-exclude self reference.
-		tos := []uint32{}
+		var tos []uint32
 		seen := map[uint32]bool{from: true}
 
 		for _, match := range matches {
