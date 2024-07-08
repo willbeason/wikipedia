@@ -35,3 +35,7 @@ linters:
     - inamedparam
     - interfacebloat
     - intrange
+#    - ireturn
+#    - lll
+#    - maintidx
+    - makezero

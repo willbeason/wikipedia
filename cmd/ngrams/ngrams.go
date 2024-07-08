@@ -147,7 +147,7 @@ func runCmd(cmd *cobra.Command, _ []string) error {
 			prevDictionarySize, curDictionarySize)
 	}
 
-	ngramCounts := make([]TokenCount, len(ngramCountsMap))
+	ngramCounts := make([]TokenCount, 0, len(ngramCountsMap))
 	for ngram, count := range ngramCountsMap {
 		ngramCounts = append(ngramCounts, TokenCount{
 			Token: ngram,

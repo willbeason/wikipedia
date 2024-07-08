@@ -190,7 +190,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	topics := make([]Topic, len(topicsMap))
+	topics := make([]Topic, 0, len(topicsMap))
 	for id, topicCount := range topicsMap {
 		topics = append(topics, Topic{
 			Title: titleMap[id],
