@@ -25,7 +25,7 @@ var (
 	WordRegex = regexp.MustCompile(`[\w']+`)
 
 	NumberRegex  = regexp.MustCompile(`\b\d+(,\d{3})*(\.\d+)?\b`)
-	PercentRegex = regexp.MustCompile(fmt.Sprintf(`%s%%`, NumToken))
+	PercentRegex = regexp.MustCompile(NumToken + "%")
 	DateRegex    = regexp.MustCompile(fmt.Sprintf(`(?i)\b(%s (%s,? )?%s|%s %s,? %s)\b`,
 		NumToken, Months, NumToken,
 		Months, NumToken, NumToken,

@@ -39,3 +39,14 @@ linters:
 #    - lll
 #    - maintidx
     - makezero
+    - mirror
+    - misspell
+#    - mnd
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+#    - nolintlint
+#    - nonamedreturns
+#    - paralleltest
+    - perfsprint

@@ -1,7 +1,6 @@
 package tagtree
 
 import (
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -35,7 +34,7 @@ func (n *NodeExpression) String(title string) string {
 			return "<UNABLE TO PARSE EXPRESSION RIGHT>"
 		}
 
-		return fmt.Sprint(left + right)
+		return strconv.FormatUint(left+right, 10)
 	default:
 		return "<MULTIPLE PLUS EXPRESSIONS>"
 	}
@@ -54,7 +53,7 @@ func (n *NodeExpression) String(title string) string {
 			return "<UNABLE TO PARSE EXPRESSION RIGHT>"
 		}
 
-		return fmt.Sprint(left - right)
+		return strconv.FormatUint(left-right, 10)
 	default:
 		return "<MULTIPLE MINUS EXPRESSIONS>"
 	}

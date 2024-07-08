@@ -42,10 +42,10 @@ func (n *NodeCentury) String(title string) string {
 	ordinalCentury := ordinal(century)
 
 	if n.Dash {
-		return fmt.Sprintf("%s-century", ordinalCentury)
+		return ordinalCentury + "-century"
 	}
 
-	return fmt.Sprintf("%s century", ordinalCentury)
+	return ordinalCentury + " century"
 }
 
 func ordinal(n uint64) string {

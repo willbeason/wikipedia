@@ -1,8 +1,6 @@
 package classify
 
 import (
-	"fmt"
-
 	"github.com/willbeason/wikipedia/pkg/documents"
 )
 
@@ -11,7 +9,7 @@ func (x *PageClassificationsMap) AddPage(known map[uint32]Classification, pageTi
 }
 
 func (x *PageClassificationsMap) addPage(known map[uint32]Classification, stack string, pageTitles map[uint32]string, pageID uint32, categories []uint32, pageCategories *documents.PageCategories) []Classification {
-	stack += fmt.Sprintf(" -> %s", pageTitles[pageID])
+	stack += " -> " + pageTitles[pageID]
 	if p, ok := x.Pages[pageID]; ok {
 		// We've already gotten the classifications for this page.
 		return p.Classifications

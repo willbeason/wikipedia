@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -78,7 +79,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(pageIDs) == 0 {
-		return fmt.Errorf("must specify at least one ID or title")
+		return errors.New("must specify at least one ID or title")
 	}
 
 	inDB := ""
