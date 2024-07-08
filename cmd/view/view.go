@@ -82,7 +82,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return errors.New("must specify at least one ID or title")
 	}
 
-	inDB := ""
+	var inDB string
 	if len(args) > 0 {
 		inDB = args[0]
 	} else {

@@ -25,6 +25,8 @@ func (c *Categorizer) Categorize(page *Page) *Categories {
 	text := categorySplit.ReplaceAllString(page.Text, "]]\n[[")
 	lines := strings.Split(text, "\n")
 
+	//nolint: prealloc // Cost of estimating is higher than potential gain.
+	// Consider setting at median size to reduce reallocations.
 	var categoryLines []string
 
 	for _, line := range lines {

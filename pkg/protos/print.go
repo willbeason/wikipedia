@@ -18,7 +18,7 @@ func PrintProtos(_ context.Context, ps <-chan ID, errs chan<- error) (*sync.Wait
 	go func() {
 		defer wg.Done()
 
-		printProtos(ps, errs)
+		printProtos(ps)
 	}()
 
 	return &wg, nil
@@ -26,21 +26,15 @@ func PrintProtos(_ context.Context, ps <-chan ID, errs chan<- error) (*sync.Wait
 
 var _ Sink = PrintProtos
 
-func printProtos(ps <-chan ID, errs chan<- error) {
+func printProtos(ps <-chan ID) {
 	for p := range ps {
-		err := printProto(p)
-		if err != nil {
-			errs <- err
-			return
-		}
+		printProto(p)
 	}
 }
 
-func printProto(p ID) error {
+func printProto(p ID) {
 	page := p.(*documents.Page)
 
 	fmt.Println(page.Text)
 	fmt.Println()
-
-	return nil
 }

@@ -50,3 +50,18 @@ linters:
 #    - nonamedreturns
 #    - paralleltest
     - perfsprint
+    - prealloc
+    - predeclared
+#    - protogetter
+    - reassign
+    - tenv
+    - testableexamples
+#    - testpackage
+    - thelper
+    - unconvert
+    - unparam
+    - usestdlibvars
+#    - varnamelen
+    - wastedassign
+    - whitespace
+#    - wrapcheck
