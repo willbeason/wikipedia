@@ -48,7 +48,7 @@ func NewRunner(opts ...RunnerOpt) *Runner {
 func (r *Runner) Run(ctx context.Context, cancel context.CancelCauseFunc, workQueue WorkQueue) *sync.WaitGroup {
 	wg := sync.WaitGroup{}
 
-	for i := 0; i < r.parallel; i++ {
+	for range r.parallel {
 		wg.Add(1)
 
 		go func() {

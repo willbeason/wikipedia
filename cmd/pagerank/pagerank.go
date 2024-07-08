@@ -181,7 +181,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	fw, mw := RelativeWeights(female, male, weights)
 	fmt.Printf("Start (%.03f, %.03f)\n", fw, mw)
 
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		nextWeights := make(map[uint32]float64, len(network))
 		dampWeight := (1.0 - damping) / float64(len(network))
 
@@ -296,7 +296,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Male Rank:   %.08f", maleTraffic)
 	fmt.Printf("Disparity:   %.08f", maleTraffic/femaleTraffic)
 
-	for i := 0; i <= len(bins); i++ {
+	for i := range len(bins) {
 		fmt.Printf("%d,%d,%d\n", i, femaleBins[i], maleBins[i])
 	}
 

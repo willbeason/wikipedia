@@ -197,7 +197,7 @@ func extractPages(cancel context.CancelCauseFunc, parallel int, ns documents.Nam
 	pages := make(chan protos.ID, jobs.WorkBuffer)
 
 	wg := sync.WaitGroup{}
-	for w := 0; w < parallel; w++ {
+	for range parallel {
 		wg.Add(1)
 		go func() {
 			err := extractPagesWorker(ns, compressedItems, pages)

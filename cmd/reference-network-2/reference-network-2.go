@@ -158,7 +158,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	fw, mw := RelativeWeights(female, male, weights)
 	fmt.Printf("Start (%.03f, %.03f)\n", fw, mw)
 
-	for i := 0; i < 40; i++ {
+	for i := range 40 {
 		nextWeights := make(map[uint32]float64, len(network))
 		dampWeight := (1.0 - damping) / float64(len(network))
 

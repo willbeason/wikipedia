@@ -32,7 +32,7 @@ func (r *Runner) ProcessIDs(ctx context.Context, cancel context.CancelCauseFunc,
 		wg.Wait()
 	}()
 
-	for i := 0; i < r.parallel; i++ {
+	for range r.parallel {
 		go func() {
 			processIDs(ctx, cancel, db, ids, process)
 			wg.Done()

@@ -20,7 +20,7 @@ func NewShortestCache(shards uint32) *ShortestCache {
 		distance: make([]map[FromTo]int, shards),
 	}
 
-	for i := uint32(0); i < shards; i++ {
+	for i := range shards {
 		result.distance[i] = make(map[FromTo]int)
 	}
 

@@ -29,9 +29,9 @@ type Bayes struct {
 func NewCounts(nClassifications, nWords int) Counts {
 	counts := make(Counts, nWords+1)
 
-	for i := 0; i <= nWords; i++ {
+	for i := range nWords {
 		newCounts := make([]uint32, nClassifications+1)
-		for j := 0; j <= nClassifications; j++ {
+		for j := range nClassifications {
 			newCounts[j] = BaseCount
 		}
 		counts[i] = newCounts
@@ -43,7 +43,7 @@ func NewCounts(nClassifications, nWords int) Counts {
 func NewModel(nClassifications, nWords int) Model {
 	logProbabilities := make(Model, nWords+1)
 
-	for i := 0; i <= nWords; i++ {
+	for i := range nWords {
 		logProbabilities[i] = make([]float64, nClassifications+1)
 	}
 

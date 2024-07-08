@@ -32,3 +32,6 @@ linters:
     - godot
     - godox
     - gofumpt
+    - inamedparam
+    - interfacebloat
+    - intrange
