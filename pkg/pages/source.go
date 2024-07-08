@@ -3,11 +3,12 @@ package pages
 import (
 	"context"
 	"fmt"
+	"math"
+	"sync"
+
 	"github.com/willbeason/wikipedia/pkg/db"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/jobs"
-	"math"
-	"sync"
 )
 
 func StreamDB(inDBPath string, parallel int) func(ctx context.Context, cancel context.CancelCauseFunc) (<-chan *documents.Page, error) {

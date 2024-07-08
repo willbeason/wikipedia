@@ -3,16 +3,17 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"regexp"
+	"strings"
+	"sync"
+
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/nlp"
 	"github.com/willbeason/wikipedia/pkg/pages"
-	"os"
-	"regexp"
-	"strings"
-	"sync"
 )
 
 func main() {

@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"os"
+	"path/filepath"
+
 	"github.com/dgraph-io/badger/v3"
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/db"
@@ -12,8 +15,6 @@ import (
 	"github.com/willbeason/wikipedia/pkg/nlp"
 	"github.com/willbeason/wikipedia/pkg/pages"
 	"github.com/willbeason/wikipedia/pkg/protos"
-	"os"
-	"path/filepath"
 )
 
 func main() {

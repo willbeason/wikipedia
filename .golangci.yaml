@@ -1,0 +1,23 @@
+linters:
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - canonicalheader
+    - containedctx
+    - copyloopvar
+#    - cyclop
+    - decorder
+    - dogsled
+    - dupl
+    - durationcheck
+#    - err113
+    - errchkjson
+    - errname
+#    - errorlint
+#    - exhaustive
+#    - exhaustruct
+    - exportloopref
+    - fatcontext
+    - gci

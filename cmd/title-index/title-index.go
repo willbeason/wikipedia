@@ -2,14 +2,15 @@ package main
 
 import (
 	"context"
+	"os"
+	"path/filepath"
+
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/environment"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/pages"
 	"github.com/willbeason/wikipedia/pkg/protos"
-	"os"
-	"path/filepath"
 )
 
 func main() {

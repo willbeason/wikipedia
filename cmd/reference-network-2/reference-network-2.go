@@ -3,17 +3,18 @@ package main
 import (
 	"context"
 	"fmt"
+	"math"
+	"os"
+	"regexp"
+	"strings"
+	"sync"
+
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/nlp"
 	"github.com/willbeason/wikipedia/pkg/pages"
-	"math"
-	"os"
-	"regexp"
-	"strings"
-	"sync"
 )
 
 // clean-wikipedia removes parts of articles we never want to analyze, such as xml tags, tables, and

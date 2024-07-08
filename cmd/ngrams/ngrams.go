@@ -3,6 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+	"sync"
+
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/environment"
@@ -11,11 +17,6 @@ import (
 	"github.com/willbeason/wikipedia/pkg/nlp"
 	"github.com/willbeason/wikipedia/pkg/ordinality"
 	"github.com/willbeason/wikipedia/pkg/pages"
-	"os"
-	"path/filepath"
-	"sort"
-	"strings"
-	"sync"
 )
 
 // Defaults for ngram detection which may be made configurable in the future.

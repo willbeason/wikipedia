@@ -7,15 +7,14 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
-	"github.com/dgraph-io/badger/v3"
 	"io"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/dgraph-io/badger/v3"
 	"github.com/spf13/cobra"
-
 	"github.com/willbeason/wikipedia/pkg/db"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"

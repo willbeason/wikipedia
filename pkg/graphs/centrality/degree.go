@@ -1,11 +1,11 @@
 package centrality
 
 import (
-	"golang.org/x/text/language"
 	"strings"
 
 	"github.com/willbeason/wikipedia/pkg/graphs"
 	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func InDegree(id uint32, graph *graphs.Directed) int {

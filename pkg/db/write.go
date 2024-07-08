@@ -3,10 +3,10 @@ package db
 import (
 	"errors"
 	"fmt"
-	"github.com/dgraph-io/badger/v3"
-	"google.golang.org/protobuf/proto"
 
+	"github.com/dgraph-io/badger/v3"
 	"github.com/willbeason/wikipedia/pkg/protos"
+	"google.golang.org/protobuf/proto"
 )
 
 func WriteProto(db *badger.DB) func(p protos.ID) error {
