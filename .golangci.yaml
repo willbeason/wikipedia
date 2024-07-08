@@ -20,17 +20,10 @@ linters-settings:
     min-complexity: 10
   goimports:
     local-prefixes: github.com/willbeason/wikipedia
-  govet:
-    shadow: true
   lll:
     line-length: 150
   misspell:
     locale: US
-
-issues:
-  exclude-rules:
-    - path: '(.+)_test\.go'
-      text: "varnamelen"
 
 linters:
   enable-all: true
