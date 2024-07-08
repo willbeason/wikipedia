@@ -2,60 +2,38 @@ package ordinality
 
 import (
 	"fmt"
-
-	"github.com/willbeason/wikipedia/pkg/nlp"
 )
 
-func CollectWordCounts(wordCountsChannel <-chan *PageWordMap, known map[string]bool, countFilter uint32, sizeThreshold int, minCount uint32) <-chan *nlp.FrequencyMap {
-	result := make(chan *nlp.FrequencyMap, 100)
+type WordCollector struct {
+	// CountFilter
+	CountFilter uint32
 
-	go func() {
-		counts := collectWordCounts(wordCountsChannel, known, countFilter, sizeThreshold)
+	// SizeThreshold is the
+	SizeThreshold int
 
-		FilterCounts(counts.Words, minCount)
-
-		result <- counts
-		close(result)
-	}()
-
-	return result
+	Counts map[string]uint32
 }
 
-func collectWordCounts(wordCountsChannel <-chan *PageWordMap, known map[string]bool, countFilter uint32, sizeThreshold int) *nlp.FrequencyMap {
-	knownCounts := &nlp.FrequencyMap{
-		Words: make(map[string]uint32, len(known)),
+func (wc *WordCollector) Add(counts map[string]uint32) {
+	if len(wc.Counts) > wc.SizeThreshold {
+		wc.FilterCounts()
 	}
-	unknownCounts := &nlp.FrequencyMap{
-		Words: make(map[string]uint32),
+	for ngram, count := range counts {
+		wc.Counts[ngram] += count
 	}
-
-	for wordCounts := range wordCountsChannel {
-		for word, count := range wordCounts.Words {
-			if known[word] {
-				knownCounts.Words[word] += count
-			} else {
-				unknownCounts.Words[word] += count
-			}
-		}
-
-		if len(unknownCounts.Words) > sizeThreshold {
-			FilterCounts(unknownCounts.Words, countFilter)
-		}
-	}
-
-	result := knownCounts
-	for newWord, count := range unknownCounts.Words {
-		result.Words[newWord] = count
-	}
-
-	return result
 }
 
-func FilterCounts(m map[string]uint32, countFilter uint32) {
-	for k, v := range m {
-		if v < countFilter {
-			delete(m, k)
+func (wc *WordCollector) FilterCounts() {
+	for k, v := range wc.Counts {
+		if v < wc.CountFilter {
+			delete(wc.Counts, k)
 		}
 	}
-	fmt.Println(len(m))
+
+	newLen := len(wc.Counts)
+	fmt.Println("Reduced to", newLen, "ngrams")
+
+	if newLen >= wc.SizeThreshold {
+		panic("unable to reduce to below size threshold")
+	}
 }
