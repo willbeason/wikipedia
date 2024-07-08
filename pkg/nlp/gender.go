@@ -76,14 +76,14 @@ func ReadDocumentGender(line string) (DocumentGender, error) {
 }
 
 var (
-	categoryRegex  = regexp.MustCompile("\\[\\[Category:.+]]")
-	womenRegex     = regexp.MustCompile("\\b(women|female)\\b")
-	menRegex       = regexp.MustCompile("\\b(men|male)\\b")
+	categoryRegex  = regexp.MustCompile(`\\[\\[Category:.+]]`)
+	womenRegex     = regexp.MustCompile(`\\b(women|female)\\b`)
+	menRegex       = regexp.MustCompile(`\\b(men|male)\\b`)
 	nonbinaryRegex = regexp.MustCompile(`\b(nonbinary)\b`)
 
-	femalePronouns    = regexp.MustCompile("\\b(she|hers|her|herself)\\b")
-	malePronouns      = regexp.MustCompile("\\b(he|his|him|himself)\\b")
-	nonbinaryPronouns = regexp.MustCompile("\\b(they|their|theirs|them|themself)\\b")
+	femalePronouns    = regexp.MustCompile(`\\b(she|hers|her|herself)\\b`)
+	malePronouns      = regexp.MustCompile(`\\b(he|his|him|himself)\\b`)
+	nonbinaryPronouns = regexp.MustCompile(`\\b(they|their|theirs|them|themself)\\b`)
 )
 
 func DetermineGender(text string) Gender {

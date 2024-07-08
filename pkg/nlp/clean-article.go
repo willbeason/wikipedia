@@ -56,7 +56,7 @@ var (
 	// and is generally either off-first-links or low quality.
 	//
 	// Obviously not perfect and can match non-comments in rare cases.
-	CommentRegex = regexp.MustCompile("(?s)<!--.*?-->")
+	CommentRegex = regexp.MustCompile(`(?s)<!--.*?-->`)
 
 	IgnoredTagsRegex     = regexp.MustCompile(fmt.Sprintf(`(?i)</?(%s).*?>`, strings.Join(ignoredTags(), "|")))
 	TimelineRegex        = regexp.MustCompile(`(?is)<timeline.*?</timeline[\w\s]*>`)

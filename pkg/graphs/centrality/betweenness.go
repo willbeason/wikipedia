@@ -19,6 +19,9 @@ func Betweenness(g *graphs.Directed) map[uint32]float64 {
 	return result
 }
 
+// nolint:unused
+//
+//goland:noinspection GoUnusedFunction
 func shortestPaths(g *graphs.Directed) <-chan []uint32 {
 	result := make(chan []uint32, jobs.WorkBuffer)
 

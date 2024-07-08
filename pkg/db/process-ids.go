@@ -54,8 +54,6 @@ func processIDs(ctx context.Context, cancel context.CancelCauseFunc, db *badger.
 			}
 		}
 	}
-
-	return
 }
 
 func processID(id uint32, process Process) func(txn *badger.Txn) error {

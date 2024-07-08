@@ -102,6 +102,10 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	runner := jobs.NewRunner()
 
 	ps, err := source(ctx, cancel)
+	if err != nil {
+		return err
+	}
+
 	printWork := jobs.ForEach(jobs.WorkBuffer, ps, func(from *documents.Page) error {
 		fmt.Println(from.Id)
 		fmt.Println(from.Title)

@@ -47,6 +47,9 @@ func runCmd(cmd *cobra.Command, _ []string) error {
 	inDB := filepath.Join(environment.WikiPath, "cleaned.db")
 	outDBPath := filepath.Join(environment.WikiPath, "normalized.db")
 	outDB, err := badger.Open(badger.DefaultOptions(outDBPath))
+	if err != nil {
+		return err
+	}
 
 	ctx, cancel := context.WithCancelCause(cmd.Context())
 
