@@ -258,7 +258,7 @@ func decompress(ns documents.Namespace, compressed []byte, outPages chan<- proto
 		return err
 	}
 
-	//infoboxChecker, err := documents.NewInfoboxChecker(documents.PersonInfoboxes)
+	// infoboxChecker, err := documents.NewInfoboxChecker(documents.PersonInfoboxes)
 
 	for _, page := range doc.Pages {
 		if page.NS != ns || page.Redirect.Title != "" {

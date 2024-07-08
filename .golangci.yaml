@@ -21,3 +21,14 @@ linters:
     - exportloopref
     - fatcontext
     - gci
+    - gocheckcompilerdirectives
+#    - gochecknoglobals
+    - gochecknoinits
+    - gochecksumtype
+#    - gocognit
+    - goconst
+#    - gocritic
+#    - gocyclo
+    - godot
+    - godox
+    - gofumpt

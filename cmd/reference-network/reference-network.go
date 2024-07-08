@@ -111,7 +111,6 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 	source2 := pages.StreamDB(inDB, parallel)
 	docs2, err := source2(ctx, cancel)
-
 	if err != nil {
 		return err
 	}
