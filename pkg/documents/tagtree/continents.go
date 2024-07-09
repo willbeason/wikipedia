@@ -15,9 +15,9 @@ var continentalOf = map[string]string{
 	Africa:       "african",
 	NorthAmerica: "north american",
 	SouthAmerica: "south american",
-	Antarctica:   "antarctican",
+	Antarctica:   "antarctic",
 	Europe:       "european",
-	Oceania:      "oceanian",
+	Oceania:      "oceanic",
 }
 
 type NodeContinent2Continental struct {

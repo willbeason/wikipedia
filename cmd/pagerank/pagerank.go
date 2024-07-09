@@ -68,7 +68,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	checker, err := documents.NewInfoboxChecker(documents.PersonInfoboxes)
+	checker, err := documents.NewInfoboxChecker(documents.PersonInfoboxes())
 	if err != nil {
 		return err
 	}
@@ -267,6 +267,8 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return pageRanks[i].rank > pageRanks[j].rank
 	})
 
+	bins := makeBins()
+
 	femaleBins := make([]int, len(bins)+1)
 	maleBins := make([]int, len(bins)+1)
 
@@ -280,7 +282,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 			continue
 		}
 
-		bin := toBin(n)
+		bin := toBin(n, bins)
 		if female[pageRank.id] {
 			femaleBins[bin]++
 			femaleTraffic += pageRank.rank
@@ -307,16 +309,20 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-var bins = []int{
-	10, 22, 46,
-	100, 215, 464,
-	1000, 2154, 4642,
-	10000, 21544, 46416,
-	100000, 215443, 464159,
-	1000000, 2154435, 4641589,
+func makeBins() []int {
+	// Should make dynamic so it auto-adjusts to size of corpus and allows for
+	//  variable granularity.
+	return []int{
+		10, 22, 46,
+		100, 215, 464,
+		1000, 2154, 4642,
+		10000, 21544, 46416,
+		100000, 215443, 464159,
+		1000000, 2154435, 4641589,
+	}
 }
 
-func toBin(n int) int {
+func toBin(n int, bins []int) int {
 	for i, bin := range bins {
 		if n <= bin {
 			return i

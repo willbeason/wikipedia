@@ -63,7 +63,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	checker, err := documents.NewInfoboxChecker(documents.PersonInfoboxes)
+	checker, err := documents.NewInfoboxChecker(documents.PersonInfoboxes())
 	if err != nil {
 		return err
 	}

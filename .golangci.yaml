@@ -46,7 +46,7 @@ linters:
     - nestif
     - nilerr
     - nilnil
-#    - nolintlint
+    - nolintlint
 #    - nonamedreturns
 #    - paralleltest
     - perfsprint
