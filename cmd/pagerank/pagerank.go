@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/spf13/cobra"
+	"github.com/willbeason/wikipedia/pkg/charts"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
@@ -267,7 +268,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return pageRanks[i].rank > pageRanks[j].rank
 	})
 
-	bins := makeBins()
+	bins := charts.LogarithmicBins(10, 18, math.Pow(10.0, 1.0/3.0))
 
 	femaleBins := make([]int, len(bins)+1)
 	maleBins := make([]int, len(bins)+1)
@@ -307,19 +308,6 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
-}
-
-func makeBins() []int {
-	// Should make dynamic so it auto-adjusts to size of corpus and allows for
-	//  variable granularity.
-	return []int{
-		10, 22, 46,
-		100, 215, 464,
-		1000, 2154, 4642,
-		10000, 21544, 46416,
-		100000, 215443, 464159,
-		1000000, 2154435, 4641589,
-	}
 }
 
 func toBin(n int, bins []int) int {

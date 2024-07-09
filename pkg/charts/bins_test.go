@@ -1,10 +1,11 @@
 package charts_test
 
 import (
-	"github.com/google/go-cmp/cmp"
-	"github.com/willbeason/wikipedia/pkg/charts"
 	"math"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/willbeason/wikipedia/pkg/charts"
 )
 
 func TestLogarithmicBins(t *testing.T) {
