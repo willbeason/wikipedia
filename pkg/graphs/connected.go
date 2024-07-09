@@ -97,7 +97,12 @@ func FindPath(start, end uint32, graph Directed) []uint32 {
 }
 
 func unroll(start, end uint32, visited map[uint32]uint32) []uint32 {
-	path := []uint32{end}
+	var path []uint32
+	if start != end {
+		// Since the path is a loop, don't duplicate the end node.
+		path = []uint32{end}
+	}
+
 	seenInPath := map[uint32]bool{end: true}
 
 	next, found := visited[end]

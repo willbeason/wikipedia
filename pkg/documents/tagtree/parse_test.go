@@ -340,6 +340,9 @@ func TestParse(t *testing.T) {
 			if diff := cmp.Diff(tc.wantNode, gotNode, cmpopts.EquateErrors()); diff != "" {
 				t.Fatal(diff)
 			}
+			if _, isErr := tc.wantNode.(*tagtree.NodeError); isErr {
+				return
+			}
 
 			gotCategory := gotNode.String(tc.title)
 			wantCategory := tc.wantCategory
