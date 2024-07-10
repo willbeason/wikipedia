@@ -55,6 +55,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	titleMap := make(map[uint32]string)
 	female := make(map[uint32]bool)
 	male := make(map[uint32]bool)
+	other := make(map[uint32]bool)
 	unknown := make(map[uint32]bool)
 	resultMtx := sync.Mutex{}
 
@@ -88,7 +89,9 @@ func runCmd(cmd *cobra.Command, args []string) error {
 			female[page.Id] = true
 		case nlp.Male:
 			male[page.Id] = true
-		default:
+		case nlp.Nonbinary, nlp.Multiple:
+			other[page.Id] = true
+		case nlp.Unknown:
 			unknown[page.Id] = true
 		}
 		resultMtx.Unlock()
