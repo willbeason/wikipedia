@@ -1,26 +1,27 @@
-package documents
+package documents_test
 
 import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/willbeason/wikipedia/pkg/documents"
 )
 
 func TestFrequencyTable_ToNgramDictionary(t *testing.T) {
 	tcs := []struct {
 		name  string
-		table FrequencyTable
+		table documents.FrequencyTable
 		want  map[string]bool
 	}{
 		{
 			name:  "empty",
-			table: FrequencyTable{},
+			table: documents.FrequencyTable{},
 			want:  map[string]bool{},
 		},
 		{
 			name: "single word",
-			table: FrequencyTable{
-				Frequencies: []Frequency{
+			table: documents.FrequencyTable{
+				Frequencies: []documents.Frequency{
 					{Word: "the"},
 				},
 			},
@@ -30,8 +31,8 @@ func TestFrequencyTable_ToNgramDictionary(t *testing.T) {
 		},
 		{
 			name: "two words",
-			table: FrequencyTable{
-				Frequencies: []Frequency{
+			table: documents.FrequencyTable{
+				Frequencies: []documents.Frequency{
 					{Word: "the"},
 					{Word: "university"},
 				},
@@ -43,8 +44,8 @@ func TestFrequencyTable_ToNgramDictionary(t *testing.T) {
 		},
 		{
 			name: "bigram",
-			table: FrequencyTable{
-				Frequencies: []Frequency{
+			table: documents.FrequencyTable{
+				Frequencies: []documents.Frequency{
 					{Word: "the university"},
 				},
 			},
@@ -55,8 +56,8 @@ func TestFrequencyTable_ToNgramDictionary(t *testing.T) {
 		},
 		{
 			name: "tetragram",
-			table: FrequencyTable{
-				Frequencies: []Frequency{
+			table: documents.FrequencyTable{
+				Frequencies: []documents.Frequency{
 					{Word: "the university of texas"},
 				},
 			},
@@ -69,8 +70,8 @@ func TestFrequencyTable_ToNgramDictionary(t *testing.T) {
 		},
 		{
 			name: "multiple ngrams",
-			table: FrequencyTable{
-				Frequencies: []Frequency{
+			table: documents.FrequencyTable{
+				Frequencies: []documents.Frequency{
 					{Word: "the university of texas"},
 					{Word: "fluid dynamics"},
 				},
@@ -101,20 +102,20 @@ func TestToFrequencyTable(t *testing.T) {
 	tcs := []struct {
 		name       string
 		wordCounts map[string]int
-		want       FrequencyTable
+		want       documents.FrequencyTable
 	}{
 		{
 			name:       "nil",
 			wordCounts: nil,
-			want: FrequencyTable{
-				Frequencies: []Frequency{},
+			want: documents.FrequencyTable{
+				Frequencies: []documents.Frequency{},
 			},
 		},
 		{
 			name:       "empty",
 			wordCounts: map[string]int{},
-			want: FrequencyTable{
-				Frequencies: []Frequency{},
+			want: documents.FrequencyTable{
+				Frequencies: []documents.Frequency{},
 			},
 		},
 		{
@@ -122,8 +123,8 @@ func TestToFrequencyTable(t *testing.T) {
 			wordCounts: map[string]int{
 				"the": 100,
 			},
-			want: FrequencyTable{
-				Frequencies: []Frequency{
+			want: documents.FrequencyTable{
+				Frequencies: []documents.Frequency{
 					{Word: "the", Count: 100},
 				},
 			},
@@ -134,8 +135,8 @@ func TestToFrequencyTable(t *testing.T) {
 				"the":        100,
 				"university": 10,
 			},
-			want: FrequencyTable{
-				Frequencies: []Frequency{
+			want: documents.FrequencyTable{
+				Frequencies: []documents.Frequency{
 					{Word: "the", Count: 100},
 					{Word: "university", Count: 10},
 				},
@@ -149,8 +150,8 @@ func TestToFrequencyTable(t *testing.T) {
 				"of":         100,
 				"texas":      20,
 			},
-			want: FrequencyTable{
-				Frequencies: []Frequency{
+			want: documents.FrequencyTable{
+				Frequencies: []documents.Frequency{
 					{Word: "of", Count: 100},
 					{Word: "the", Count: 100},
 					{Word: "texas", Count: 20},
@@ -162,7 +163,7 @@ func TestToFrequencyTable(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			got := ToFrequencyTable(tc.wordCounts)
+			got := documents.ToFrequencyTable(tc.wordCounts)
 
 			if diff := cmp.Diff(tc.want, got); diff != "" {
 				t.Error(diff)

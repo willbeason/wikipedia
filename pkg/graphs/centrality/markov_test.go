@@ -1,4 +1,4 @@
-package centrality
+package centrality_test
 
 import (
 	"testing"
@@ -6,6 +6,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/willbeason/wikipedia/pkg/graphs"
+	"github.com/willbeason/wikipedia/pkg/graphs/centrality"
 )
 
 func TestMarkov(t *testing.T) {
@@ -43,7 +44,7 @@ func TestMarkov(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			got := Markov(tc.graph, 0.001, 100)
+			got := centrality.Markov(tc.graph, 0.001, 100)
 
 			if diff := cmp.Diff(tc.want, got, cmpopts.EquateApprox(0.001, 0.0)); diff != "" {
 				t.Error(diff)

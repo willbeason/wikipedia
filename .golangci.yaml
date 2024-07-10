@@ -62,7 +62,7 @@ linters:
     - reassign
     - tenv
     - testableexamples
-#    - testpackage
+    - testpackage
     - thelper
     - unconvert
     - unparam
