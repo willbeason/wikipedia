@@ -6,6 +6,7 @@ import (
 	"compress/bzip2"
 	"context"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -179,7 +180,7 @@ func extractFile(rIndex *bufio.Reader, fRepo *os.File, work chan<- compressedDoc
 		startIndex = endIndex
 	}
 
-	if err == io.EOF {
+	if errors.Is(err, io.EOF) {
 		fmt.Println("got last file")
 
 		outBytes, err = io.ReadAll(fRepo)

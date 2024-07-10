@@ -19,7 +19,7 @@ const (
 )
 
 func ParsingFlagError(flag string, err error) error {
-	return fmt.Errorf("parsing flag %q: %v", flag, err)
+	return fmt.Errorf("parsing flag %q: %w", flag, err)
 }
 
 func Parallel(cmd *cobra.Command) {

@@ -36,7 +36,7 @@ linters:
 #    - err113
     - errchkjson
     - errname
-#    - errorlint
+    - errorlint
     - exhaustive
     - exportloopref
     - fatcontext
