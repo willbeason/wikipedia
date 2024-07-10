@@ -3,6 +3,8 @@ package tagtree
 import (
 	"regexp"
 	"strings"
+
+	"github.com/willbeason/wikipedia/pkg/nlp"
 )
 
 type NodeMonth struct {
@@ -13,7 +15,7 @@ func (n *NodeMonth) String(title string) string {
 	return n.Value.String(title)
 }
 
-var patternMonths = regexp.MustCompile(`(?i)(january|february|march|april|may|june|july|august|september|october|november|december)`)
+var patternMonths = regexp.MustCompile(`(?i)` + nlp.Months)
 
 type NodeTitleMonth struct{}
 

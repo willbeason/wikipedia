@@ -193,7 +193,12 @@ func extractFile(rIndex *bufio.Reader, fRepo *os.File, work chan<- compressedDoc
 	return nil
 }
 
-func extractPages(cancel context.CancelCauseFunc, parallel int, ns documents.Namespace, compressedItems <-chan compressedDocument) <-chan protos.ID {
+func extractPages(
+	cancel context.CancelCauseFunc,
+	parallel int,
+	ns documents.Namespace,
+	compressedItems <-chan compressedDocument,
+) <-chan protos.ID {
 	pages := make(chan protos.ID, jobs.WorkBuffer)
 
 	wg := sync.WaitGroup{}

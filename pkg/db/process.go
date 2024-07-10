@@ -15,7 +15,11 @@ import (
 //
 // Returns a WaitGroup which finishes after the last Value from the DB has been
 // processed.
-func (r *Runner) Process(ctx context.Context, cancel context.CancelCauseFunc, process Process) (*sync.WaitGroup, error) {
+func (r *Runner) Process(
+	ctx context.Context,
+	cancel context.CancelCauseFunc,
+	process Process,
+) (*sync.WaitGroup, error) {
 	dbOpts := badger.DefaultOptions(r.path).WithNumGoroutines(r.parallel)
 
 	db, err := badger.Open(dbOpts)

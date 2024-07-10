@@ -13,7 +13,12 @@ import (
 // threads.
 //
 // Returns a WaitGroup which finishes after the last id has been processed.
-func (r *Runner) ProcessIDs(ctx context.Context, cancel context.CancelCauseFunc, process Process, ids <-chan uint32) (*sync.WaitGroup, error) {
+func (r *Runner) ProcessIDs(
+	ctx context.Context,
+	cancel context.CancelCauseFunc,
+	process Process,
+	ids <-chan uint32,
+) (*sync.WaitGroup, error) {
 	db, err := badger.Open(badger.DefaultOptions(r.path))
 	if err != nil {
 		return nil, fmt.Errorf("opening %q: %w", r.path, err)
@@ -43,7 +48,13 @@ func (r *Runner) ProcessIDs(ctx context.Context, cancel context.CancelCauseFunc,
 	return &wg, nil
 }
 
-func processIDs(ctx context.Context, cancel context.CancelCauseFunc, db *badger.DB, ids <-chan uint32, process Process) {
+func processIDs(
+	ctx context.Context,
+	cancel context.CancelCauseFunc,
+	db *badger.DB,
+	ids <-chan uint32,
+	process Process,
+) {
 	for id := range ids {
 		select {
 		case <-ctx.Done():
