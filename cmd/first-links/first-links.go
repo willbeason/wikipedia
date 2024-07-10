@@ -113,7 +113,8 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		}
 
 		// Find first X links in article.
-		matches := linkRegex.FindAllString(page.Text, 20)
+		numLinks := 20
+		matches := linkRegex.FindAllString(page.Text, numLinks)
 
 		// Force-exclude self reference.
 		var tos []uint32

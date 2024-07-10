@@ -1,4 +1,13 @@
 linters-settings:
+  mnd:
+    ignored-numbers:
+      - '2'
+      - '2.0'
+      - '3'
+      - '3.0'
+      - '10'
+      - '10.0'
+      - '100'
   wrapcheck:
     ignorePackageGlobs:
       - github.com/willbeason/wikipedia/*
@@ -46,7 +55,7 @@ linters:
     - makezero
     - mirror
     - misspell
-#    - mnd
+    - mnd
     - nakedret
     - nestif
     - nilerr

@@ -20,7 +20,7 @@ func TestLogarithmicBins(t *testing.T) {
 		1000000, 2154435, 4641589,
 	}
 
-	got := charts.LogarithmicBins(10, 18, math.Pow(10.0, 1.0/3.0))
+	got := charts.LogarithmicBins(10, 10000000, math.Pow(10.0, 1.0/3.0))
 
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Fatalf("LogarithmicBins() mismatch (-want +got):\n%s", diff)

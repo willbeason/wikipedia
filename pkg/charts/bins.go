@@ -7,12 +7,12 @@ import "math"
 // start is the threshold between the first and second bin, and size is the number of
 // thresholds.
 // factor is the multiplicative factor between each bin threshold.
-func LogarithmicBins(start int, size int, factor float64) []int {
-	bins := make([]int, size)
+func LogarithmicBins(start int, end int, factor float64) []int {
+	var bins []int
 
 	curSize := float64(start)
-	for i := range size {
-		bins[i] = int(math.Round(curSize))
+	for curSize <= float64(end) {
+		bins = append(bins, int(math.Round(curSize)))
 		curSize *= factor
 	}
 

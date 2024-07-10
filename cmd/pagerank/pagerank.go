@@ -214,7 +214,9 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		for id, before := range weights {
 			diffs += math.Abs(before - nextWeights[id])
 		}
-		if diffs < 1e-8 {
+
+		convergeThreshold := 1e-8
+		if diffs < convergeThreshold {
 			fmt.Printf("Converged early at iteration %d\n", i)
 
 			beforePageRanks := make([]PageRank, len(weights))
@@ -271,7 +273,9 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return pageRanks[i].rank > pageRanks[j].rank
 	})
 
-	bins := charts.LogarithmicBins(10, 18, math.Pow(10.0, 1.0/3.0))
+	minBin := 10
+	maxBin := 1000000
+	bins := charts.LogarithmicBins(minBin, maxBin, math.Pow(10.0, 1.0/3.0))
 
 	femaleBins := make([]int, len(bins)+1)
 	maleBins := make([]int, len(bins)+1)
