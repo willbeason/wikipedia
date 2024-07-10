@@ -109,7 +109,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	networkWork := jobs.Reduce(jobs.WorkBuffer, docs2, func(page *documents.Page) error {
 		from, foundFrom := idMap[page.Title]
 		if !foundFrom {
-			return fmt.Errorf("did not add ID for %q", page.Title)
+			return fmt.Errorf("%w: did not add ID for %q", jobs.ErrStream, page.Title)
 		}
 
 		matches := linkRegex.FindAllString(page.Text, -1)

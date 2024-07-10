@@ -54,10 +54,12 @@ func ReadDocumentGenders(path string) ([]DocumentGender, error) {
 	return result, nil
 }
 
+var ErrUnknownGender = errors.New("unable to parse gender")
+
 func ReadDocumentGender(line string) (DocumentGender, error) {
 	parts := strings.Split(line, ":")
 	if len(parts) != 2 {
-		return DocumentGender{}, errors.New("invalid line for document gender")
+		return DocumentGender{}, fmt.Errorf("invalid line for document gender: %w", ErrUnknownGender)
 	}
 
 	id, err := strconv.ParseUint(parts[0], 10, 32)
@@ -69,7 +71,7 @@ func ReadDocumentGender(line string) (DocumentGender, error) {
 	switch g {
 	case Male, Female, Nonbinary, Multiple, Unknown:
 	default:
-		return DocumentGender{}, errors.New("unknown gender label")
+		return DocumentGender{}, fmt.Errorf("%w: %q", ErrUnknownGender, g)
 	}
 
 	return DocumentGender{ID: uint32(id), Gender: g}, nil

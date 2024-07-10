@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -72,14 +71,14 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		for _, title := range titles {
 			id, found := index.Titles[title]
 			if !found {
-				return fmt.Errorf("unable to find article of title %q", title)
+				return flags.InvalidFlagError(flags.TitlesKey, fmt.Sprintf("unable to find article of title %q", title))
 			}
 			pageIDs = append(pageIDs, uint(id))
 		}
 	}
 
 	if len(pageIDs) == 0 {
-		return errors.New("must specify at least one ID or title")
+		return fmt.Errorf("%w: must specify %q or %q flag", flags.ErrInvalidFlag, flags.IDsKey, flags.TitlesKey)
 	}
 
 	var inDB string

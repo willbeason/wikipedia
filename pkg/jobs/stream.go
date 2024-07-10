@@ -2,9 +2,12 @@ package jobs
 
 import (
 	"context"
+	"errors"
 	"runtime"
 	"sync"
 )
+
+var ErrStream = errors.New("executing workflow")
 
 const WorkBuffer = 100
 

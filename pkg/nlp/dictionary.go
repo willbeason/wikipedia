@@ -1,6 +1,7 @@
 package nlp
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,6 +10,8 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
+
+var ErrUnsupportedProtoExtension = errors.New("unsupported proto extension")
 
 // ReadDictionary reads a Dictionary proto from a file.
 // Returns an empty dictionary if path is the empty string.
@@ -37,7 +40,7 @@ func ReadDictionary(path string) (*Dictionary, error) {
 			return nil, fmt.Errorf("unmarshalling %q: %w", path, err)
 		}
 	default:
-		return nil, fmt.Errorf("unsupported proto extension %q", ext)
+		return nil, fmt.Errorf("%w: %s", ErrUnsupportedProtoExtension, ext)
 	}
 
 	return dictionary, nil

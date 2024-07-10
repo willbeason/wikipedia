@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/willbeason/wikipedia/pkg/nlp"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
@@ -21,7 +22,7 @@ func Read(file string, out proto.Message) error {
 	case ".json":
 		err = protojson.Unmarshal(bytes, out)
 	default:
-		panic(fmt.Errorf("unsupported proto exension: %q", ext))
+		return fmt.Errorf("%w: %q", nlp.ErrUnsupportedProtoExtension, ext)
 	}
 
 	return fmt.Errorf("reading %q: %w", file, err)
@@ -47,7 +48,7 @@ func Write(path string, p proto.Message) error {
 			return fmt.Errorf("writing %q: %w", path, err)
 		}
 	default:
-		return fmt.Errorf("unsupported proto extension %q", ext)
+		return fmt.Errorf("%w: %q", nlp.ErrUnsupportedProtoExtension, ext)
 	}
 
 	err = os.WriteFile(path, bytes, os.ModePerm)

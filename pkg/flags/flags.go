@@ -1,6 +1,7 @@
 package flags
 
 import (
+	"errors"
 	"fmt"
 	"runtime"
 
@@ -17,6 +18,12 @@ const (
 	IDsKey    = "ids"
 	TitlesKey = "titles"
 )
+
+var ErrInvalidFlag = errors.New("invalid flag")
+
+func InvalidFlagError(flag string, message string) error {
+	return fmt.Errorf("%w %q: %s", ErrInvalidFlag, flag, message)
+}
 
 func ParsingFlagError(flag string, err error) error {
 	return fmt.Errorf("parsing flag %q: %w", flag, err)
