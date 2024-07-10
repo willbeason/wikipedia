@@ -10,6 +10,8 @@ import (
 )
 
 func TestMarkov(t *testing.T) {
+	t.Parallel()
+
 	tcs := []struct {
 		name  string
 		graph *graphs.Directed
@@ -44,6 +46,8 @@ func TestMarkov(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := centrality.Markov(tc.graph, 0.001, 100)
 
 			if diff := cmp.Diff(tc.want, got, cmpopts.EquateApprox(0.001, 0.0)); diff != "" {

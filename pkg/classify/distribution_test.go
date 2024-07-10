@@ -9,6 +9,8 @@ import (
 )
 
 func TestLogDistribution_ToDistribution(t *testing.T) {
+	t.Parallel()
+
 	tcs := []struct {
 		name            string
 		logDistribution classify.LogDistribution
@@ -58,6 +60,8 @@ func TestLogDistribution_ToDistribution(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := tc.logDistribution.ToDistribution()
 
 			if diff := cmp.Diff(tc.want, got, cmpopts.EquateApprox(0.0, 0.001)); diff != "" {
@@ -68,6 +72,8 @@ func TestLogDistribution_ToDistribution(t *testing.T) {
 }
 
 func TestDistribution_Normalize(t *testing.T) {
+	t.Parallel()
+
 	tcs := []struct {
 		name   string
 		before classify.Distribution
@@ -117,6 +123,8 @@ func TestDistribution_Normalize(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			tc.before.Normalize()
 
 			if diff := cmp.Diff(tc.want, tc.before, cmpopts.EquateApprox(0.0, 0.001)); diff != "" {

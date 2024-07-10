@@ -54,7 +54,7 @@ linters:
     - nilnil
     - nolintlint
 #    - nonamedreturns
-#    - paralleltest
+    - paralleltest
     - perfsprint
     - prealloc
     - predeclared

@@ -8,6 +8,8 @@ import (
 )
 
 func TestFrequencyTable_ToNgramDictionary(t *testing.T) {
+	t.Parallel()
+
 	tcs := []struct {
 		name  string
 		table documents.FrequencyTable
@@ -89,6 +91,8 @@ func TestFrequencyTable_ToNgramDictionary(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := tc.table.ToNgramDictionary()
 
 			if diff := cmp.Diff(tc.want, got); diff != "" {
@@ -99,6 +103,8 @@ func TestFrequencyTable_ToNgramDictionary(t *testing.T) {
 }
 
 func TestToFrequencyTable(t *testing.T) {
+	t.Parallel()
+
 	tcs := []struct {
 		name       string
 		wordCounts map[string]int
@@ -163,6 +169,8 @@ func TestToFrequencyTable(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := documents.ToFrequencyTable(tc.wordCounts)
 
 			if diff := cmp.Diff(tc.want, got); diff != "" {

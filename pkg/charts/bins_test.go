@@ -9,6 +9,8 @@ import (
 )
 
 func TestLogarithmicBins(t *testing.T) {
+	t.Parallel()
+
 	want := []int{
 		10, 22, 46,
 		100, 215, 464,

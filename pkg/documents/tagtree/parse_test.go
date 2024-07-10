@@ -9,6 +9,8 @@ import (
 )
 
 func TestParse(t *testing.T) {
+	t.Parallel()
+
 	tcs := []struct {
 		name         string
 		category     string
@@ -335,6 +337,8 @@ func TestParse(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			gotNode := tagtree.Parse(tc.category)
 
 			if diff := cmp.Diff(tc.wantNode, gotNode, cmpopts.EquateErrors()); diff != "" {
