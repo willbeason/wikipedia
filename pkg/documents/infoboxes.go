@@ -31,7 +31,7 @@ func PersonInfoboxes() []string {
 		"person",
 		"football biography",
 		"officeholder",
-		//"musical artist", // incorrectly used for bands
+		// "musical artist", // incorrectly used for bands
 		"sportsperson",
 		"writer",
 		"scientist",
@@ -125,7 +125,7 @@ func PersonInfoboxes() []string {
 		"sumo wrestler",
 		"nba biography",
 		"prime minister",
-		//"wrestling team",
+		// "wrestling team", // sometimes used for individuals, but too inconsistent.
 		"ice hockey biography",
 		"chess biography",
 		"pharaoh",

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"sort"
@@ -52,6 +53,8 @@ type TokenCount struct {
 	Count uint32
 }
 
+var subsample = 1.0
+
 func runCmd(cmd *cobra.Command, _ []string) error {
 	cmd.SilenceUsage = true
 
@@ -92,9 +95,12 @@ func runCmd(cmd *cobra.Command, _ []string) error {
 		countsChanel, countWork := jobs.Map(jobs.WorkBuffer, docs, func(page *documents.Page) (map[string]uint32, error) {
 			pageWordCounts := make(map[string]uint32)
 			// 10% subsample.
-			//if rand.Float64() > 0.1 {
-			//	return pageWordCounts, nil
-			//}
+
+			if subsample < 1.0 {
+				if rand.Float64() > subsample {
+					return pageWordCounts, nil
+				}
+			}
 
 			// Ignore ngrams resulting from line breaks.
 			lines := strings.Split(page.Text, "\n")

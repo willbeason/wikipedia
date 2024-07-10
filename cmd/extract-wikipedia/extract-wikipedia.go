@@ -274,11 +274,6 @@ func decompress(ns documents.Namespace, compressed []byte, outPages chan<- proto
 
 		pageProto := page.ToProto()
 
-		//// Exclude non-biographies.
-		//if !infoboxChecker.Matches(pageProto.Text) {
-		//	continue
-		//}
-
 		outPages <- pageProto
 	}
 

@@ -88,7 +88,7 @@ var (
 	nonbinaryPronouns = regexp.MustCompile(`\\b(they|their|theirs|them|themself)\\b`)
 )
 
-func DetermineGender(text string) Gender {
+func InferGender(text string) Gender {
 	categories := categoryRegex.FindAllString(text, -1)
 
 	foundMale := false
@@ -97,40 +97,17 @@ func DetermineGender(text string) Gender {
 
 	for _, category := range categories {
 		category = strings.ToLower(category)
-		if womenRegex.MatchString(category) {
+		switch {
+		case womenRegex.MatchString(category):
 			foundFemale = true
-		} else if menRegex.MatchString(category) {
+		case menRegex.MatchString(category):
 			foundMale = true
-		} else if nonbinaryRegex.MatchString(category) {
+		case nonbinaryRegex.MatchString(category):
 			foundNonbinary = true
 		}
 	}
 
 	cleanedText := strings.ToLower(CleanArticle(text))
-	//firstFemale := femalePronouns.FindAllStringIndex(cleanedText, 1)
-	//firstFemaleIdx := math.MaxInt
-	//if len(firstFemale) > 0 {
-	//	firstFemaleIdx = firstFemale[0][0]
-	//}
-	//
-	//firstMale := malePronouns.FindAllStringIndex(cleanedText, 1)
-	//firstMaleIdx := math.MaxInt
-	//if len(firstMale) > 0 {
-	//	firstMaleIdx = firstMale[0][0]
-	//}
-
-	//firstNonbinary := nonbinaryPronouns.FindAllStringIndex(cleanedText, 1)
-	//firstNonbinaryIdx := math.MaxInt
-	//if len(firstNonbinary) > 0 {
-	//	firstNonbinaryIdx = firstNonbinary[0][0]
-	//}
-
-	//switch {
-	//case firstFemaleIdx < firstMaleIdx:
-	//	foundFemale = true
-	//case firstMaleIdx < firstFemaleIdx:
-	//	foundMale = true
-	//}
 
 	femaleUsages := len(femalePronouns.FindAllString(cleanedText, -1))
 	maleUsages := len(malePronouns.FindAllString(cleanedText, -1))

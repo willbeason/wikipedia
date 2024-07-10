@@ -64,30 +64,11 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	checker, err := documents.NewInfoboxChecker(documents.PersonInfoboxes())
+	idTitleFn, err := addToIDAndTitleMaps(&resultMtx, idMap, titleMap, biographies)
 	if err != nil {
 		return err
 	}
-
-	idMapWork := jobs.Reduce(jobs.WorkBuffer, docs, func(page *documents.Page) error {
-		if !checker.Matches(page.Text) {
-			resultMtx.Lock()
-			idMap[page.Title] = page.Id
-			titleMap[page.Id] = page.Title
-			resultMtx.Unlock()
-			return nil
-		}
-
-		resultMtx.Lock()
-		idMap[page.Title] = page.Id
-		titleMap[page.Id] = page.Title
-
-		biographies[page.Id] = true
-
-		resultMtx.Unlock()
-
-		return nil
-	})
+	idMapWork := jobs.Reduce(jobs.WorkBuffer, docs, idTitleFn)
 
 	runner := jobs.NewRunner()
 	idMapWg := runner.Run(ctx, cancel, idMapWork)
@@ -106,50 +87,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	networkWork := jobs.Reduce(jobs.WorkBuffer, docs2, func(page *documents.Page) error {
-		from, foundFrom := idMap[page.Title]
-		if !foundFrom {
-			return fmt.Errorf("%w: did not add ID for %q", jobs.ErrStream, page.Title)
-		}
-
-		// Find first X links in article.
-		numLinks := 20
-		matches := linkRegex.FindAllString(page.Text, numLinks)
-
-		// Force-exclude self reference.
-		var tos []uint32
-		seen := map[uint32]bool{from: true}
-
-		for _, match := range matches {
-			// Strip square brackets.
-			match = match[2 : len(match)-2]
-
-			// Only consider before vertical bar.
-			if idx := strings.Index(match, "|"); idx != -1 {
-				match = match[:idx]
-			}
-
-			// Ignore references to non-biographies.
-			to, foundTo := idMap[match]
-			if !foundTo {
-				continue
-			}
-
-			// Don't add duplicates.
-			if seen[to] {
-				continue
-			}
-			seen[to] = true
-
-			tos = append(tos, to)
-		}
-
-		networkMtx.Lock()
-		network[from] = tos
-		networkMtx.Unlock()
-
-		return nil
-	})
+	networkWork := jobs.Reduce(jobs.WorkBuffer, docs2, addPageToNetwork(idMap, &networkMtx, network))
 
 	networkWg := runner.Run(ctx, cancel, networkWork)
 	networkWg.Wait()
@@ -210,6 +148,89 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+func addPageToNetwork(
+	idMap map[string]uint32,
+	networkMtx *sync.Mutex,
+	network map[uint32][]uint32,
+) func(page *documents.Page) error {
+	return func(page *documents.Page) error {
+		from, foundFrom := idMap[page.Title]
+		if !foundFrom {
+			return fmt.Errorf("%w: did not add ID for %q", jobs.ErrStream, page.Title)
+		}
+
+		// Find first X links in article.
+		numLinks := 20
+		matches := linkRegex.FindAllString(page.Text, numLinks)
+
+		// Force-exclude self reference.
+		var tos []uint32
+		seen := map[uint32]bool{from: true}
+
+		for _, match := range matches {
+			// Strip square brackets.
+			match = match[2 : len(match)-2]
+
+			// Only consider before vertical bar.
+			if idx := strings.Index(match, "|"); idx != -1 {
+				match = match[:idx]
+			}
+
+			// Ignore references to non-biographies.
+			to, foundTo := idMap[match]
+			if !foundTo {
+				continue
+			}
+
+			// Don't add duplicates.
+			if seen[to] {
+				continue
+			}
+			seen[to] = true
+
+			tos = append(tos, to)
+		}
+
+		networkMtx.Lock()
+		network[from] = tos
+		networkMtx.Unlock()
+
+		return nil
+	}
+}
+
+func addToIDAndTitleMaps(
+	resultMtx *sync.Mutex,
+	idMap map[string]uint32,
+	titleMap map[uint32]string,
+	biographies map[uint32]bool,
+) (func(page *documents.Page) error, error) {
+	checker, err := documents.NewInfoboxChecker(documents.PersonInfoboxes())
+	if err != nil {
+		return nil, err
+	}
+
+	return func(page *documents.Page) error {
+		if !checker.Matches(page.Text) {
+			resultMtx.Lock()
+			idMap[page.Title] = page.Id
+			titleMap[page.Id] = page.Title
+			resultMtx.Unlock()
+			return nil
+		}
+
+		resultMtx.Lock()
+		idMap[page.Title] = page.Id
+		titleMap[page.Id] = page.Title
+
+		biographies[page.Id] = true
+
+		resultMtx.Unlock()
+
+		return nil
+	}, nil
 }
 
 type Topic struct {

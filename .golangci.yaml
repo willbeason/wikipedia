@@ -18,6 +18,7 @@ issues:
     - path: '(.+)_test\.go'
       linters:
         - lll
+        - maintidx
 
 linters:
   enable:
@@ -28,7 +29,7 @@ linters:
     - canonicalheader
     - containedctx
     - copyloopvar
-#    - cyclop
+#    - cyclop # Too many instances to deal with now.
     - decorder
     - dogsled
     - dupl
@@ -45,19 +46,18 @@ linters:
 #    - gochecknoglobals
     - gochecknoinits
     - gochecksumtype
-#    - gocognit
+    - gocognit
     - goconst
-#    - gocritic
-#    - gocyclo
+    - gocritic
+    - gocyclo
     - godot
     - godox
     - gofumpt
     - inamedparam
     - interfacebloat
     - intrange
-#    - ireturn
     - lll
-#    - maintidx
+    - maintidx
     - makezero
     - mirror
     - misspell

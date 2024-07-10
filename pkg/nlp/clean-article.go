@@ -116,43 +116,23 @@ func CleanArticle(text string) string {
 	sections := strings.Split(text, "\n\n")
 
 	for i, section := range sections {
-		section = TableRegex2.ReplaceAllString(section, "")
-		section = keepReplacing(widgets, section, "")
-		section = RemoveLinks.ReplaceAllString(section, "")
-
-		section = link.ReplaceAllString(section, "")
-		section = keepReplacing(WikipediaLinks, section, "$2")
-		section = keepReplacing(parens, section, "")
-
-		section = RefRegex.ReplaceAllString(section, "")
-
-		section = CommentRegex.ReplaceAllString(section, "")
-		section = TableRegex.ReplaceAllString(section, "")
-		section = CiteRegex.ReplaceAllString(section, "")
-		section = GalleryRegex.ReplaceAllString(section, "")
-		section = GraphRegex.ReplaceAllString(section, "")
-		section = TimelineRegex.ReplaceAllString(section, "")
-		section = MathRegex.ReplaceAllString(section, MathToken)
-		section = HieroglyphRegex.ReplaceAllString(section, HieroglyphToken)
-		section = CodeRegex.ReplaceAllString(section, "")
-		section = ChemRegex.ReplaceAllString(section, "")
-		section = ImageMapRegex.ReplaceAllString(section, "")
-		section = SyntaxHighlightRegex.ReplaceAllString(section, "")
-		section = PreRegex.ReplaceAllString(section, "")
-		section = PoemRegex.ReplaceAllString(section, "")
-		section = DelRegex.ReplaceAllString(section, "")
-		section = MapframeRegex.ReplaceAllString(section, "")
-
-		section = BrRegex.ReplaceAllString(section, "\n")
-		section = AlteredQuote.ReplaceAllString(section, "$1")
-
-		section = IgnoredTagsRegex.ReplaceAllString(section, "")
+		section = cleanSection(section)
 		sections[i] = section
 	}
 
 	text = strings.Join(sections, "\n\n")
 
 	lines := strings.Split(text, "\n")
+
+	result := cleanLines(lines)
+
+	text = strings.Join(result, "\n")
+	text = strings.TrimSpace(text)
+
+	return text
+}
+
+func cleanLines(lines []string) []string {
 	result := make([]string, 0, len(lines))
 	lastLineEmpty := false
 
@@ -199,9 +179,40 @@ func CleanArticle(text string) string {
 
 		result = append(result, line)
 	}
+	return result
+}
 
-	text = strings.Join(result, "\n")
-	text = strings.TrimSpace(text)
+func cleanSection(section string) string {
+	section = TableRegex2.ReplaceAllString(section, "")
+	section = keepReplacing(widgets, section, "")
+	section = RemoveLinks.ReplaceAllString(section, "")
 
-	return text
+	section = link.ReplaceAllString(section, "")
+	section = keepReplacing(WikipediaLinks, section, "$2")
+	section = keepReplacing(parens, section, "")
+
+	section = RefRegex.ReplaceAllString(section, "")
+
+	section = CommentRegex.ReplaceAllString(section, "")
+	section = TableRegex.ReplaceAllString(section, "")
+	section = CiteRegex.ReplaceAllString(section, "")
+	section = GalleryRegex.ReplaceAllString(section, "")
+	section = GraphRegex.ReplaceAllString(section, "")
+	section = TimelineRegex.ReplaceAllString(section, "")
+	section = MathRegex.ReplaceAllString(section, MathToken)
+	section = HieroglyphRegex.ReplaceAllString(section, HieroglyphToken)
+	section = CodeRegex.ReplaceAllString(section, "")
+	section = ChemRegex.ReplaceAllString(section, "")
+	section = ImageMapRegex.ReplaceAllString(section, "")
+	section = SyntaxHighlightRegex.ReplaceAllString(section, "")
+	section = PreRegex.ReplaceAllString(section, "")
+	section = PoemRegex.ReplaceAllString(section, "")
+	section = DelRegex.ReplaceAllString(section, "")
+	section = MapframeRegex.ReplaceAllString(section, "")
+
+	section = BrRegex.ReplaceAllString(section, "\n")
+	section = AlteredQuote.ReplaceAllString(section, "$1")
+
+	section = IgnoredTagsRegex.ReplaceAllString(section, "")
+	return section
 }

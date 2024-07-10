@@ -7,9 +7,9 @@ import (
 )
 
 var (
-	openTag  = regexp.MustCompile(`{{`)
-	closeTag = regexp.MustCompile(`}}`)
-	dash     = "dash"
+	openTag   = regexp.MustCompile(`{{`)
+	closeTag  = regexp.MustCompile(`}}`)
+	dashToken = "dash"
 )
 
 type Brace struct {
@@ -147,10 +147,22 @@ func Parse(category string) Node {
 	return parent
 }
 
-func parseTag(category string) Node {
+func normalizeCategory(category string) string {
 	category = strings.TrimPrefix(category, "{{")
 	category = strings.TrimSuffix(category, "}}")
-	category = strings.TrimSpace(category)
+	return strings.TrimSpace(category)
+}
+
+func normalizeTagType(tagType string) string {
+	tagType = strings.TrimSpace(tagType)
+	return strings.ToLower(tagType)
+}
+
+// parseTag converts the Wikipedia-style category to a parse tree.
+//
+//nolint:gocyclo // Each possibility really needs its own logic, and splitting further would harm readability.
+func parseTag(category string) Node {
+	category = normalizeCategory(category)
 
 	if strings.HasPrefix(category, "#expr:") {
 		return &NodeExpression{Value: Parse(category[6:])}
@@ -158,10 +170,9 @@ func parseTag(category string) Node {
 
 	splits := strings.Split(category, "|")
 
-	tagType := splits[0]
-	tagType = strings.TrimSpace(tagType)
+	tagType := normalizeTagType(splits[0])
 
-	switch strings.ToLower(tagType) {
+	switch tagType {
 	case "title year":
 		return &NodeTitleYear{}
 	case "title year range":
@@ -203,22 +214,22 @@ func parseTag(category string) Node {
 			return &NodeCentury{Value: &NodeString{Value: "<MISSING CENTURY NODE>"}}
 		}
 
-		dash := splits[len(splits)-1] == dash
+		dash := splits[len(splits)-1] == dashToken
 
 		return &NodeCentury{
 			Value: Parse(splits[1]),
 			Dash:  dash,
 		}
 	case "century name from title year":
-		dash := splits[len(splits)-1] == dash
+		dash := splits[len(splits)-1] == dashToken
 
 		return &NodeCentury{Value: &NodeTitleYear{}, Dash: dash}
 	case "century name from title decade":
-		dash := splits[len(splits)-1] == dash
+		dash := splits[len(splits)-1] == dashToken
 
 		return &NodeCentury{Value: &NodeTitleDecade{}, Dash: dash}
 	case "century name from decade or year":
-		dash := splits[len(splits)-1] == dash
+		dash := splits[len(splits)-1] == dashToken
 
 		if len(splits) == 1 {
 			return &NodeCentury{Value: &NodeString{Value: "<MISSING CENTURY NODE>"}}

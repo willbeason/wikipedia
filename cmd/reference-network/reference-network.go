@@ -79,7 +79,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 
-		gender := nlp.DetermineGender(page.Text)
+		gender := nlp.InferGender(page.Text)
 
 		resultMtx.Lock()
 		idMap[page.Title] = page.Id
@@ -118,37 +118,11 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	networkWork := jobs.Reduce(jobs.WorkBuffer, docs2, func(page *documents.Page) error {
-		from, foundFrom := idMap[page.Title]
-		if !foundFrom {
-			return fmt.Errorf("%w: did not add ID for %q", jobs.ErrStream, page.Title)
-		}
-
-		matches := linkRegex.FindAllString(page.Text, -1)
-		var tos []uint32
-		for _, match := range matches {
-			// Strip square brackets.
-			match = match[2 : len(match)-2]
-
-			// Only consider before vertical bar.
-			if idx := strings.Index(match, "|"); idx != -1 {
-				match = match[:idx]
-			}
-
-			to, foundTo := idMap[match]
-			if !foundTo {
-				continue
-			}
-
-			tos = append(tos, to)
-		}
-
-		networkMtx.Lock()
-		network[from] = tos
-		networkMtx.Unlock()
-
-		return nil
-	})
+	networkWork := jobs.Reduce(
+		jobs.WorkBuffer,
+		docs2,
+		addPageToNetwork(idMap, &networkMtx, network),
+	)
 
 	networkWg := runner.Run(ctx, cancel, networkWork)
 	networkWg.Wait()
@@ -170,20 +144,22 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 		for _, edge := range edges {
 			from := NonBiography
-			if female[id] {
+			switch {
+			case female[id]:
 				from = Female
-			} else if male[id] {
+			case male[id]:
 				from = Male
-			} else if unknown[id] {
+			case unknown[id]:
 				from = Unknown
 			}
 
 			to := NonBiography
-			if female[edge] {
+			switch {
+			case female[edge]:
 				to = Female
-			} else if male[edge] {
+			case male[edge]:
 				to = Male
-			} else if unknown[edge] {
+			case unknown[edge]:
 				to = Unknown
 			}
 
@@ -220,6 +196,44 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+func addPageToNetwork(
+	idMap map[string]uint32,
+	networkMtx *sync.Mutex,
+	network map[uint32][]uint32,
+) func(page *documents.Page) error {
+	return func(page *documents.Page) error {
+		from, foundFrom := idMap[page.Title]
+		if !foundFrom {
+			return fmt.Errorf("%w: did not add ID for %q", jobs.ErrStream, page.Title)
+		}
+
+		matches := linkRegex.FindAllString(page.Text, -1)
+		var tos []uint32
+		for _, match := range matches {
+			// Strip square brackets.
+			match = match[2 : len(match)-2]
+
+			// Only consider before vertical bar.
+			if idx := strings.Index(match, "|"); idx != -1 {
+				match = match[:idx]
+			}
+
+			to, foundTo := idMap[match]
+			if !foundTo {
+				continue
+			}
+
+			tos = append(tos, to)
+		}
+
+		networkMtx.Lock()
+		network[from] = tos
+		networkMtx.Unlock()
+
+		return nil
+	}
 }
 
 var linkRegex = regexp.MustCompile(`\[\[[^]]+]]`)
