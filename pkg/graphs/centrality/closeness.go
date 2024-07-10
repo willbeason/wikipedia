@@ -2,9 +2,13 @@ package centrality
 
 import "github.com/willbeason/wikipedia/pkg/graphs"
 
-func ClosenessHarmonic(id uint32, graph *graphs.Directed) (closeness, harmonic float64) {
-	closeness = 0
-	harmonic = 0
+type ClosenessHarmonicResult struct {
+	Closeness, Harmonic float64
+}
+
+func ClosenessHarmonic(id uint32, graph *graphs.Directed) ClosenessHarmonicResult {
+	closeness := 0.0
+	harmonic := 0.0
 
 	curDistance := 1
 	visited := make(map[uint32]bool, len(graph.Nodes))
@@ -42,5 +46,5 @@ func ClosenessHarmonic(id uint32, graph *graphs.Directed) (closeness, harmonic f
 
 	harmonic /= float64(len(graph.Nodes) - 1)
 
-	return closeness, harmonic
+	return ClosenessHarmonicResult{Closeness: closeness, Harmonic: harmonic}
 }

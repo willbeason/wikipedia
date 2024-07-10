@@ -52,7 +52,7 @@ linters:
     - nilerr
     - nilnil
     - nolintlint
-#    - nonamedreturns
+    - nonamedreturns
     - paralleltest
     - perfsprint
     - prealloc
@@ -65,7 +65,6 @@ linters:
     - unconvert
     - unparam
     - usestdlibvars
-#    - varnamelen
     - wastedassign
     - whitespace
     - wrapcheck
