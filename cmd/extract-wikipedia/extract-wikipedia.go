@@ -51,14 +51,14 @@ Badger database, given an already-extracted index file.`,
 func runCmd(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 
-	parallel, err := cmd.Flags().GetInt(flags.ParallelKey)
+	parallel, err := flags.GetParallel(cmd)
 	if err != nil {
 		return err
 	}
 
 	ns, err := cmd.Flags().GetInt16(namespaceKey)
 	if err != nil {
-		return err
+		return flags.ParsingFlagError(namespaceKey, err)
 	}
 
 	repo := args[0]
@@ -79,7 +79,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 	outDB, err := badger.Open(badger.DefaultOptions(outDBPath))
 	if err != nil {
-		return err
+		return fmt.Errorf("opening %q: %w", outDBPath, err)
 	}
 
 	defer func() {
@@ -105,13 +105,13 @@ func source(cancel context.CancelCauseFunc, repo, index string) (<-chan compress
 	// Open the compressed data file.
 	fRepo, err := os.Open(repo)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("opening %q: %w", repo, err)
 	}
 
 	// Open the uncompressed index file.
 	fIndex, err := os.Open(index)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("opening %q: %w", index, err)
 	}
 
 	// Create a channel of the compressed Wikipedia pages.
@@ -160,7 +160,7 @@ func extractFile(rIndex *bufio.Reader, fRepo *os.File, work chan<- compressedDoc
 
 		endIndex, err = strconv.ParseInt(parts[0], 10, strconv.IntSize)
 		if err != nil {
-			return err
+			return fmt.Errorf("parsing end index from %q: %w", line, err)
 		}
 
 		if startIndex == endIndex {
@@ -171,7 +171,7 @@ func extractFile(rIndex *bufio.Reader, fRepo *os.File, work chan<- compressedDoc
 
 		_, err = fRepo.Read(outBytes)
 		if err != nil {
-			return err
+			return fmt.Errorf("reading from %q: %w", fRepo.Name(), err)
 		}
 
 		work <- outBytes
@@ -184,7 +184,7 @@ func extractFile(rIndex *bufio.Reader, fRepo *os.File, work chan<- compressedDoc
 
 		outBytes, err = io.ReadAll(fRepo)
 		if err != nil {
-			return err
+			return fmt.Errorf("reading from %q: %w", fRepo.Name(), err)
 		}
 
 		work <- outBytes
@@ -246,7 +246,7 @@ func decompress(ns documents.Namespace, compressed []byte, outPages chan<- proto
 
 	compressed, err := io.ReadAll(bz)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading from compressed reader: %w", err)
 	}
 
 	text := normalize(string(compressed))
@@ -255,7 +255,7 @@ func decompress(ns documents.Namespace, compressed []byte, outPages chan<- proto
 
 	err = xml.Unmarshal([]byte(text), doc)
 	if err != nil {
-		return err
+		return fmt.Errorf("unmarshalling text %q: %w", text, err)
 	}
 
 	// infoboxChecker, err := documents.NewInfoboxChecker(documents.PersonInfoboxes)

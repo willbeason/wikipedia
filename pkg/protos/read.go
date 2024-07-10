@@ -12,7 +12,7 @@ import (
 func Read(file string, out proto.Message) error {
 	bytes, err := os.ReadFile(file)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading %q: %w", file, err)
 	}
 
 	switch ext := filepath.Ext(file); ext {
@@ -24,13 +24,13 @@ func Read(file string, out proto.Message) error {
 		panic(fmt.Errorf("unsupported proto exension: %q", ext))
 	}
 
-	return err
+	return fmt.Errorf("reading %q: %w", file, err)
 }
 
 func Write(path string, p proto.Message) error {
 	err := os.MkdirAll(filepath.Dir(path), os.ModePerm)
 	if err != nil {
-		return err
+		return fmt.Errorf("writing %q: %w", path, err)
 	}
 
 	var bytes []byte
@@ -39,16 +39,21 @@ func Write(path string, p proto.Message) error {
 	case ".pb":
 		bytes, err = proto.Marshal(p)
 		if err != nil {
-			return err
+			return fmt.Errorf("writing %q: %w", path, err)
 		}
 	case ".json":
 		bytes, err = protojson.MarshalOptions{Indent: "  "}.Marshal(p)
 		if err != nil {
-			return err
+			return fmt.Errorf("writing %q: %w", path, err)
 		}
 	default:
 		return fmt.Errorf("unsupported proto extension %q", ext)
 	}
 
-	return os.WriteFile(path, bytes, os.ModePerm)
+	err = os.WriteFile(path, bytes, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("writing %q: %w", path, err)
+	}
+
+	return nil
 }

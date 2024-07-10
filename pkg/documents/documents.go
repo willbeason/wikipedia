@@ -1,6 +1,8 @@
 package documents
 
 import (
+	"fmt"
+
 	"google.golang.org/protobuf/proto"
 )
 
@@ -10,7 +12,7 @@ func ReadPages(pages chan<- *Page) func([]byte) error {
 
 		err := proto.Unmarshal(bytes, page)
 		if err != nil {
-			return err
+			return fmt.Errorf("unmarshalling page: %w", err)
 		}
 
 		pages <- page

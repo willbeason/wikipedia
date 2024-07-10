@@ -1,6 +1,7 @@
 package documents
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 )
@@ -11,10 +12,11 @@ type InfoboxChecker struct {
 
 func NewInfoboxChecker(want []string) (*InfoboxChecker, error) {
 	infoboxString := strings.Join(want, "|")
+	infoboxRegex := "infobox (" + infoboxString + ")\n"
 
-	validInfoboxes, err := regexp.Compile("infobox (" + infoboxString + ")\n")
+	validInfoboxes, err := regexp.Compile(infoboxRegex)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("compiling infobox regex: %q: %w", infoboxRegex, err)
 	}
 
 	return &InfoboxChecker{r: validInfoboxes}, nil

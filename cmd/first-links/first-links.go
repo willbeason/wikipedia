@@ -41,7 +41,7 @@ func mainCmd() *cobra.Command {
 func runCmd(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 
-	parallel, err := cmd.Flags().GetInt(flags.ParallelKey)
+	parallel, err := flags.GetParallel(cmd)
 	if err != nil {
 		return err
 	}

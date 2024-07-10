@@ -18,15 +18,20 @@ type FrequencyTable struct {
 func WriteFrequencyTable(out string, t FrequencyTable) error {
 	bytes, err := yaml.Marshal(t)
 	if err != nil {
-		return err
+		return fmt.Errorf("unmarshalling table: %w", err)
 	}
 
 	err = os.MkdirAll(filepath.Dir(out), os.ModePerm)
 	if err != nil {
-		return err
+		return fmt.Errorf("creating directory for %q: %w", out, err)
 	}
 
-	return os.WriteFile(out, bytes, os.ModePerm)
+	err = os.WriteFile(out, bytes, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("writing to %q: %w", out, err)
+	}
+
+	return nil
 }
 
 func ReadFrequencyTables(paths ...string) (*FrequencyTable, error) {
@@ -37,14 +42,14 @@ func ReadFrequencyTables(paths ...string) (*FrequencyTable, error) {
 
 		bytes, err := os.ReadFile(path)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("reading %q: %w", path, err)
 		}
 
 		frequencyTable := &FrequencyTable{}
 
 		err = yaml.Unmarshal(bytes, frequencyTable)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unmarshalling YAML in %q: %w", path, err)
 		}
 
 		result.Frequencies = append(result.Frequencies, frequencyTable.Frequencies...)

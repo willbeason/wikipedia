@@ -21,7 +21,7 @@ func write(m protos.ID) func(txn *badger.Txn) error {
 
 		bytes, err := proto.Marshal(m)
 		if err != nil {
-			return err
+			return fmt.Errorf("marshalling %d: %w", fromKey(key), err)
 		}
 
 		return txn.Set(key, bytes)
@@ -37,7 +37,7 @@ func RunGC(db *badger.DB) error {
 		err := db.RunValueLogGC(discardRatio)
 		if err != nil {
 			if !errors.Is(err, badger.ErrNoRewrite) && !errors.Is(err, badger.ErrRejected) {
-				return err
+				return fmt.Errorf("running garbage collection: %w", err)
 			}
 
 			break

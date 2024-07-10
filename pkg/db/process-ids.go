@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/dgraph-io/badger/v3"
@@ -15,7 +16,7 @@ import (
 func (r *Runner) ProcessIDs(ctx context.Context, cancel context.CancelCauseFunc, process Process, ids <-chan uint32) (*sync.WaitGroup, error) {
 	db, err := badger.Open(badger.DefaultOptions(r.path))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("opening %q: %w", r.path, err)
 	}
 
 	wg := sync.WaitGroup{}
@@ -62,12 +63,13 @@ func processID(id uint32, process Process) func(txn *badger.Txn) error {
 
 		item, err := txn.Get(key)
 		if err != nil {
-			return err
+			return fmt.Errorf("getting ID %d: %w", id, err)
 		}
 
 		value, err := item.ValueCopy(nil)
 		if err != nil {
-			return err
+			// Only returns an error if the item is an error.
+			return fmt.Errorf("getting ID %d: %w", id, err)
 		}
 
 		return process(value)

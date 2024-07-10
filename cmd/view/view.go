@@ -47,12 +47,12 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	// We don't want to print pages in parallel.
 	parallel := 1
 
-	pageIDs, err := cmd.Flags().GetUintSlice(flags.IDsKey)
+	pageIDs, err := flags.GetIDs(cmd)
 	if err != nil {
 		return err
 	}
 
-	titles, err := cmd.Flags().GetStringSlice(flags.TitlesKey)
+	titles, err := flags.GetTitles(cmd)
 	if err != nil {
 		return err
 	}
@@ -60,13 +60,13 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		indexFilepath := filepath.Join(environment.WikiPath, environment.TitleIndex)
 		indexBytes, err2 := os.ReadFile(indexFilepath)
 		if err2 != nil {
-			return err2
+			return fmt.Errorf("reading index %q: %w", indexFilepath, err2)
 		}
 
 		index := documents.TitleIndex{}
 		err2 = protojson.Unmarshal(indexBytes, &index)
 		if err2 != nil {
-			return err2
+			return fmt.Errorf("unmarshalling index %q: %w", indexFilepath, err2)
 		}
 
 		for _, title := range titles {

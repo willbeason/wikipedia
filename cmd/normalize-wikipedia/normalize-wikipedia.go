@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -40,7 +41,7 @@ func mainCmd() *cobra.Command {
 func runCmd(cmd *cobra.Command, _ []string) error {
 	cmd.SilenceUsage = true
 
-	parallel, err := cmd.Flags().GetInt(flags.ParallelKey)
+	parallel, err := flags.GetParallel(cmd)
 	if err != nil {
 		return err
 	}
@@ -49,7 +50,7 @@ func runCmd(cmd *cobra.Command, _ []string) error {
 	outDBPath := filepath.Join(environment.WikiPath, "normalized.db")
 	outDB, err := badger.Open(badger.DefaultOptions(outDBPath))
 	if err != nil {
-		return err
+		return fmt.Errorf("opening %q: %w", outDBPath, err)
 	}
 
 	ctx, cancel := context.WithCancelCause(cmd.Context())

@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/dgraph-io/badger/v3"
@@ -19,7 +20,7 @@ func (r *Runner) Process(ctx context.Context, cancel context.CancelCauseFunc, pr
 
 	db, err := badger.Open(dbOpts)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("opening Badger DB %q: %w", r.path, err)
 	}
 
 	wg := sync.WaitGroup{}
@@ -49,14 +50,19 @@ func (r *Runner) process(ctx context.Context, db *badger.DB, process Process) er
 	stream.NumGo = r.parallel
 	stream.Send = send(process)
 
-	return stream.Orchestrate(ctx)
+	err := stream.Orchestrate(ctx)
+	if err != nil {
+		return fmt.Errorf("stream.Orchestrate: %w", err)
+	}
+
+	return nil
 }
 
 func send(process Process) func(buf *z.Buffer) error {
 	return func(buf *z.Buffer) error {
 		list, err := badger.BufferToKVList(buf)
 		if err != nil {
-			return err
+			return fmt.Errorf("badger.BufferToKVList: %w", err)
 		}
 
 		kvs := list.GetKv()

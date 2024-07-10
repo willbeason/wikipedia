@@ -16,6 +16,13 @@ type Runner struct {
 	path string
 }
 
+func fromKey(key []byte) uint32 {
+	var id uint32
+	binary.LittleEndian.Uint32(key)
+
+	return id
+}
+
 func toKey(id uint32) []byte {
 	const uint32Bytes = 4
 

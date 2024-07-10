@@ -1,3 +1,9 @@
+linters-settings:
+  wrapcheck:
+    ignorePackageGlobs:
+      - github.com/willbeason/wikipedia/*
+      - context
+
 linters:
   enable:
     - asasalint
@@ -64,4 +70,4 @@ linters:
 #    - varnamelen
     - wastedassign
     - whitespace
-#    - wrapcheck
+    - wrapcheck

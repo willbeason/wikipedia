@@ -41,7 +41,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 	ctx, cancel := context.WithCancelCause(cmd.Context())
 
-	parallel, err := cmd.Flags().GetInt(flags.ParallelKey)
+	parallel, err := flags.GetParallel(cmd)
 	if err != nil {
 		return err
 	}

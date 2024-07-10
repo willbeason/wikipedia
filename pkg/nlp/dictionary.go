@@ -22,19 +22,19 @@ func ReadDictionary(path string) (*Dictionary, error) {
 
 	bytes, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("reading %q: %w", path, err)
 	}
 
 	switch ext := filepath.Ext(path); ext {
 	case ".pb":
 		err = proto.Unmarshal(bytes, dictionary)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unmarshalling %q: %w", path, err)
 		}
 	case ".json":
 		err = protojson.Unmarshal(bytes, dictionary)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unmarshalling %q: %w", path, err)
 		}
 	default:
 		return nil, fmt.Errorf("unsupported proto extension %q", ext)

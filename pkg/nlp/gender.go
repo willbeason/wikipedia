@@ -31,7 +31,7 @@ func (dg DocumentGender) String() string {
 func ReadDocumentGenders(path string) ([]DocumentGender, error) {
 	bytes, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("reading %q: %w", path, err)
 	}
 
 	lines := strings.Split(string(bytes), "\n")
@@ -62,7 +62,7 @@ func ReadDocumentGender(line string) (DocumentGender, error) {
 
 	id, err := strconv.ParseUint(parts[0], 10, 32)
 	if err != nil {
-		return DocumentGender{}, err
+		return DocumentGender{}, fmt.Errorf("parsing document gender id %q: %w", parts[0], err)
 	}
 
 	g := Gender(parts[1])
