@@ -153,33 +153,26 @@ func cleanLines(lines []string) []string {
 			}
 		}
 
-		if skip {
+		if skip || isComment(line) {
 			continue
 		}
 
-		if strings.HasPrefix(line, "!") ||
-			strings.HasPrefix(line, "|") ||
-			strings.HasPrefix(line, "|-") ||
-			strings.HasPrefix(line, "{|") ||
-			strings.HasPrefix(line, "{{") {
-			continue
+		curLineEmpty := line == ""
+		if !curLineEmpty || !lastLineEmpty {
+			result = append(result, line)
 		}
 
-		if line == "" {
-			if !lastLineEmpty {
-				result = append(result, line)
-			}
-
-			lastLineEmpty = true
-
-			continue
-		}
-
-		lastLineEmpty = false
-
-		result = append(result, line)
+		lastLineEmpty = curLineEmpty
 	}
 	return result
+}
+
+func isComment(line string) bool {
+	return strings.HasPrefix(line, "!") ||
+		strings.HasPrefix(line, "|") ||
+		strings.HasPrefix(line, "|-") ||
+		strings.HasPrefix(line, "{|") ||
+		strings.HasPrefix(line, "{{")
 }
 
 func cleanSection(section string) string {
