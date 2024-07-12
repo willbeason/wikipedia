@@ -29,13 +29,21 @@ func OutDegree(id uint32, graph *graphs.Directed) int {
 	return len(graph.Nodes[id])
 }
 
-var caser = cases.Title(language.English)
+type Normalizer struct {
+	caser cases.Caser
+}
 
-func Normalize(title string) string {
+func NewNormalizer() *Normalizer {
+	return &Normalizer{
+		caser: cases.Title(language.English),
+	}
+}
+
+func (n Normalizer) Normalize(title string) string {
 	title = strings.TrimPrefix(title, "category:")
 	// title = strings.TrimSuffix(title, ", california")
 	// title = strings.TrimSuffix(title, " (california)")
-	title = caser.String(title)
+	title = n.caser.String(title)
 	title = strings.ReplaceAll(title, " Of", " of")
 	title = strings.ReplaceAll(title, " In", " in")
 	title = strings.ReplaceAll(title, " The", " the")

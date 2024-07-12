@@ -26,6 +26,8 @@ const (
 	DefaultCountFilter = 40
 	// DefaultSizeThreshold is when to trigger an automatic filtering of n-grams.
 	DefaultSizeThreshold = 1e7
+
+	SubSampleFlag = "subsample"
 )
 
 func main() {
@@ -42,6 +44,8 @@ func mainCmd() *cobra.Command {
 		RunE:  runCmd,
 	}
 
+	cmd.Flags().Float64(SubSampleFlag, 1.0, "proportion of articles to analyze")
+
 	flags.Parallel(cmd)
 	flags.IDs(cmd)
 
@@ -52,8 +56,6 @@ type TokenCount struct {
 	Token string
 	Count uint32
 }
-
-var subsample = 1.0
 
 func runCmd(cmd *cobra.Command, _ []string) error {
 	cmd.SilenceUsage = true
@@ -74,6 +76,11 @@ func runCmd(cmd *cobra.Command, _ []string) error {
 	minNgramLength := 1
 
 	ngramCountsMap := make(map[string]uint32)
+
+	subsample, err := cmd.Flags().GetFloat64(SubSampleFlag)
+	if err != nil {
+		return fmt.Errorf("%w: unable to parse subsample flag", err)
+	}
 
 	for prevDictionarySize != curDictionarySize {
 		fmt.Println("Finding n-grams length", minNgramLength)

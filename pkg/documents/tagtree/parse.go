@@ -7,10 +7,11 @@ import (
 )
 
 var (
-	openTag   = regexp.MustCompile(`{{`)
-	closeTag  = regexp.MustCompile(`}}`)
-	dashToken = "dash"
+	openTag  = regexp.MustCompile(`{{`)
+	closeTag = regexp.MustCompile(`}}`)
 )
+
+const dashToken = "dash"
 
 type Brace struct {
 	Type       BraceType

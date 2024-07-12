@@ -28,13 +28,13 @@ func Parallel(parallel int) func(*Runner) {
 	}
 }
 
-var defaultOpts = []RunnerOpt{
-	Parallel(runtime.NumCPU()),
+func defaultOpts() []RunnerOpt {
+	return []RunnerOpt{Parallel(runtime.NumCPU())}
 }
 
 func NewRunner(opts ...RunnerOpt) *Runner {
 	runner := &Runner{}
-	for _, opt := range defaultOpts {
+	for _, opt := range defaultOpts() {
 		opt(runner)
 	}
 

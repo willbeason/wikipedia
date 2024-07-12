@@ -240,7 +240,7 @@ var linkRegex = regexp.MustCompile(`\[\[[^]]+]]`)
 
 type Class string
 
-var (
+const (
 	Female       Class = "female"
 	Male         Class = "male"
 	Unknown      Class = "unknown"

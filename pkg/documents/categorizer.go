@@ -13,8 +13,6 @@ type Categorizer struct {
 
 var categorySplit = regexp.MustCompile(`]]\s*\[\[`)
 
-var Missed = 0
-
 func (c *Categorizer) Categorize(page *Page) *Categories {
 	const (
 		categoryPrefix     = "[[Category:"
@@ -78,7 +76,7 @@ func (c *Categorizer) Categorize(page *Page) *Categories {
 
 		if !ok {
 			// People may misspell categories.
-			Missed++
+			// Missed++
 
 			continue
 		}

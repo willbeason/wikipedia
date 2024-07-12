@@ -43,7 +43,7 @@ linters:
     - fatcontext
     - gci
     - gocheckcompilerdirectives
-#    - gochecknoglobals # Need to implement configuration files to do this properly.
+    - gochecknoglobals # Need to implement configuration files to do this properly.
     - gochecknoinits
     - gochecksumtype
     - gocognit
