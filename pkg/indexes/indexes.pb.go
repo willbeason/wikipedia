@@ -164,11 +164,14 @@ func file_pkg_indexes_indexes_proto_rawDescGZIP() []byte {
 	return file_pkg_indexes_indexes_proto_rawDescData
 }
 
-var file_pkg_indexes_indexes_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_pkg_indexes_indexes_proto_goTypes = []interface{}{
-	(*Index)(nil), // 0: Index
-	(*Entry)(nil), // 1: Entry
-}
+var (
+	file_pkg_indexes_indexes_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+	file_pkg_indexes_indexes_proto_goTypes  = []interface{}{
+		(*Index)(nil), // 0: Index
+		(*Entry)(nil), // 1: Entry
+	}
+)
+
 var file_pkg_indexes_indexes_proto_depIDxs = []int32{
 	1, // 0: Index.entries:type_name -> Entry
 	1, // [1:1] is the sub-list for method output_type

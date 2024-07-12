@@ -258,14 +258,17 @@ func file_pkg_nlp_nlp_proto_rawDescGZIP() []byte {
 	return file_pkg_nlp_nlp_proto_rawDescData
 }
 
-var file_pkg_nlp_nlp_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
-var file_pkg_nlp_nlp_proto_goTypes = []interface{}{
-	(*FrequencyMap)(nil),   // 0: nlp.FrequencyMap
-	(*FrequencyTable)(nil), // 1: nlp.FrequencyTable
-	(*WordCount)(nil),      // 2: nlp.WordCount
-	(*Dictionary)(nil),     // 3: nlp.Dictionary
-	nil,                    // 4: nlp.FrequencyMap.WordsEntry
-}
+var (
+	file_pkg_nlp_nlp_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+	file_pkg_nlp_nlp_proto_goTypes  = []interface{}{
+		(*FrequencyMap)(nil),   // 0: nlp.FrequencyMap
+		(*FrequencyTable)(nil), // 1: nlp.FrequencyTable
+		(*WordCount)(nil),      // 2: nlp.WordCount
+		(*Dictionary)(nil),     // 3: nlp.Dictionary
+		nil,                    // 4: nlp.FrequencyMap.WordsEntry
+	}
+)
+
 var file_pkg_nlp_nlp_proto_depIDxs = []int32{
 	4, // 0: nlp.FrequencyMap.words:type_name -> nlp.FrequencyMap.WordsEntry
 	2, // 1: nlp.FrequencyTable.words:type_name -> nlp.WordCount

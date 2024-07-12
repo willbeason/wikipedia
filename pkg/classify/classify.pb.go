@@ -444,20 +444,23 @@ func file_pkg_classify_classify_proto_rawDescGZIP() []byte {
 	return file_pkg_classify_classify_proto_rawDescData
 }
 
-var file_pkg_classify_classify_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_pkg_classify_classify_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
-var file_pkg_classify_classify_proto_goTypes = []interface{}{
-	(Classification)(0),            // 0: Classification
-	(*ClassifiedArticles)(nil),     // 1: ClassifiedArticles
-	(*ClassifiedIDs)(nil),          // 2: ClassifiedIDs
-	(*ClassifiedTitles)(nil),       // 3: ClassifiedTitles
-	(*PageClassificationsMap)(nil), // 4: PageClassificationsMap
-	(*PageClassifications)(nil),    // 5: PageClassifications
-	nil,                            // 6: ClassifiedArticles.ArticlesEntry
-	nil,                            // 7: ClassifiedIDs.PagesEntry
-	nil,                            // 8: ClassifiedTitles.PagesEntry
-	nil,                            // 9: PageClassificationsMap.PagesEntry
-}
+var (
+	file_pkg_classify_classify_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+	file_pkg_classify_classify_proto_msgTypes  = make([]protoimpl.MessageInfo, 9)
+	file_pkg_classify_classify_proto_goTypes   = []interface{}{
+		(Classification)(0),            // 0: Classification
+		(*ClassifiedArticles)(nil),     // 1: ClassifiedArticles
+		(*ClassifiedIDs)(nil),          // 2: ClassifiedIDs
+		(*ClassifiedTitles)(nil),       // 3: ClassifiedTitles
+		(*PageClassificationsMap)(nil), // 4: PageClassificationsMap
+		(*PageClassifications)(nil),    // 5: PageClassifications
+		nil,                            // 6: ClassifiedArticles.ArticlesEntry
+		nil,                            // 7: ClassifiedIDs.PagesEntry
+		nil,                            // 8: ClassifiedTitles.PagesEntry
+		nil,                            // 9: PageClassificationsMap.PagesEntry
+	}
+)
+
 var file_pkg_classify_classify_proto_depIDxs = []int32{
 	6, // 0: ClassifiedArticles.articles:type_name -> ClassifiedArticles.ArticlesEntry
 	7, // 1: ClassifiedIDs.pages:type_name -> ClassifiedIDs.PagesEntry

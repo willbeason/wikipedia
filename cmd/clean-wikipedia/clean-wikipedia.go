@@ -28,7 +28,7 @@ func main() {
 func mainCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   `first-links`,
-		Short: `Analyzes the network of references between biographical articles.`,
+		Short: `Cleans Wikipedia articles.`,
 		RunE:  runCmd,
 	}
 

@@ -319,16 +319,19 @@ func file_pkg_documents_documents_proto_rawDescGZIP() []byte {
 	return file_pkg_documents_documents_proto_rawDescData
 }
 
-var file_pkg_documents_documents_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
-var file_pkg_documents_documents_proto_goTypes = []interface{}{
-	(*Document)(nil),       // 0: Document
-	(*Page)(nil),           // 1: Page
-	(*TitleIndex)(nil),     // 2: TitleIndex
-	(*PageCategories)(nil), // 3: PageCategories
-	(*Categories)(nil),     // 4: Categories
-	nil,                    // 5: TitleIndex.TitlesEntry
-	nil,                    // 6: PageCategories.PagesEntry
-}
+var (
+	file_pkg_documents_documents_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+	file_pkg_documents_documents_proto_goTypes  = []interface{}{
+		(*Document)(nil),       // 0: Document
+		(*Page)(nil),           // 1: Page
+		(*TitleIndex)(nil),     // 2: TitleIndex
+		(*PageCategories)(nil), // 3: PageCategories
+		(*Categories)(nil),     // 4: Categories
+		nil,                    // 5: TitleIndex.TitlesEntry
+		nil,                    // 6: PageCategories.PagesEntry
+	}
+)
+
 var file_pkg_documents_documents_proto_depIDxs = []int32{
 	1, // 0: Document.pages:type_name -> Page
 	5, // 1: TitleIndex.titles:type_name -> TitleIndex.TitlesEntry

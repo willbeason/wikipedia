@@ -242,13 +242,16 @@ func file_pkg_ordinality_ordinality_proto_rawDescGZIP() []byte {
 	return file_pkg_ordinality_ordinality_proto_rawDescData
 }
 
-var file_pkg_ordinality_ordinality_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
-var file_pkg_ordinality_ordinality_proto_goTypes = []interface{}{
-	(*PageWordBag)(nil), // 0: ordinality.PageWordBag
-	(*WordCount)(nil),   // 1: ordinality.WordCount
-	(*PageWordMap)(nil), // 2: ordinality.PageWordMap
-	nil,                 // 3: ordinality.PageWordMap.WordsEntry
-}
+var (
+	file_pkg_ordinality_ordinality_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+	file_pkg_ordinality_ordinality_proto_goTypes  = []interface{}{
+		(*PageWordBag)(nil), // 0: ordinality.PageWordBag
+		(*WordCount)(nil),   // 1: ordinality.WordCount
+		(*PageWordMap)(nil), // 2: ordinality.PageWordMap
+		nil,                 // 3: ordinality.PageWordMap.WordsEntry
+	}
+)
+
 var file_pkg_ordinality_ordinality_proto_depIDxs = []int32{
 	1, // 0: ordinality.PageWordBag.words:type_name -> ordinality.WordCount
 	3, // 1: ordinality.PageWordMap.words:type_name -> ordinality.PageWordMap.WordsEntry
