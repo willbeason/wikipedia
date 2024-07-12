@@ -159,6 +159,8 @@ func cleanLines(lines []string) []string {
 
 		curLineEmpty := line == ""
 		if !curLineEmpty || !lastLineEmpty {
+			// Keep lines that are non-empty, and empty newlines between content.
+			// Essentially this eats consecutive blank lines.
 			result = append(result, line)
 		}
 
