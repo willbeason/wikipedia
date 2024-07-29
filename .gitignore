@@ -1,6 +1,7 @@
 /.idea
 /.out
 /data
+/work
 
 *.exe
 *.png
