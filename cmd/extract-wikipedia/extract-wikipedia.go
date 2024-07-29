@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -109,7 +110,7 @@ func source(cancel context.CancelCauseFunc, repo, index string) (<-chan compress
 		return nil, fmt.Errorf("opening %q: %w", repo, err)
 	}
 
-	// Open the uncompressed index file.
+	// Open the index file.
 	fIndex, err := os.Open(index)
 	if err != nil {
 		return nil, fmt.Errorf("opening %q: %w", index, err)
@@ -131,7 +132,14 @@ func source(cancel context.CancelCauseFunc, repo, index string) (<-chan compress
 			}
 		}()
 
-		rIndex := bufio.NewReader(fIndex)
+		var rIndex *bufio.Reader
+		compressed := filepath.Ext(index) == "bz2"
+		if compressed {
+			rIndex = bufio.NewReader(bzip2.NewReader(rIndex))
+		} else {
+			rIndex = bufio.NewReader(fIndex)
+		}
+
 		err2 := extractFile(rIndex, fRepo, compressedItems)
 		if err2 != nil {
 			cancel(err2)
@@ -142,21 +150,20 @@ func source(cancel context.CancelCauseFunc, repo, index string) (<-chan compress
 	return compressedItems, nil
 }
 
-func extractFile(rIndex *bufio.Reader, fRepo *os.File, work chan<- compressedDocument) error {
+func extractFile(articleIndex *bufio.Reader, fRepo *os.File, work chan<- compressedDocument) error {
 	var startIndex, endIndex int64
 
 	var (
-		lineBytes []byte
-		err       error
-		outBytes  []byte
+		line     string
+		err      error
+		outBytes []byte
 	)
 
-	for ; err == nil; lineBytes, _, err = rIndex.ReadLine() {
-		if len(lineBytes) == 0 {
+	for ; err == nil; line, err = articleIndex.ReadString('\n') {
+		if len(line) == 0 {
 			continue
 		}
 
-		line := string(lineBytes)
 		parts := strings.SplitN(line, ":", 3)
 
 		endIndex, err = strconv.ParseInt(parts[0], 10, strconv.IntSize)
@@ -241,21 +248,30 @@ func normalize(text string) string {
 	}
 
 	if !strings.HasSuffix(text, "</mediawiki>") {
-		text += "\n</mediawiki>\n"
+		text += "\n</mediawiki>"
 	}
 
 	return text
 }
 
-func decompress(ns documents.Namespace, compressed []byte, outPages chan<- protos.ID) error {
+func decompressBz2(compressed []byte) ([]byte, error) {
 	bz := bzip2.NewReader(bytes.NewReader(compressed))
 
-	compressed, err := io.ReadAll(bz)
+	uncompressed, err := io.ReadAll(bz)
 	if err != nil {
-		return fmt.Errorf("reading from compressed reader: %w", err)
+		return nil, fmt.Errorf("reading from compressed reader: %w", err)
 	}
 
-	text := normalize(string(compressed))
+	return uncompressed, nil
+}
+
+func decompress(ns documents.Namespace, compressed []byte, outPages chan<- protos.ID) error {
+	uncompressed, err := decompressBz2(compressed)
+	if err != nil {
+		return err
+	}
+
+	text := normalize(string(uncompressed))
 
 	doc := &documents.XMLDocument{}
 

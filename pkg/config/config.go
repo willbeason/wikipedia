@@ -13,14 +13,14 @@ type Config struct {
 	// WorkPath is an exact path to the working directory to store intermediate
 	// and final outputs. All child paths are assumed to be subdirectories of
 	// this path.
-	WorkPath string
+	WorkPath string `yaml:"workPath"`
 
 	// Jobs is a map of directory names representing jobs to the configuration
 	// for those jobs. Should be retrieved individually with GetJob.
 	//
 	// The job name (the key in this map) is the argument which should be passed
 	// after the configuration argument.
-	Jobs map[string]*Job
+	Jobs map[string]*Job `yaml:"jobs"`
 }
 
 // ErrLoad indicates the config for a job could not be loaded successfully.
@@ -53,11 +53,11 @@ type Job struct {
 	// SubCommand is the subcommand of wikopticon to run. Should correspond
 	// one-to-one with a configuration type to unmarshall to. So the subcommand
 	// "extract" should map to the "config.Extract" type.
-	SubCommand string
+	SubCommand string `yaml:"subCommand"`
 
 	// Settings are the configuration used for a job.
 	// Should be unmarshalled into a real config object with unmarshall.
-	Settings map[string]interface{}
+	Settings map[string]interface{} `yaml:"settings"`
 }
 
 // unmarshall attempts to extract the Job's config into out. Does not check that
