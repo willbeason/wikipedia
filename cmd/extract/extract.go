@@ -1,4 +1,4 @@
-package main
+package extract
 
 import (
 	"bufio"
@@ -26,17 +26,10 @@ import (
 
 const namespaceKey = "namespace"
 
-func main() {
-	err := mainCmd().Execute()
-	if err != nil {
-		os.Exit(1)
-	}
-}
-
-func mainCmd() *cobra.Command {
+func Cmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Args: cobra.ExactArgs(3),
-		Use: `extract-wikipedia path/to/pages-articles-multistream.xml.bz2 \
+		Use: `extract path/to/pages-articles-multistream.xml.bz2 \
   path/to/pages-articles-multistream-index.txt \
   path/to/output.db`,
 		Short: `Extracts the compressed pages-articles-multistream dump of Wikipedia to an output

@@ -3,8 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
-	"strings"
-	"unicode"
+	"os"
 
 	"gopkg.in/yaml.v3"
 )
@@ -26,32 +25,54 @@ type Config struct {
 // ErrLoad indicates the config for a job could not be loaded successfully.
 var ErrLoad = errors.New("unable to load config")
 
-// GetJob extracts the configuration for a subcommand to a passed
-// configuration object.
-func (c *Config) GetJob(name string, config interface{}) error {
-	job, exists := c.Jobs[name]
-	if !exists {
-		return fmt.Errorf("%w: job %q does not exist", ErrLoad, name)
+// Load reads a generic Config object from a file.
+func Load(configPath string) (*Config, error) {
+	config := &Config{}
+
+	in, err := os.ReadFile(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("%w: unable to read config file", ErrLoad)
+	}
+	err = yaml.Unmarshal(in, config)
+	if err != nil {
+		return nil, fmt.Errorf("%w: unable to parse config file", ErrLoad)
 	}
 
-	// Sanity check that we're running the desired command. Don't want to run
-	// normalize when we really want to clean.
-	wantType := normalizeType(job.SubCommand)
-	gotType := fmt.Sprintf("%T", config)
-	if gotType != wantType {
-		return fmt.Errorf("%w: job %q with subcommand %q expects config type %s, got %T",
-			ErrLoad, name, job.SubCommand, wantType, gotType)
+	return config, nil
+}
+
+// GetJob extracts the configuration for a subCommand.
+func (c *Config) GetJob(name string) (any, error) {
+	job, exists := c.Jobs[name]
+	if !exists {
+		return nil, fmt.Errorf("%w: job %q does not exist", ErrLoad, name)
+	}
+
+	var config any
+	switch job.SubCommand {
+	case "":
+		return nil, fmt.Errorf("%w: job %q has no subCommand",
+			ErrLoad, name)
+	case "extract":
+		config = &Extract{}
+	default:
+		return nil, fmt.Errorf("%w: job %q has unknown subCommand %q",
+			ErrLoad, name, job.SubCommand)
 	}
 
 	err := job.unmarshall(config)
-	return fmt.Errorf("%w: unmarshalling job config %q to %T: %w",
-		ErrLoad, name, config, err)
+	if err != nil {
+		return nil, fmt.Errorf("%w: unmarshalling job config %q to %T: %w",
+			ErrLoad, name, config, err)
+	}
+
+	return config, nil
 }
 
 // Job represents a generic task to run with all specified configuration.
 type Job struct {
-	// SubCommand is the subcommand of wikopticon to run. Should correspond
-	// one-to-one with a configuration type to unmarshall to. So the subcommand
+	// SubCommand is the subCommand of wikopticon to run. Should correspond
+	// one-to-one with a configuration type to unmarshall to. So the subCommand
 	// "extract" should map to the "config.Extract" type.
 	SubCommand string `yaml:"subCommand"`
 
@@ -70,26 +91,9 @@ func (j *Job) unmarshall(out interface{}) error {
 	}
 
 	err = yaml.Unmarshal(in, out)
-	return fmt.Errorf("unmarshalling to subcommand config %T: %w", out, err)
-}
-
-func normalizeType(typ string) string {
-	out := strings.Builder{}
-
-	nextCapital := true
-	for _, c := range typ {
-		if c == '-' {
-			nextCapital = true
-			continue
-		}
-
-		if nextCapital {
-			out.WriteRune(unicode.ToUpper(c))
-		} else {
-			out.WriteRune(c)
-		}
-		nextCapital = false
+	if err != nil {
+		return fmt.Errorf("unmarshalling to subCommand config %T: %w", out, err)
 	}
 
-	return out.String()
+	return nil
 }
