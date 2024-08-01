@@ -7,7 +7,10 @@ message Document {
 }
 
 message Page {
+  // id is the unique article identifier. Persists across article title changes.
   uint32 id = 1;
+  // title is a conditionally unique identifier for Pages.
+  // Guaranteed unique at any point in time, but not across time.
   string title = 2;
   string text = 3;
 }

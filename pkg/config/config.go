@@ -48,7 +48,7 @@ func (c *Config) GetJob(name string) (any, error) {
 		return nil, fmt.Errorf("%w: job %q does not exist", ErrLoad, name)
 	}
 
-	var config any
+	var config JobConfig
 	switch job.SubCommand {
 	case "":
 		return nil, fmt.Errorf("%w: job %q has no subCommand",
@@ -66,6 +66,11 @@ func (c *Config) GetJob(name string) (any, error) {
 			ErrLoad, name, config, err)
 	}
 
+	if config.GetWorkPath() == "" {
+		// Inherit from parent if not set.
+		config.SetWorkPath(c.WorkPath)
+	}
+
 	return config, nil
 }
 
@@ -81,8 +86,7 @@ type Job struct {
 	Settings map[string]interface{} `yaml:"settings"`
 }
 
-// unmarshall attempts to extract the Job's config into out. Does not check that
-// the conversion is sane: use Config.GetJob.
+// unmarshall attempts to extract the Job's config into out.
 func (j *Job) unmarshall(out interface{}) error {
 	in, err := yaml.Marshal(j.Settings)
 	if err != nil {

@@ -6,7 +6,9 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/willbeason/wikipedia/cmd/extract"
 	"github.com/willbeason/wikipedia/pkg/config"
+	"github.com/willbeason/wikipedia/pkg/flags"
 )
 
 const Version = "0.3.0"
@@ -35,14 +37,18 @@ func mainCmd() *cobra.Command {
 
 	cmd.AddCommand(runCmd())
 
+	cmd.AddCommand(extract.Cmd())
+
+	flags.Parallel(cmd)
+
 	return cmd
 }
 
 func runCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Args:    cobra.ExactArgs(2),
-		Use:     `run path/to/config.yaml job`,
-		Short:   `Runs a specific job in a configuration file.`,
+		Use:     `run config_yaml job_name`,
+		Short:   `runs a specific wikopticon job in a configuration file`,
 		RunE:    runRunE,
 		Version: Version,
 	}
@@ -68,12 +74,11 @@ func runRunE(cmd *cobra.Command, args []string) error {
 
 	switch cfg := jobConfig.(type) {
 	case *config.Extract:
-		fmt.Printf("extracting %q with index %q only namespaces %v\n",
-			cfg.ArticlesPath, cfg.IndexPath, cfg.Namespaces)
+		fmt.Printf("Extracting %q with index %q to directory %q only namespaces %v\n",
+			cfg.GetArticlesPath(), cfg.GetIndexPath(), cfg.GetOutPath(), cfg.Namespaces)
+		return extract.Extract(cmd, cfg)
 	default:
 		return fmt.Errorf("%w: %T",
 			ErrUnknownSubcommandType, jobConfig)
 	}
-
-	return nil
 }

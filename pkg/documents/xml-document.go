@@ -1,6 +1,8 @@
 package documents
 
-// XMLDocument solely exists for extracting.
+// XMLDocument solely exists for extracting from pages-articles-multistream.
+// Individual XML documents from the compressed file slices may contain one
+// or more Pages.
 type XMLDocument struct {
 	Pages []XMLPage `xml:"page"`
 }
@@ -18,7 +20,8 @@ func (d *XMLDocument) ToProto() *Document {
 }
 
 type XMLPage struct {
-	Title    string      `xml:"title"`
+	Title string `xml:"title"`
+	// NS is the Wikipedia Namespace the page is categorized into.
 	NS       Namespace   `xml:"ns"`
 	ID       uint32      `xml:"id"`
 	Redirect XMLRedirect `yaml:",omitempty" xml:"redirect"`

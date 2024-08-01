@@ -8,6 +8,8 @@ linters-settings:
       - '10'
       - '10.0'
       - '100'
+    ignored-functions:
+      - cobra.ExactArgs
   wrapcheck:
     ignorePackageGlobs:
       - github.com/willbeason/wikipedia/*

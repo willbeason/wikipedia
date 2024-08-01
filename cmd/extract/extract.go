@@ -17,6 +17,7 @@ import (
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/spf13/cobra"
+	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/db"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
@@ -28,59 +29,92 @@ const namespaceKey = "namespace"
 
 func Cmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Args: cobra.ExactArgs(3),
-		Use: `extract path/to/pages-articles-multistream.xml.bz2 \
-  path/to/pages-articles-multistream-index.txt \
-  path/to/output.db`,
+		Args: cobra.ExactArgs(4),
+		Use:  `extract articles_path index_path allowed_namespace out_path`,
 		Short: `Extracts the compressed pages-articles-multistream dump of Wikipedia to an output
 Badger database, given an already-extracted index file.`,
 		RunE: runCmd,
 	}
 
 	flags.Parallel(cmd)
-	cmd.Flags().Int16(namespaceKey, int16(documents.NamespaceArticle), "")
+	cmd.Flags().IntSlice(namespaceKey, []int{int(documents.NamespaceArticle)},
+		"the article namespace to ")
 
 	return cmd
 }
 
+var ErrExtract = errors.New("unable to run extraction")
+
 func runCmd(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
+
+	ns, err := strconv.ParseInt(args[2], 10, 16)
+	if err != nil {
+		return fmt.Errorf("%w: allowed_namespace argument must be an integer", ErrExtract)
+	}
+
+	extractCfg := &config.Extract{
+		ArticlesPath: args[0],
+		IndexPath:    args[1],
+		Namespaces:   []int{int(ns)},
+		OutPath:      args[3],
+	}
+
+	return Extract(cmd, extractCfg)
+}
+
+func Extract(cmd *cobra.Command, extract *config.Extract) error {
+	articlesPath := extract.GetArticlesPath()
+	if _, err := os.Stat(articlesPath); os.IsNotExist(err) {
+		return fmt.Errorf("%w: articles not found at %q", ErrExtract, articlesPath)
+	}
+
+	indexPath := extract.GetIndexPath()
+	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
+		return fmt.Errorf("%w: index not found at %q", ErrExtract, indexPath)
+	}
+
+	outPath := extract.GetOutPath()
+	if _, err := os.Stat(outPath); !os.IsNotExist(err) {
+		if err != nil {
+			return fmt.Errorf("%w: unable to determine if output database already exists at %q: %w",
+				ErrExtract, outPath, err)
+		} else {
+			return fmt.Errorf("%w: out directory exists: %q",
+				ErrExtract, outPath)
+		}
+	} else {
+		err = os.MkdirAll(outPath, os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("creating output directory %q: %w", outPath, err)
+		}
+	}
+
+	runner := jobs.NewRunner()
+
+	ctx, cancel := context.WithCancelCause(cmd.Context())
+
+	compressedItems, err := source(cancel, articlesPath, indexPath)
+	if err != nil {
+		return err
+	}
 
 	parallel, err := flags.GetParallel(cmd)
 	if err != nil {
 		return err
 	}
 
-	ns, err := cmd.Flags().GetInt16(namespaceKey)
+	pages := extractPages(cancel, parallel, extract.Namespaces, compressedItems)
+
+	outDB, err := badger.Open(badger.DefaultOptions(outPath))
 	if err != nil {
-		return flags.ParsingFlagError(namespaceKey, err)
-	}
-
-	repo := args[0]
-	index := args[1]
-
-	outDBPath := args[2]
-
-	runner := jobs.NewRunner()
-
-	ctx, cancel := context.WithCancelCause(cmd.Context())
-
-	compressedItems, err := source(cancel, repo, index)
-	if err != nil {
-		return err
-	}
-
-	pages := extractPages(cancel, parallel, documents.Namespace(ns), compressedItems)
-
-	outDB, err := badger.Open(badger.DefaultOptions(outDBPath))
-	if err != nil {
-		return fmt.Errorf("opening %q: %w", outDBPath, err)
+		return fmt.Errorf("opening %q: %w", outPath, err)
 	}
 
 	defer func() {
-		err2 := outDB.Close()
-		if err2 != nil {
-			cancel(err2)
+		closeErr := outDB.Close()
+		if closeErr != nil {
+			cancel(closeErr)
 		}
 	}()
 
@@ -91,6 +125,10 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	err = db.RunGC(outDB)
 	if err != nil {
 		return err
+	}
+
+	if ctx.Err() != nil {
+		return context.Cause(ctx)
 	}
 
 	return ctx.Err()
@@ -126,9 +164,9 @@ func source(cancel context.CancelCauseFunc, repo, index string) (<-chan compress
 		}()
 
 		var rIndex *bufio.Reader
-		compressed := filepath.Ext(index) == "bz2"
+		compressed := filepath.Ext(index) == ".bz2"
 		if compressed {
-			rIndex = bufio.NewReader(bzip2.NewReader(rIndex))
+			rIndex = bufio.NewReader(bzip2.NewReader(fIndex))
 		} else {
 			rIndex = bufio.NewReader(fIndex)
 		}
@@ -197,7 +235,7 @@ func extractFile(articleIndex *bufio.Reader, fRepo *os.File, work chan<- compres
 func extractPages(
 	cancel context.CancelCauseFunc,
 	parallel int,
-	ns documents.Namespace,
+	namespaces []int,
 	compressedItems <-chan compressedDocument,
 ) <-chan protos.ID {
 	pages := make(chan protos.ID, jobs.WorkBuffer)
@@ -206,7 +244,7 @@ func extractPages(
 	for range parallel {
 		wg.Add(1)
 		go func() {
-			err := extractPagesWorker(ns, compressedItems, pages)
+			err := extractPagesWorker(namespaces, compressedItems, pages)
 			if err != nil {
 				cancel(err)
 			}
@@ -222,9 +260,14 @@ func extractPages(
 	return pages
 }
 
-func extractPagesWorker(ns documents.Namespace, compressed <-chan compressedDocument, pages chan<- protos.ID) error {
+func extractPagesWorker(namespaces []int, compressed <-chan compressedDocument, pages chan<- protos.ID) error {
+	allowedNamespaces := make(map[documents.Namespace]bool, len(namespaces))
+	for _, ns := range namespaces {
+		allowedNamespaces[documents.Namespace(ns)] = true
+	}
+
 	for j := range compressed {
-		err := decompress(ns, j, pages)
+		err := decompress(allowedNamespaces, j, pages)
 		if err != nil {
 			return err
 		}
@@ -235,7 +278,8 @@ func extractPagesWorker(ns documents.Namespace, compressed <-chan compressedDocu
 
 type compressedDocument []byte
 
-func normalize(text string) string {
+// normalizeXML ensures all passed XML strings begin and end with mediawiki tags.
+func normalizeXML(text string) string {
 	if !strings.HasPrefix(text, "<mediawiki") {
 		text = "<mediawiki>\n" + text
 	}
@@ -258,13 +302,13 @@ func decompressBz2(compressed []byte) ([]byte, error) {
 	return uncompressed, nil
 }
 
-func decompress(ns documents.Namespace, compressed []byte, outPages chan<- protos.ID) error {
+func decompress(allowedNamespaces map[documents.Namespace]bool, compressed []byte, outPages chan<- protos.ID) error {
 	uncompressed, err := decompressBz2(compressed)
 	if err != nil {
 		return err
 	}
 
-	text := normalize(string(uncompressed))
+	text := normalizeXML(string(uncompressed))
 
 	doc := &documents.XMLDocument{}
 
@@ -273,10 +317,8 @@ func decompress(ns documents.Namespace, compressed []byte, outPages chan<- proto
 		return fmt.Errorf("unmarshalling text %q: %w", text, err)
 	}
 
-	// infoboxChecker, err := documents.NewInfoboxChecker(documents.PersonInfoboxes)
-
 	for _, page := range doc.Pages {
-		if page.NS != ns || page.Redirect.Title != "" {
+		if !allowedNamespaces[page.NS] || page.Redirect.Title != "" {
 			// Ignore redirects and articles in other Namespaces.
 			continue
 		}

@@ -1,16 +1,63 @@
 package config
 
+import "path/filepath"
+
+type JobConfig interface {
+	SetWorkPath(path string)
+	GetWorkPath() string
+}
+
 type Extract struct {
-	// ArticlesPath is the exact filepath to the pages-articles-multistream
+	// WorkPath is an exact path to the working directory all other paths are relative to.
+	// Inherits from the parent configuration if unset.
+	WorkPath string `yaml:"workPath"`
+
+	// ArticlesPath is the filepath to the pages-articles-multistream
 	// dump of Wikipedia. Must be compressed as the associated Index points
 	// to specific bytes of the compressed format.
 	ArticlesPath string `yaml:"articlesPath"`
 
-	// IndexPath is the exact path to the index corresponding to the dump.
+	// IndexPath is the filepath to the index corresponding to the dump.
 	// Accepts bz2 or uncompressed.
 	IndexPath string `yaml:"indexPath"`
 
-	// Namespaces are the namespace IDs to include articles from.
-	// Empty indicates to use articles from all namespaces.
+	// Namespace is the namespace ID to include articles from.
 	Namespaces []int `yaml:"namespaces"`
+
+	// OutPath is the filepath to store the database of extracted articles.
+	OutPath string `yaml:"outPath"`
+}
+
+var _ JobConfig = &Extract{}
+
+func (cfg *Extract) SetWorkPath(path string) {
+	cfg.WorkPath = path
+}
+
+func (cfg *Extract) GetWorkPath() string {
+	return cfg.WorkPath
+}
+
+func (cfg *Extract) GetArticlesPath() string {
+	if filepath.IsAbs(cfg.ArticlesPath) {
+		return cfg.ArticlesPath
+	}
+
+	return filepath.Join(cfg.WorkPath, cfg.ArticlesPath)
+}
+
+func (cfg *Extract) GetIndexPath() string {
+	if filepath.IsAbs(cfg.IndexPath) {
+		return cfg.IndexPath
+	}
+
+	return filepath.Join(cfg.WorkPath, cfg.IndexPath)
+}
+
+func (cfg *Extract) GetOutPath() string {
+	if filepath.IsAbs(cfg.OutPath) {
+		return cfg.OutPath
+	}
+
+	return filepath.Join(cfg.WorkPath, cfg.OutPath)
 }
