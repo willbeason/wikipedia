@@ -4,11 +4,13 @@ This repository is a collection of code I use for analyzing wikipedia. The main
 idea here is to document methods for various analysis I've done.
 
 Generally, code starts in commands under `cmd/` and gets migrated to `pkg/` when
-I figure out how to make it more general.
+I figure out how to make it more general and deduplicate code across commands.
 
 I make no guarantees on the interoperability of the code here, or that output
 will remain consistent with time. For now these are fun, non-professional
-projects.
+projects. Generally, I will tag commits after making significant changes.
+As yet there is no stable release of this software, but I am working towards
+this as I make progress towards using this code for research papers.
 
 Many of these commands will change with time as I learn more about the Wikipedia
 corpus. This is a large, complex set of data and there aren't (yet) good
@@ -28,22 +30,15 @@ as this quickly became a headache I didn't want to deal with.
 
 ## The Commands
 
-A brief description of the commands so far, roughly in the order you'd use them.
+I am reworking this functionality heavily to make using individual commands
+easier, and allow for workflows to be repeated.
 
-`extract-wikipedia` operates on the `pages-articles-multistream` dump of
-Wikipedia, extracting each element into its own file. As of this writing,
-extraction results in about 213,000 files.
+The main command is `wikopticon`, found in `cmd/wikopticon`. You can use it
+in one of two ways.
 
-`clean-wikipedia` operates on the output of `extract-wikipedia`, removing noisy
-elements present in Wikipedia such as tables or various non-shown elements. This
-results in an intermediate set of data which is essentially "the text of
-Wikipedia as a user would see it". I keep this as I'm still updating
-`normalize-wikipedia`, and `extract-wikipedia` takes annoyingly long so it's
-worth saving the output of this intermediate step.
-
-`normalize-wikipedia` operates on the output of `clean-wikipedia`, performing
-operations like making everything lowercase, identifying numbers and dates,
-removing tables, and the like. This is the data set I directly operate on.
+1. (Recommended) Use a configuration file that defines individual jobs which
+    rely on subcommands.
+2. (Not Recommended) Manually call subcommands with `wikopticon subcommand`.
 
 ## Warnings
 
