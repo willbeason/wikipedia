@@ -107,12 +107,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printWork := jobs.ForEach(jobs.WorkBuffer, ps, func(from *documents.Page) error {
-		fmt.Println(from.Id)
-		fmt.Println(from.Title)
-		fmt.Println(from.Text)
-		return nil
-	})
+	printWork := jobs.ForEach(jobs.WorkBuffer, ps, pages.Print)
 
 	printWg := runner.Run(ctx, cancel, printWork)
 	printWg.Wait()

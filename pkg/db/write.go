@@ -9,8 +9,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func WriteProto(db *badger.DB) func(p protos.ID) error {
-	return func(p protos.ID) error {
+func WriteProto[PROTO protos.ID](db *badger.DB) func(p PROTO) error {
+	return func(p PROTO) error {
 		return db.Update(write(p))
 	}
 }

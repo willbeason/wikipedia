@@ -17,7 +17,7 @@ import (
 	"github.com/willbeason/wikipedia/pkg/pages"
 )
 
-// clean-wikipedia removes parts of articles we never want to analyze, such as xml tags, tables, and
+// clean removes parts of articles we never want to analyze, such as xml tags, tables, and
 // formatting directives.
 func main() {
 	err := mainCmd().Execute()

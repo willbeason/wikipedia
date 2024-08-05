@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/willbeason/wikipedia/cmd/clean"
 	"github.com/willbeason/wikipedia/cmd/extract"
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/flags"
@@ -38,6 +39,7 @@ func mainCmd() *cobra.Command {
 	cmd.AddCommand(runCmd())
 
 	cmd.AddCommand(extract.Cmd())
+	cmd.AddCommand(clean.Cmd())
 
 	flags.Parallel(cmd)
 
@@ -77,6 +79,10 @@ func runRunE(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Extracting %q with index %q to directory %q only namespaces %v\n",
 			cfg.GetArticlesPath(), cfg.GetIndexPath(), cfg.GetOutPath(), cfg.Namespaces)
 		return extract.Extract(cmd, cfg)
+	case *config.Clean:
+		fmt.Printf("Cleaning %q to directory %q viewing %v\n",
+			cfg.GetArticlesPath(), cfg.GetOutPath(), cfg.View)
+		return clean.Clean(cmd, cfg)
 	default:
 		return fmt.Errorf("%w: %T",
 			ErrUnknownSubcommandType, jobConfig)

@@ -105,7 +105,7 @@ func Filter[T any](buffer int, in <-chan T, predicate func(T) (bool, error)) (<-
 }
 
 // Map mutates an input channel, optionally changing the type.
-func Map[FROM, TO any](buffer int, in <-chan FROM, fn func(FROM) (TO, error)) (<-chan TO, WorkQueue) {
+func Map[FROM, TO any](buffer int, in <-chan FROM, fn func(FROM) (TO, error)) (chan TO, WorkQueue) {
 	out := make(chan TO, buffer)
 	work := make(chan Work, buffer)
 
@@ -123,7 +123,6 @@ func Map[FROM, TO any](buffer int, in <-chan FROM, fn func(FROM) (TO, error)) (<
 			}
 		}
 
-		close(out)
 		close(work)
 	}()
 

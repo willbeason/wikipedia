@@ -118,7 +118,7 @@ func Extract(cmd *cobra.Command, extract *config.Extract) error {
 		}
 	}()
 
-	sinkWork := jobs.Reduce(jobs.WorkBuffer, pages, db.WriteProto(outDB))
+	sinkWork := jobs.Reduce(jobs.WorkBuffer, pages, db.WriteProto[protos.ID](outDB))
 	sinkWg := runner.Run(ctx, cancel, sinkWork)
 	sinkWg.Wait()
 
@@ -131,7 +131,7 @@ func Extract(cmd *cobra.Command, extract *config.Extract) error {
 		return context.Cause(ctx)
 	}
 
-	return ctx.Err()
+	return nil
 }
 
 func source(cancel context.CancelCauseFunc, repo, index string) (<-chan compressedDocument, error) {

@@ -55,6 +55,8 @@ func (c *Config) GetJob(name string) (any, error) {
 			ErrLoad, name)
 	case "extract":
 		config = &Extract{}
+	case "clean":
+		config = &Clean{}
 	default:
 		return nil, fmt.Errorf("%w: job %q has unknown subCommand %q",
 			ErrLoad, name, job.SubCommand)

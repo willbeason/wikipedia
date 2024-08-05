@@ -71,7 +71,7 @@ type Clean struct {
 	ArticlesPath string `yaml:"articlesPath"`
 
 	// View if set, is a list of cleaned articles to print to the screen (instead of writing to OutPath).
-	View []int `yaml:"view"`
+	View []uint `yaml:"view"`
 
 	// OutPath is the filepath to store the database of cleaned articles.
 	// Ignored if View is non-empty.
@@ -86,4 +86,20 @@ func (cfg *Clean) SetWorkPath(path string) {
 
 func (cfg *Clean) GetWorkPath() string {
 	return cfg.WorkPath
+}
+
+func (cfg *Clean) GetArticlesPath() string {
+	if filepath.IsAbs(cfg.ArticlesPath) {
+		return cfg.ArticlesPath
+	}
+
+	return filepath.Join(cfg.WorkPath, cfg.ArticlesPath)
+}
+
+func (cfg *Clean) GetOutPath() string {
+	if filepath.IsAbs(cfg.OutPath) {
+		return cfg.OutPath
+	}
+
+	return filepath.Join(cfg.WorkPath, cfg.OutPath)
 }

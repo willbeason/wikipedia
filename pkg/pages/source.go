@@ -11,10 +11,12 @@ import (
 	"github.com/willbeason/wikipedia/pkg/jobs"
 )
 
+type Source func(ctx context.Context, cancel context.CancelCauseFunc) (<-chan *documents.Page, error)
+
 func StreamDB(
 	inDBPath string,
 	parallel int,
-) func(ctx context.Context, cancel context.CancelCauseFunc) (<-chan *documents.Page, error) {
+) Source {
 	return func(ctx context.Context, cancel context.CancelCauseFunc) (<-chan *documents.Page, error) {
 		inDB := db.NewRunner(inDBPath, parallel)
 		pages := make(chan *documents.Page, jobs.WorkBuffer)
@@ -37,7 +39,7 @@ func StreamDBKeys(
 	inDBPath string,
 	parallel int,
 	keys []uint,
-) func(ctx context.Context, cancel context.CancelCauseFunc) (<-chan *documents.Page, error) {
+) Source {
 	return func(ctx context.Context, cancel context.CancelCauseFunc) (<-chan *documents.Page, error) {
 		var (
 			wg  *sync.WaitGroup
