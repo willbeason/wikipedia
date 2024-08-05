@@ -1,67 +1,52 @@
-package main
+package title_index
 
 import (
 	"context"
-	"os"
-	"path/filepath"
+	"errors"
+	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/documents"
-	"github.com/willbeason/wikipedia/pkg/environment"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/pages"
 	"github.com/willbeason/wikipedia/pkg/protos"
 )
 
-func main() {
-	ctx := context.Background()
-
-	err := mainCmd().ExecuteContext(ctx)
-	if err != nil {
-		os.Exit(1)
-	}
-}
-
-func mainCmd() *cobra.Command {
+func Cmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   `view path/to/input`,
-		Short: `View specific articles by identifier (--ids) or title (--titles)`,
+		Use:   `title-index path/to/input`,
+		Short: `Create an index from titles to article IDs`,
 		RunE:  runCmd,
 	}
 
 	flags.Parallel(cmd)
-	flags.IDs(cmd)
-	flags.Titles(cmd)
 
 	return cmd
 }
 
+var ErrTitleIndex = errors.New("unable to create title index")
+
 func runCmd(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 
-	ctx, cancel := context.WithCancelCause(cmd.Context())
+	cfg := &config.TitleIndex{
+		ArticlesPath: args[0],
+		OutPath:      args[1],
+	}
 
+	return TitleIndex(cmd, cfg)
+}
+
+func TitleIndex(cmd *cobra.Command, cfg *config.TitleIndex) error {
 	parallel, err := flags.GetParallel(cmd)
 	if err != nil {
 		return err
 	}
 
-	var inDB string
-	if len(args) > 0 {
-		inDB = args[0]
-	} else {
-		inDB = filepath.Join(environment.WikiPath, "extracted.db")
-	}
+	source := pages.StreamDB(cfg.GetArticlesPath(), parallel)
 
-	var out string
-	if len(args) > 1 {
-		out = args[1]
-	} else {
-		out = filepath.Join(environment.WikiPath, environment.TitleIndex)
-	}
-
-	source := pages.StreamDB(inDB, parallel)
-
+	ctx, cancel := context.WithCancelCause(cmd.Context())
 	ps, err := source(ctx, cancel)
 	if err != nil {
 		return err
@@ -71,9 +56,9 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 	index := <-results
 
-	err = protos.Write(out, index)
+	err = protos.Write(cfg.GetOutPath(), index)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: writing title index: %w", ErrTitleIndex, err)
 	}
 
 	return nil

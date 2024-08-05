@@ -1,46 +1,22 @@
 package nlp
 
 import (
-	"errors"
-	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
+	"github.com/willbeason/wikipedia/pkg/protos"
 )
-
-var ErrUnsupportedProtoExtension = errors.New("unsupported proto extension")
 
 // ReadDictionary reads a Dictionary proto from a file.
 // Returns an empty dictionary if path is the empty string.
-//
-//goland:noinspection GoUnusedExportedFunction
 func ReadDictionary(path string) (*Dictionary, error) {
 	dictionary := new(Dictionary)
 	if path == "" {
 		return dictionary, nil
 	}
 
-	bytes, err := os.ReadFile(path)
+	err := protos.Read(path, dictionary)
 	if err != nil {
-		return nil, fmt.Errorf("reading %q: %w", path, err)
-	}
-
-	switch ext := filepath.Ext(path); ext {
-	case ".pb":
-		err = proto.Unmarshal(bytes, dictionary)
-		if err != nil {
-			return nil, fmt.Errorf("unmarshalling %q: %w", path, err)
-		}
-	case ".json":
-		err = protojson.Unmarshal(bytes, dictionary)
-		if err != nil {
-			return nil, fmt.Errorf("unmarshalling %q: %w", path, err)
-		}
-	default:
-		return nil, fmt.Errorf("%w: %s", ErrUnsupportedProtoExtension, ext)
+		return nil, err
 	}
 
 	return dictionary, nil

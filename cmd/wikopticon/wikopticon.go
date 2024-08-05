@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"os"
 
+
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/cmd/clean"
 	"github.com/willbeason/wikipedia/cmd/extract"
+	title_index "github.com/willbeason/wikipedia/cmd/title-index"
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/flags"
 )
@@ -40,6 +42,7 @@ func mainCmd() *cobra.Command {
 
 	cmd.AddCommand(extract.Cmd())
 	cmd.AddCommand(clean.Cmd())
+	cmd.AddCommand(title_index.Cmd())
 
 	flags.Parallel(cmd)
 
@@ -83,6 +86,10 @@ func runRunE(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Cleaning %q to directory %q viewing %v\n",
 			cfg.GetArticlesPath(), cfg.GetOutPath(), cfg.View)
 		return clean.Clean(cmd, cfg)
+	case *config.TitleIndex:
+		fmt.Printf("Creating title index of %q to %q\n",
+			cfg.GetArticlesPath(), cfg.GetOutPath())
+		return title_index.TitleIndex(cmd, cfg)
 	default:
 		return fmt.Errorf("%w: %T",
 			ErrUnknownSubcommandType, jobConfig)

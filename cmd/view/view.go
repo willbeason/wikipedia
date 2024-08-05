@@ -1,4 +1,4 @@
-package main
+package view
 
 import (
 	"context"
@@ -15,18 +15,9 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-func main() {
-	ctx := context.Background()
-
-	err := mainCmd().ExecuteContext(ctx)
-	if err != nil {
-		os.Exit(1)
-	}
-}
-
-func mainCmd() *cobra.Command {
+func Cmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   `view path/to/input`,
+		Use:   `view articles_path articles...`,
 		Short: `View specific articles by identifier (--ids) or title (--titles)`,
 		RunE:  runCmd,
 	}

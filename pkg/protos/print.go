@@ -2,10 +2,11 @@ package protos
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
-	"github.com/willbeason/wikipedia/pkg/documents"
+	"google.golang.org/protobuf/encoding/prototext"
 )
 
 // PrintProtos prints passed protos as JSON to the stdout.
@@ -18,7 +19,10 @@ func PrintProtos(_ context.Context, ps <-chan ID, errs chan<- error) (*sync.Wait
 	go func() {
 		defer wg.Done()
 
-		printProtos(ps)
+		err := printProtos(ps)
+		if err != nil {
+			errs <- err
+		}
 	}()
 
 	return &wg, nil
@@ -26,15 +30,27 @@ func PrintProtos(_ context.Context, ps <-chan ID, errs chan<- error) (*sync.Wait
 
 var _ Sink = PrintProtos
 
-func printProtos(ps <-chan ID) {
+func printProtos(ps <-chan ID) error {
 	for p := range ps {
-		printProto(p)
+		err := printProto(p)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
-func printProto(p ID) {
-	page := p.(*documents.Page)
+var ErrPrint = errors.New("printing proto")
 
-	fmt.Println(page.Text)
+func printProto(p ID) error {
+	bytes, err := prototext.MarshalOptions{Indent: "  "}.Marshal(p)
+	if err != nil {
+		return fmt.Errorf("%w with ID %v", ErrPrint, p.ID())
+	}
+
+	fmt.Println(string(bytes))
 	fmt.Println()
+
+	return nil
 }

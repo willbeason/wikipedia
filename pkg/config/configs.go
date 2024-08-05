@@ -103,3 +103,40 @@ func (cfg *Clean) GetOutPath() string {
 
 	return filepath.Join(cfg.WorkPath, cfg.OutPath)
 }
+
+type TitleIndex struct {
+	// WorkPath is an exact path to the working directory all other paths are relative to.
+	// Inherits from the parent configuration if unset.
+	WorkPath string `yaml:"workPath"`
+
+	// ArticlesPath is the filepath to the extracted Wikipedia articles.
+	ArticlesPath string `yaml:"articlesPath"`
+
+	// OutPath is the filepath to store the database of cleaned articles.
+	// Ignored if View is non-empty.
+	OutPath string `yaml:"outPath"`
+}
+
+func (cfg *TitleIndex) SetWorkPath(path string) {
+	cfg.WorkPath = path
+}
+
+func (cfg *TitleIndex) GetWorkPath() string {
+	return cfg.WorkPath
+}
+
+func (cfg *TitleIndex) GetArticlesPath() string {
+	if filepath.IsAbs(cfg.ArticlesPath) {
+		return cfg.ArticlesPath
+	}
+
+	return filepath.Join(cfg.WorkPath, cfg.ArticlesPath)
+}
+
+func (cfg *TitleIndex) GetOutPath() string {
+	if filepath.IsAbs(cfg.OutPath) {
+		return cfg.OutPath
+	}
+
+	return filepath.Join(cfg.WorkPath, cfg.OutPath)
+}

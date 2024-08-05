@@ -1,14 +1,17 @@
 package protos
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/willbeason/wikipedia/pkg/nlp"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
 )
+
+var ErrUnsupportedProtoExtension = errors.New("unsupported proto extension")
 
 func Read(file string, out proto.Message) error {
 	bytes, err := os.ReadFile(file)
@@ -21,11 +24,17 @@ func Read(file string, out proto.Message) error {
 		err = proto.Unmarshal(bytes, out)
 	case ".json":
 		err = protojson.Unmarshal(bytes, out)
+	case ".txt":
+		err = prototext.Unmarshal(bytes, out)
 	default:
-		return fmt.Errorf("%w: %q", nlp.ErrUnsupportedProtoExtension, ext)
+		return fmt.Errorf("%w: %q", ErrUnsupportedProtoExtension, ext)
 	}
 
-	return fmt.Errorf("reading %q: %w", file, err)
+	if err != nil {
+		return fmt.Errorf("unmarshalling %q: %w", file, err)
+	}
+
+	return nil
 }
 
 func Write(path string, p proto.Message) error {
@@ -39,16 +48,15 @@ func Write(path string, p proto.Message) error {
 	switch ext := filepath.Ext(path); ext {
 	case ".pb":
 		bytes, err = proto.Marshal(p)
-		if err != nil {
-			return fmt.Errorf("writing %q: %w", path, err)
-		}
 	case ".json":
 		bytes, err = protojson.MarshalOptions{Indent: "  "}.Marshal(p)
-		if err != nil {
-			return fmt.Errorf("writing %q: %w", path, err)
-		}
+	case ".txt":
+		bytes, err = prototext.MarshalOptions{Indent: "  "}.Marshal(p)
 	default:
-		return fmt.Errorf("%w: %q", nlp.ErrUnsupportedProtoExtension, ext)
+		return fmt.Errorf("%w: %q", ErrUnsupportedProtoExtension, ext)
+	}
+	if err != nil {
+		return fmt.Errorf("marshalling %q: %w", path, err)
 	}
 
 	err = os.WriteFile(path, bytes, os.ModePerm)
