@@ -1,4 +1,4 @@
-package nlp_test
+package articles_test
 
 const EmmyNoetherAfter = `{{Short description|German mathematician (1882–1935)}}
 {{Use dmy dates|date=January 2018}}

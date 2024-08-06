@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/willbeason/wikipedia/pkg/article"
 	"github.com/willbeason/wikipedia/pkg/nlp"
 )
 
@@ -63,8 +64,8 @@ func TestCleanArticle(t *testing.T) {
 			"wide-ranging applications.",
 	}, {
 		name: "full article",
-		text: EmmyNoetherBefore,
-		want: EmmyNoetherAfter,
+		text: articles.EmmyNoetherBefore,
+		want: articles.EmmyNoetherAfter,
 	}}
 
 	for _, tc := range tt {
