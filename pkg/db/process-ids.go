@@ -19,9 +19,15 @@ func (r *Runner) ProcessIDs(
 	process Process,
 	ids <-chan uint32,
 ) (*sync.WaitGroup, error) {
-	db, err := badger.Open(badger.DefaultOptions(r.path))
+	dbOpts := badger.
+		DefaultOptions(r.path).
+		WithLoggingLevel(badger.WARNING).
+		WithNumGoroutines(r.parallel).
+		WithReadOnly(true)
+
+	db, err := badger.Open(dbOpts)
 	if err != nil {
-		return nil, fmt.Errorf("opening %q: %w", r.path, err)
+		return nil, fmt.Errorf("opening Badger DB %q: %w", r.path, err)
 	}
 
 	wg := sync.WaitGroup{}

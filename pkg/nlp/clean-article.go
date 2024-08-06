@@ -64,6 +64,7 @@ var (
 	GraphRegex           = regexp.MustCompile(`(?is)<graph.*?</graph[\w\s]*>`)
 	ImageMapRegex        = regexp.MustCompile(`(?is)<imagemap.*?</imagemap[\w\s]*>`)
 	MathRegex            = regexp.MustCompile(`(?is)<math.*?</math[\w\s]*>`)
+	MathRegex2           = regexp.MustCompile(`(?is){{math[^|]*?\|.*?}}`)
 	CodeRegex            = regexp.MustCompile(`(?is)<code.*?</code[\w\s]*>`)
 	CiteRegex            = regexp.MustCompile(`(?is)<cite.*?</cite[\w\s]*>`)
 	ChemRegex            = regexp.MustCompile(`(?is)<chem.*?</chem[\w\s]*>`)
@@ -83,10 +84,9 @@ var (
 
 	RemoveLinks = regexp.MustCompile(`\[\[(:?Category:|List of)[^]]+]]`)
 
-	WikipediaLinks = regexp.MustCompile(`\[\[([^[\]]+\|)?([^[|]+?)]]`)
+	WikipediaLinks = regexp.MustCompile(`\[\[([^[|\]]+\|)*([^[|]+?)]]`)
 
 	widgets = regexp.MustCompile(`{[^{}]*}`)
-	parens  = regexp.MustCompile(`\([^()]*?\)`)
 
 	RefRegex = regexp.MustCompile(`(?s)<ref.*?(>.*?</ref>| ?/>)`)
 )
@@ -106,10 +106,6 @@ func keepReplacing(pattern *regexp.Regexp, text, replace string) string {
 
 	return text
 }
-
-// func CleanArticle(text string) string {
-// 	return text
-// }
 
 // CleanArticle removes all parts of Wikipedia we never want to analyze.
 func CleanArticle(text string) string {
@@ -142,18 +138,30 @@ func cleanLines(lines []string) []string {
 		line = strings.ReplaceAll(line, "&nbsp;", " ")
 		line = strings.ReplaceAll(line, "&ndash;", "–")
 
-		line = strings.Trim(line, "* \t")
+		line = strings.TrimLeft(line, "* \t")
 
-		switch strings.ToLower(strings.Trim(line, " =")) {
-		case "bibliography", "citations", "external links", "further reading", "notes", "references", "see also", "sources":
-			skip = true
-		default:
-			if strings.HasPrefix(line, "==") {
-				skip = false
+		isSection := strings.HasPrefix(line, "==")
+		if isSection {
+			section := strings.ToLower(strings.Trim(line, "="))
+			switch section {
+			case "articles", "bibliography", "citations", "external links", "further reading", "notes", "online biographies", "references", "see also", "sources":
+				skip = true
+			default:
+				if strings.HasPrefix(section, "selected works") {
+					skip = true
+				} else {
+					skip = false
+				}
 			}
 		}
 
-		if skip || isComment(line) {
+		// The portal bar indicates the end of article content, but we want to parse this separately.
+		isPortal := strings.HasPrefix(line, "{{Portal bar")
+		if isPortal {
+			skip = false
+		}
+
+		if skip {
 			continue
 		}
 
@@ -178,36 +186,5 @@ func isComment(line string) bool {
 }
 
 func cleanSection(section string) string {
-	section = TableRegex2.ReplaceAllString(section, "")
-	section = keepReplacing(widgets, section, "")
-	section = RemoveLinks.ReplaceAllString(section, "")
-
-	section = link.ReplaceAllString(section, "")
-	section = keepReplacing(WikipediaLinks, section, "$2")
-	section = keepReplacing(parens, section, "")
-
-	section = RefRegex.ReplaceAllString(section, "")
-
-	section = CommentRegex.ReplaceAllString(section, "")
-	section = TableRegex.ReplaceAllString(section, "")
-	section = CiteRegex.ReplaceAllString(section, "")
-	section = GalleryRegex.ReplaceAllString(section, "")
-	section = GraphRegex.ReplaceAllString(section, "")
-	section = TimelineRegex.ReplaceAllString(section, "")
-	section = MathRegex.ReplaceAllString(section, MathToken)
-	section = HieroglyphRegex.ReplaceAllString(section, HieroglyphToken)
-	section = CodeRegex.ReplaceAllString(section, "")
-	section = ChemRegex.ReplaceAllString(section, "")
-	section = ImageMapRegex.ReplaceAllString(section, "")
-	section = SyntaxHighlightRegex.ReplaceAllString(section, "")
-	section = PreRegex.ReplaceAllString(section, "")
-	section = PoemRegex.ReplaceAllString(section, "")
-	section = DelRegex.ReplaceAllString(section, "")
-	section = MapframeRegex.ReplaceAllString(section, "")
-
-	section = BrRegex.ReplaceAllString(section, "\n")
-	section = AlteredQuote.ReplaceAllString(section, "$1")
-
-	section = IgnoredTagsRegex.ReplaceAllString(section, "")
 	return section
 }

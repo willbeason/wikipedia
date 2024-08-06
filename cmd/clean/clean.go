@@ -57,15 +57,24 @@ func Clean(cmd *cobra.Command, clean *config.Clean) error {
 	ctx, cancel := context.WithCancelCause(cmd.Context())
 
 	var source pages.Source
+	var compare func(page *documents.Page) error
+
 	if clean.View == nil {
 		source = pages.StreamDB(articlesPath, parallel)
 	} else {
+		beforeSource := pages.StreamDBKeys(articlesPath, parallel, clean.View)
+		beforePages, err2 := beforeSource(ctx, cancel)
+		if err2 != nil {
+			return fmt.Errorf("getting articles before cleaning: %w", err2)
+		}
+		compare = pages.Compare(beforePages)
+
 		source = pages.StreamDBKeys(articlesPath, parallel, clean.View)
 	}
 
 	docs, err := source(ctx, cancel)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading articles for cleaning: %w", err)
 	}
 
 	cleanedChannel, cleanWork := jobs.Map(jobs.WorkBuffer, docs, func(from *documents.Page) (*documents.Page, error) {
@@ -76,7 +85,7 @@ func Clean(cmd *cobra.Command, clean *config.Clean) error {
 	var sinkWork jobs.WorkQueue
 	var outDB *badger.DB
 	if clean.OutPath == "" {
-		sinkWork = jobs.ForEach(jobs.WorkBuffer, cleanedChannel, pages.Print)
+		sinkWork = jobs.ForEach(jobs.WorkBuffer, cleanedChannel, compare)
 	} else {
 		outPath := clean.GetOutPath()
 		outDB, err = toOutDB(outPath)

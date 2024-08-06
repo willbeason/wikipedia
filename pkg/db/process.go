@@ -20,7 +20,11 @@ func (r *Runner) Process(
 	cancel context.CancelCauseFunc,
 	process Process,
 ) (*sync.WaitGroup, error) {
-	dbOpts := badger.DefaultOptions(r.path).WithNumGoroutines(r.parallel)
+	dbOpts := badger.
+		DefaultOptions(r.path).
+		WithLoggingLevel(badger.WARNING).
+		WithNumGoroutines(r.parallel).
+		WithReadOnly(true)
 
 	db, err := badger.Open(dbOpts)
 	if err != nil {
