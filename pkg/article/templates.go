@@ -57,7 +57,7 @@ func renderBlockquote(args map[string][]Token) string {
 		text = Render(textVal)
 	}
 
-	return text
+	return "\n" + text + "\n"
 }
 
 func renderIPAcEn(args map[string][]Token) string {
@@ -142,9 +142,14 @@ func MergeTemplateTokens(tokens []Token) ([]Token, bool, error) {
 		// Get rid of argument marker if present.
 		name = strings.TrimRight(name, "|")
 
+		args, err := parseArguments(tokens[lastStartIdx+1 : idx])
+		if err != nil {
+			return nil, false, err
+		}
+
 		result = append(result, Template{
 			Name:      name,
-			Arguments: parseArguments(tokens[lastStartIdx+1 : idx]),
+			Arguments: args,
 		})
 
 		lastStart = nil
@@ -159,7 +164,7 @@ func MergeTemplateTokens(tokens []Token) ([]Token, bool, error) {
 	return result, appliedRule, nil
 }
 
-func parseArguments(tokens []Token) map[string][]Token {
+func parseArguments(tokens []Token) (map[string][]Token, error) {
 	arguments := make(map[string][]Token)
 
 	var argument []Token
@@ -175,7 +180,10 @@ func parseArguments(tokens []Token) map[string][]Token {
 		for _, tokenArg := range tokenArgs {
 			argument = append(argument, LiteralText(tokenArg))
 			if len(tokenArgs) > 1 || idx == len(tokens)-1 {
-				name, value := parseArgument(argument)
+				name, value, err := parseArgument(argument)
+				if err != nil {
+					return nil, err
+				}
 
 				if name == "" {
 					name = fmt.Sprint(unnamed)
@@ -190,9 +198,15 @@ func parseArguments(tokens []Token) map[string][]Token {
 		}
 	}
 
-	return arguments
+	return arguments, nil
 }
 
-func parseArgument(tokens []Token) (string, []Token) {
-	return "", tokens
+func parseArgument(tokens []Token) (string, []Token, error) {
+	wikitext := Render(tokens)
+	tokens, err := Tokenize(UnparsedText(wikitext))
+	if err != nil {
+		return "", nil, err
+	}
+
+	return "", tokens, nil
 }

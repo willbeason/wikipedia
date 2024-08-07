@@ -58,7 +58,9 @@ When World War I ended, the German Revolution of 1918–1919 brought a significa
 Three years later, she received a letter from , the Prussian Minister for Science, Art, and Public Education, in which he conferred on her the title of ''nicht beamteter ausserordentlicher Professor'' (an untenured professor with limited internal administrative rights and functions). This was an unpaid "extraordinary" professorship, not the higher "ordinary" professorship, which was a civil-service position. Although it recognized the importance of her work, the position still provided no salary. Noether was not paid for her lectures until she was appointed to the special position of ''Lehrbeauftragte für Algebra'' a year later.
 
 ===Work in abstract algebra===
-Although Noether's theorem had a significant effect upon classical and quantum mechanics, among mathematicians she is best remembered for her contributions to abstract algebra. In his introduction to Noether's ''Collected Papers'', Nathan Jacobson wrote thatThe development of abstract algebra, which is one of the most distinctive innovations of twentieth century mathematics, is largely due to her – in published papers, in lectures, and in personal influence on her contemporaries.
+Although Noether's theorem had a significant effect upon classical and quantum mechanics, among mathematicians she is best remembered for her contributions to abstract algebra. In his introduction to Noether's ''Collected Papers'', Nathan Jacobson wrote that
+The development of abstract algebra, which is one of the most distinctive innovations of twentieth century mathematics, is largely due to her – in published papers, in lectures, and in personal influence on her contemporaries.
+
 
 Noether's work in algebra began in 1920 when, in collaboration with her protégé Werner Schmeidler, she published a paper about the theory of ideals in which they defined left and right ideals in a ring.
 B.L. van der Waerden (pictured in 1980) was heavily influenced by Noether during his time in Göttingen.
@@ -85,7 +87,9 @@ Noether's other students were Wilhelm Dörnte, who received his doctorate in 192
 ===Noether school===
 Noether developed a close circle of mathematicians beyond just her doctoral students who shared Noether's approach to abstract algebra and contributed to the field's development, a group often referred to as the Noether school. An example of this is her close work with Wolfgang Krull, who greatly advanced commutative algebra with his ''Hauptidealsatz'' and his dimension theory for commutative rings. Another is Gottfried Köthe, who contributed to the development of the theory of hypercomplex quantities using Noether and Krull's methods.
 
-In addition to her mathematical insight, Noether was respected for her consideration of others. Although she sometimes acted rudely toward those who disagreed with her, she nevertheless gained a reputation for constant helpfulness and patient guidance of new students. Her loyalty to mathematical precision caused one colleague to name her "a severe critic", but she combined this demand for accuracy with a nurturing attitude. In Noether's obituary, Van der Waerden described her asCompletely unegotistical and free of vanity, she never claimed anything for herself, but promoted the works of her students above all.
+In addition to her mathematical insight, Noether was respected for her consideration of others. Although she sometimes acted rudely toward those who disagreed with her, she nevertheless gained a reputation for constant helpfulness and patient guidance of new students. Her loyalty to mathematical precision caused one colleague to name her "a severe critic", but she combined this demand for accuracy with a nurturing attitude. In Noether's obituary, Van der Waerden described her as
+Completely unegotistical and free of vanity, she never claimed anything for herself, but promoted the works of her students above all.
+
 
 Noether showed a devotion to her subject and her students that extended beyond the academic day. Once, when the building was closed for a state holiday, she gathered the class on the steps outside, led them through the woods, and lectured at a local coffee house. Later, after Nazi Germany dismissed her from teaching, she invited students into her home to discuss their plans for the future and mathematical concepts.
 
@@ -216,7 +220,9 @@ Noether was brought to Göttingen in 1915 by David Hilbert and Felix Klein, who 
 
 For illustration, if a physical system behaves the same, regardless of how it is oriented in space, the physical laws that govern it are rotationally symmetric; from this symmetry, Noether's theorem shows the angular momentum of the system must be conserved. The physical system itself need not be symmetric; a jagged asteroid tumbling in space conserves angular momentum despite its asymmetry. Rather, the symmetry of the ''physical laws'' governing the system is responsible for the conservation law. As another example, if a physical experiment has the same outcome at any place and at any time, then its laws are symmetric under continuous translations in space and time; by Noether's theorem, these symmetries account for the conservation laws of linear momentum and energy within this system, respectively.
 
-Noether's theorem has become a fundamental tool of modern theoretical physics, both because of the insight it gives into conservation laws, and also, as a practical calculation tool. Her theorem allows researchers to determine the conserved quantities from the observed symmetries of a physical system. Conversely, it facilitates the description of a physical system based on classes of hypothetical physical laws. For illustration, suppose that a new physical phenomenon is discovered. Noether's theorem provides a test for theoretical models of the phenomenon:If the theory has a continuous symmetry, then Noether's theorem guarantees that the theory has a conserved quantity, and for the theory to be correct, this conservation must be observable in experiments.
+Noether's theorem has become a fundamental tool of modern theoretical physics, both because of the insight it gives into conservation laws, and also, as a practical calculation tool. Her theorem allows researchers to determine the conserved quantities from the observed symmetries of a physical system. Conversely, it facilitates the description of a physical system based on classes of hypothetical physical laws. For illustration, suppose that a new physical phenomenon is discovered. Noether's theorem provides a test for theoretical models of the phenomenon:
+If the theory has a continuous symmetry, then Noether's theorem guarantees that the theory has a conserved quantity, and for the theory to be correct, this conservation must be observable in experiments.
+
 
 ===Second epoch (1920–1926)===
 ====Ascending and descending chain conditions====
@@ -275,7 +281,9 @@ Briefly, Noether subsumed the structure theory of associative algebras and the r
 ====Noncommutative algebra====
 Noether also was responsible for a number of other advances in the field of algebra. With Emil Artin, Richard Brauer, and Helmut Hasse, she founded the theory of central simple algebras.
 
-A paper by Noether, Helmut Hasse, and Richard Brauer pertains to division algebras, which are algebraic systems in which division is possible. They proved two important theorems: a local-global theorem stating that if a finite-dimensional central division algebra over a number field splits locally everywhere then it splits globally (so is trivial), and from this, deduced their ''Hauptsatz'' ("main theorem"):every finite dimensional central division algebra over an algebraic number field F splits over a cyclic cyclotomic extension.These theorems allow one to classify all finite-dimensional central division algebras over a given number field. A subsequent paper by Noether showed, as a special case of a more general theorem, that all maximal subfields of a division algebra  are splitting fields. This paper also contains the Skolem–Noether theorem, which states that any two embeddings of an extension of a field  into a finite-dimensional central simple algebra over  are conjugate. The Brauer–Noether theorem gives a characterization of the splitting fields of a central division algebra over a field.
+A paper by Noether, Helmut Hasse, and Richard Brauer pertains to division algebras, which are algebraic systems in which division is possible. They proved two important theorems: a local-global theorem stating that if a finite-dimensional central division algebra over a number field splits locally everywhere then it splits globally (so is trivial), and from this, deduced their ''Hauptsatz'' ("main theorem"):
+every finite dimensional central division algebra over an algebraic number field F splits over a cyclic cyclotomic extension.
+These theorems allow one to classify all finite-dimensional central division algebras over a given number field. A subsequent paper by Noether showed, as a special case of a more general theorem, that all maximal subfields of a division algebra  are splitting fields. This paper also contains the Skolem–Noether theorem, which states that any two embeddings of an extension of a field  into a finite-dimensional central simple algebra over  are conjugate. The Brauer–Noether theorem gives a characterization of the splitting fields of a central division algebra over a field.
 
 ==Legacy==
 The Emmy Noether Campus at the University of Siegen is home to its mathematics and physics departments.
@@ -283,7 +291,9 @@ Noether's work continues to be relevant for the development of theoretical physi
 
 In a letter to ''The New York Times'', Albert Einstein wrote:
 
-In the judgment of the most competent living mathematicians, Fräulein Noether was the most significant creative mathematical [[genius]] thus far produced since the higher education of women began. In the realm of algebra, in which the most gifted mathematicians have been busy for centuries, she discovered methods which have proved of enormous importance in the development of the present-day younger generation of mathematicians.
+
+In the judgment of the most competent living mathematicians, Fräulein Noether was the most significant creative mathematical genius thus far produced since the higher education of women began. In the realm of algebra, in which the most gifted mathematicians have been busy for centuries, she discovered methods which have proved of enormous importance in the development of the present-day younger generation of mathematicians.
+
 
 ==See also==
 * List of things named after Emmy Noether

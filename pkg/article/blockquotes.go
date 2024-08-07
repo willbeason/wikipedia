@@ -1,6 +1,8 @@
 package article
 
-import "regexp"
+import (
+	"regexp"
+)
 
 var (
 	BlockquoteStartPattern = regexp.MustCompile(`<blockquote>`)
@@ -32,9 +34,14 @@ type Blockquote struct {
 }
 
 func (t Blockquote) Render() string {
-	return Render(t.Quote)
+	return "\n" + Render(t.Quote) + "\n"
 }
 
 func ParseBlockquote(tokens []Token) (Token, error) {
-	return Blockquote{tokens[1 : len(tokens)-1]}, nil
+	quote, err := Tokenize(UnparsedText(Render(tokens[1 : len(tokens)-1])))
+	if err != nil {
+		return nil, err
+	}
+
+	return Blockquote{Quote: quote}, nil
 }

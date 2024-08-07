@@ -124,7 +124,7 @@ func TestParse(t *testing.T) {
 	}, {
 		name:     "Blockquote template",
 		wikitext: `{{Blockquote|In the judgment of the most competent living mathematicians, Fräulein Noether was the most significant creative mathematical [[genius]] thus far produced since the higher education of women began. In the realm of algebra, in which the most gifted mathematicians have been busy for centuries, she discovered methods which have proved of enormous importance in the development of the present-day younger generation of mathematicians.}}`,
-		want:     `In the judgment of the most competent living mathematicians, Fräulein Noether was the most significant creative mathematical [[genius]] thus far produced since the higher education of women began. In the realm of algebra, in which the most gifted mathematicians have been busy for centuries, she discovered methods which have proved of enormous importance in the development of the present-day younger generation of mathematicians.`,
+		want:     `In the judgment of the most competent living mathematicians, Fräulein Noether was the most significant creative mathematical genius thus far produced since the higher education of women began. In the realm of algebra, in which the most gifted mathematicians have been busy for centuries, she discovered methods which have proved of enormous importance in the development of the present-day younger generation of mathematicians.`,
 	}}
 
 	for _, tc := range tt {
@@ -137,12 +137,15 @@ func TestParse(t *testing.T) {
 				t.Fatalf("got error %v, want %v", err, tc.wantErr)
 			}
 
-			text := strings.Builder{}
+			sb := strings.Builder{}
 			for _, token := range gotParse {
-				text.WriteString(token.Render())
+				sb.WriteString(token.Render())
 			}
 
-			if diff := cmp.Diff(tc.want, text.String()); diff != "" {
+			text := sb.String()
+			text = strings.Trim(text, "\n")
+
+			if diff := cmp.Diff(tc.want, text); diff != "" {
 				t.Errorf("(-want +got): %v", diff)
 			}
 		})
