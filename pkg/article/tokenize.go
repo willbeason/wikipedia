@@ -1,4 +1,4 @@
-package articles
+package article
 
 import (
 	"errors"
@@ -20,6 +20,21 @@ func Tokenize(text UnparsedText) ([]Token, error) {
 		PatternTokenRule(TemplateEndPattern, func(string) Token {
 			return TemplateEnd{}
 		}),
+		PatternTokenRule(RefAutoclosePattern, func(s string) Token {
+			return RefAutoclose(s)
+		}),
+		PatternTokenRule(RefStartPattern, func(s string) Token {
+			return RefStart(s)
+		}),
+		PatternTokenRule(RefEndPattern, func(string) Token {
+			return RefEnd{}
+		}),
+		PatternTokenRule(LinkStartPattern, func(string) Token {
+			return LinkStart{}
+		}),
+		PatternTokenRule(LinkEndPattern, func(string) Token {
+			return LinkEnd{}
+		}),
 		ToLiterals,
 	}
 
@@ -33,6 +48,8 @@ func Tokenize(text UnparsedText) ([]Token, error) {
 
 	repeatedRules := []RuleFn{
 		MergeTemplateTokens,
+		MergeTokenRule[RefStart, RefEnd](ParseRef),
+		MergeTokenRule[LinkStart, LinkEnd](ParseLink),
 	}
 
 	for _, rule := range repeatedRules {

@@ -1,4 +1,6 @@
-package articles
+package article
+
+import "strings"
 
 // Token represents a semantic unit of an article.
 type Token interface {
@@ -15,4 +17,14 @@ type LiteralText string
 
 func (t LiteralText) Render() string {
 	return string(t)
+}
+
+func Render(tokens []Token) string {
+	sb := strings.Builder{}
+
+	for _, t := range tokens {
+		sb.WriteString(t.Render())
+	}
+
+	return sb.String()
 }

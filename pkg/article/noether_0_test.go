@@ -1,4 +1,4 @@
-package articles_test
+package article_test
 
 const EmmyNoetherBefore = `{{Short description|German mathematician (1882–1935)}}
 {{Use dmy dates|date=January 2018}}

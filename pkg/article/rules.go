@@ -1,4 +1,4 @@
-package articles
+package article
 
 import "regexp"
 
@@ -48,6 +48,46 @@ func PatternTokenRule(regex *regexp.Regexp, newToken func(string) Token) RuleFn 
 			if lastEnd < len(unparsed) {
 				result = append(result, unparsed[lastEnd:])
 			}
+		}
+
+		return result, appliedRule, nil
+	}
+}
+
+func MergeTokenRule[START, END Token](parseToken func([]Token) Token) func(tokens []Token) ([]Token, bool, error) {
+	return func(tokens []Token) ([]Token, bool, error) {
+		var result []Token
+		appliedRule := false
+
+		lastStartIdx := -1
+
+		for idx, token := range tokens {
+			_, isStart := token.(START)
+			if isStart {
+				if lastStartIdx != -1 {
+					result = append(result, tokens[lastStartIdx:idx]...)
+				}
+
+				lastStartIdx = idx
+				continue
+			} else if lastStartIdx == -1 {
+				result = append(result, token)
+				continue
+			}
+
+			_, isEnd := token.(END)
+			if !isEnd {
+				continue
+			}
+
+			appliedRule = true
+			result = append(result, parseToken(tokens[lastStartIdx:idx]))
+
+			lastStartIdx = -1
+		}
+
+		if lastStartIdx != -1 {
+			result = append(result, tokens[lastStartIdx:]...)
 		}
 
 		return result, appliedRule, nil
