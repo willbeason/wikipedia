@@ -125,6 +125,31 @@ func TestParse(t *testing.T) {
 		name:     "Blockquote template",
 		wikitext: `{{Blockquote|In the judgment of the most competent living mathematicians, Fräulein Noether was the most significant creative mathematical [[genius]] thus far produced since the higher education of women began. In the realm of algebra, in which the most gifted mathematicians have been busy for centuries, she discovered methods which have proved of enormous importance in the development of the present-day younger generation of mathematicians.}}`,
 		want:     `In the judgment of the most competent living mathematicians, Fräulein Noether was the most significant creative mathematical genius thus far produced since the higher education of women began. In the realm of algebra, in which the most gifted mathematicians have been busy for centuries, she discovered methods which have proved of enormous importance in the development of the present-day younger generation of mathematicians.`,
+	}, {
+		name:     "Normal header",
+		wikitext: "\n==Biography==\n",
+		want:     `Biography`,
+	}, {
+		name:     "Header starts with equals",
+		wikitext: "\n===a=b==\n",
+		want:     `=a=b`,
+	}, {
+		name:     "Header ends with equals",
+		wikitext: "\n==a=b===\n",
+		want:     `a=b=`,
+	}, {
+		name:     "Max header depth",
+		wikitext: "\n======Very specific======\n",
+		want:     `Very specific`,
+	}, {
+		name:     "Beyond max header depth",
+		wikitext: "\n=======Too specific=======\n",
+		want:     `=Too specific=`,
+	}, {
+		name:     "Ignore notes section",
+		wikitext: "\n==Notes==\nThings\nMore things\n==Other==\nDisplayed",
+		want: `Other
+Displayed`,
 	}}
 
 	for _, tc := range tt {

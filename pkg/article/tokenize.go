@@ -28,6 +28,7 @@ func Tokenize(text UnparsedText) ([]Token, error) {
 		PatternTokenRule(SubscriptStartPattern, ParseSubscriptStart),
 		PatternTokenRule(SubscriptEndPattern, ParseSubscriptEnd),
 		PatternTokenRule(ExternalLinkPattern, ParseExternalLink),
+		PatternTokenRule(HeaderPattern, ParseHeader),
 		ToLiterals,
 	}
 
@@ -48,6 +49,7 @@ func Tokenize(text UnparsedText) ([]Token, error) {
 		MergeTokenRule[MathStart, MathEnd](ParseMath),
 		MergeTokenRule[SubscriptStart, SubscriptEnd](ParseSubscript),
 		MergeReferences,
+		MergeSections,
 	}
 
 	for _, rule := range repeatedRules {
