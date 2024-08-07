@@ -11,30 +11,23 @@ func Tokenize(text UnparsedText) ([]Token, error) {
 
 	oneTimeRules := []RuleFn{
 		NowikiSectionTokens,
-		PatternTokenRule(NowikiAutoClosePattern, func(string) Token {
-			return NowikiAutoClose{}
-		}),
-		PatternTokenRule(TemplateStartPattern, func(s string) Token {
-			return TemplateStart(s)
-		}),
-		PatternTokenRule(TemplateEndPattern, func(string) Token {
-			return TemplateEnd{}
-		}),
-		PatternTokenRule(RefAutoclosePattern, func(s string) Token {
-			return RefAutoclose(s)
-		}),
-		PatternTokenRule(RefStartPattern, func(s string) Token {
-			return RefStart(s)
-		}),
-		PatternTokenRule(RefEndPattern, func(string) Token {
-			return RefEnd{}
-		}),
-		PatternTokenRule(LinkStartPattern, func(string) Token {
-			return LinkStart{}
-		}),
-		PatternTokenRule(LinkEndPattern, func(string) Token {
-			return LinkEnd{}
-		}),
+		PatternTokenRule(NowikiAutoClosePattern, ParseNowikiAutoClose),
+		PatternTokenRule(TemplateStartPattern, ParseTemplateStart),
+		PatternTokenRule(TemplateEndPattern, ParseTemplateEnd),
+		PatternTokenRule(RefAutoClosePattern, ParseRefAutoClose),
+		PatternTokenRule(RefStartPattern, ParseRefStart),
+		PatternTokenRule(RefEndPattern, ParseRefEnd),
+		PatternTokenRule(LinkStartPattern, ParseLinkStart),
+		PatternTokenRule(LinkEndPattern, ParseLinkEnd),
+		PatternTokenRule(BlockquoteStartPattern, ParseBlockquoteStart),
+		PatternTokenRule(BlockquoteEndPattern, ParseBlockquoteEnd),
+		PatternTokenRule(EmphasisStartPattern, ParseEmphasisStart),
+		PatternTokenRule(EmphasisEndPattern, ParseEmphasisEnd),
+		PatternTokenRule(MathStartPattern, ParseMathStart),
+		PatternTokenRule(MathEndPattern, ParseMathEnd),
+		PatternTokenRule(SubscriptStartPattern, ParseSubscriptStart),
+		PatternTokenRule(SubscriptEndPattern, ParseSubscriptEnd),
+		PatternTokenRule(ExternalLinkPattern, ParseExternalLink),
 		ToLiterals,
 	}
 
@@ -50,6 +43,11 @@ func Tokenize(text UnparsedText) ([]Token, error) {
 		MergeTemplateTokens,
 		MergeTokenRule[RefStart, RefEnd](ParseRef),
 		MergeTokenRule[LinkStart, LinkEnd](ParseLink),
+		MergeTokenRule[BlockquoteStart, BlockquoteEnd](ParseBlockquote),
+		MergeTokenRule[EmphasisStart, EmphasisEnd](ParseEmphasis),
+		MergeTokenRule[MathStart, MathEnd](ParseMath),
+		MergeTokenRule[SubscriptStart, SubscriptEnd](ParseSubscript),
+		MergeReferences,
 	}
 
 	for _, rule := range repeatedRules {

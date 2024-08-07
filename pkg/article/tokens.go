@@ -15,8 +15,12 @@ func (t UnparsedText) Render() string {
 
 type LiteralText string
 
+const NBSP = `&nbsp;`
+
 func (t LiteralText) Render() string {
-	return string(t)
+	s := string(t)
+	s = strings.ReplaceAll(s, NBSP, " ")
+	return s
 }
 
 func Render(tokens []Token) string {

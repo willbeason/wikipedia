@@ -54,7 +54,7 @@ func PatternTokenRule(regex *regexp.Regexp, newToken func(string) Token) RuleFn 
 	}
 }
 
-func MergeTokenRule[START, END Token](parseToken func([]Token) Token) func(tokens []Token) ([]Token, bool, error) {
+func MergeTokenRule[START, END Token](parseToken func([]Token) (Token, error)) func(tokens []Token) ([]Token, bool, error) {
 	return func(tokens []Token) ([]Token, bool, error) {
 		var result []Token
 		appliedRule := false
@@ -81,7 +81,11 @@ func MergeTokenRule[START, END Token](parseToken func([]Token) Token) func(token
 			}
 
 			appliedRule = true
-			result = append(result, parseToken(tokens[lastStartIdx:idx]))
+			parsed, err := parseToken(tokens[lastStartIdx : idx+1])
+			if err != nil {
+				return nil, false, err
+			}
+			result = append(result, parsed)
 
 			lastStartIdx = -1
 		}

@@ -17,10 +17,18 @@ func (t TemplateStart) Render() string {
 	return string(t)
 }
 
+func ParseTemplateStart(s string) Token {
+	return TemplateStart(s)
+}
+
 type TemplateEnd struct{}
 
 func (t TemplateEnd) Render() string {
 	return "}}"
+}
+
+func ParseTemplateEnd(string) Token {
+	return TemplateEnd{}
 }
 
 type Template struct {
@@ -30,13 +38,26 @@ type Template struct {
 
 func (t Template) Render() string {
 	switch t.Name {
-	case "IPAc-en":
-		return renderIPAcEn(t.Arguments)
+	case "Blockquote":
+		return renderBlockquote(t.Arguments)
 	case "IPA-de":
 		return renderIPADe(t.Arguments)
+	case "IPAc-en":
+		return renderIPAcEn(t.Arguments)
 	default:
 		return ""
 	}
+}
+
+func renderBlockquote(args map[string][]Token) string {
+	var text string
+	if textVal, hasText := args["text"]; hasText {
+		text = Render(textVal)
+	} else if textVal, hasText = args["1"]; hasText {
+		text = Render(textVal)
+	}
+
+	return text
 }
 
 func renderIPAcEn(args map[string][]Token) string {
@@ -143,7 +164,7 @@ func parseArguments(tokens []Token) map[string][]Token {
 
 	var argument []Token
 	unnamed := 1
-	for _, token := range tokens {
+	for idx, token := range tokens {
 		literal, isLiteral := token.(LiteralText)
 		if !isLiteral {
 			argument = append(argument, token)
@@ -153,7 +174,7 @@ func parseArguments(tokens []Token) map[string][]Token {
 		tokenArgs := strings.Split(string(literal), "|")
 		for _, tokenArg := range tokenArgs {
 			argument = append(argument, LiteralText(tokenArg))
-			if len(tokenArgs) > 1 {
+			if len(tokenArgs) > 1 || idx == len(tokens)-1 {
 				name, value := parseArgument(argument)
 
 				if name == "" {

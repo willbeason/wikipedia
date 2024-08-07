@@ -26,6 +26,10 @@ func (t NowikiAutoClose) Render() string {
 	return ""
 }
 
+func ParseNowikiAutoClose(string) Token {
+	return NowikiAutoClose{}
+}
+
 func NowikiSectionTokens(tokens []Token) ([]Token, bool, error) {
 	var result []Token
 	appliedRule := false

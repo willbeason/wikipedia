@@ -81,6 +81,50 @@ func TestParse(t *testing.T) {
 		name:     "Named reference",
 		wikitext: `<ref name="MacTutorStudents"/>`,
 		want:     "",
+	}, {
+		name:     "Reference unquotes",
+		wikitext: `<ref name=Weyl></ref>`,
+		want:     "",
+	}, {
+		name:     "Reference spaced",
+		wikitext: `<ref name = Weyl ></ref>`,
+		want:     "",
+	}, {
+		name:     "File link",
+		wikitext: `[[File:Wikipedesketch.png|thumb|alt=A cartoon centipede ... detailed description.|The Wikipede edits ''[[Myriapoda]]''.]]`,
+		want:     "The Wikipede edits ''Myriapoda''.",
+	}, {
+		name:     "NBSP",
+		wikitext: `Noether c.&nbsp;1930`,
+		want:     "Noether c. 1930",
+	}, {
+		name:     "Blockquote",
+		wikitext: `<blockquote>The development of abstract algebra, which is one of the most distinctive innovations of twentieth century mathematics, is largely due to her – in published papers, in lectures, and in personal influence on her contemporaries.</blockquote>`,
+		want:     "The development of abstract algebra, which is one of the most distinctive innovations of twentieth century mathematics, is largely due to her – in published papers, in lectures, and in personal influence on her contemporaries.",
+	}, {
+		name:     "Emphasis",
+		wikitext: `<em>Noether Boys</em>`,
+		want:     "Noether Boys",
+	}, {
+		name:     "Math",
+		wikitext: `<math>A_{1} \subset A_{2} \subset A_{3} \subset \cdots.</math>`,
+		want:     article.MathToken,
+	}, {
+		name:     "Subscript",
+		wikitext: `the "m<sub>μν</sub>-riddle of syllables"`,
+		want:     `the "m_μν-riddle of syllables"`,
+	}, {
+		name:     "HTTP Links",
+		wikitext: `[https://web.archive.org/web/20070929100418/http://www.physikerinnen.de/noetherlebenslauf.html Noether's application for admission to the University of Erlangen and three of her curriculum vitae] from the website of historian Cordula Tollmien`,
+		want:     `Noether's application for admission to the University of Erlangen and three of her curriculum vitae from the website of historian Cordula Tollmien`,
+	}, {
+		name:     "References",
+		wikitext: `A {{refbegin|30em}}Stuff{{refend}} thing`,
+		want:     `A  thing`,
+	}, {
+		name:     "Blockquote template",
+		wikitext: `{{Blockquote|In the judgment of the most competent living mathematicians, Fräulein Noether was the most significant creative mathematical [[genius]] thus far produced since the higher education of women began. In the realm of algebra, in which the most gifted mathematicians have been busy for centuries, she discovered methods which have proved of enormous importance in the development of the present-day younger generation of mathematicians.}}`,
+		want:     `In the judgment of the most competent living mathematicians, Fräulein Noether was the most significant creative mathematical [[genius]] thus far produced since the higher education of women began. In the realm of algebra, in which the most gifted mathematicians have been busy for centuries, she discovered methods which have proved of enormous importance in the development of the present-day younger generation of mathematicians.`,
 	}}
 
 	for _, tc := range tt {

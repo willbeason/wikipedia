@@ -3,9 +3,9 @@ package article
 import "regexp"
 
 var (
-	RefStartPattern     = regexp.MustCompile(`<ref( name="[^"]+")? *>`)
+	RefStartPattern     = regexp.MustCompile(`<ref( name *= *("[^"]+"|[^">]+))? *>`)
 	RefEndPattern       = regexp.MustCompile("</ref>")
-	RefAutoclosePattern = regexp.MustCompile(`<ref name="[^"]+" */>`)
+	RefAutoClosePattern = regexp.MustCompile(`<ref name *= *("[^"]+"|[^">]+) */>`)
 )
 
 type RefStart string
@@ -14,16 +14,28 @@ func (t RefStart) Render() string {
 	return string(t)
 }
 
+func ParseRefStart(s string) Token {
+	return RefStart(s)
+}
+
 type RefEnd struct{}
 
 func (t RefEnd) Render() string {
 	return "</ref>"
 }
 
-type RefAutoclose string
+func ParseRefEnd(string) Token {
+	return RefEnd{}
+}
 
-func (t RefAutoclose) Render() string {
+type RefAutoClose string
+
+func (t RefAutoClose) Render() string {
 	return ""
+}
+
+func ParseRefAutoClose(s string) Token {
+	return RefAutoClose(s)
 }
 
 type Ref struct {
@@ -34,6 +46,6 @@ func (t Ref) Render() string {
 	return ""
 }
 
-func ParseRef(tokens []Token) Token {
-	return Ref{Tokens: tokens[1 : len(tokens)-1]}
+func ParseRef(tokens []Token) (Token, error) {
+	return Ref{Tokens: tokens[1 : len(tokens)-1]}, nil
 }
