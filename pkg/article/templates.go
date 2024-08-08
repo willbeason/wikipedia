@@ -202,10 +202,17 @@ func parseArguments(tokens []Token) (map[string][]Token, error) {
 
 func parseArgument(tokens []Token) (string, []Token, error) {
 	wikitext := Render(tokens)
-	tokens, err := Tokenize(UnparsedText(wikitext))
+	if !strings.Contains(wikitext, "=") {
+		return "", tokens, nil
+	}
+
+	splits := strings.Split(wikitext, "=")
+	name := splits[0]
+	value := splits[1]
+	tokens, err := Tokenize(UnparsedText(value))
 	if err != nil {
 		return "", nil, err
 	}
 
-	return "", tokens, nil
+	return name, tokens, nil
 }

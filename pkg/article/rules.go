@@ -54,7 +54,9 @@ func PatternTokenRule(regex *regexp.Regexp, newToken func(string) Token) RuleFn 
 	}
 }
 
-func MergeTokenRule[START, END Token](parseToken func([]Token) (Token, error)) func(tokens []Token) ([]Token, bool, error) {
+func MergeTokenRule[START, END Token](
+	parseToken func([]Token) (Token, error),
+) func(tokens []Token) ([]Token, bool, error) {
 	return func(tokens []Token) ([]Token, bool, error) {
 		var result []Token
 		appliedRule := false

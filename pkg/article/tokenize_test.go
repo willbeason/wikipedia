@@ -2,6 +2,7 @@ package article_test
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -185,20 +186,41 @@ Early Life`,
 func TestTokenize_Noether(t *testing.T) {
 	t.Parallel()
 
-	wikitext := article.UnparsedText(EmmyNoetherBefore)
-	gotParse, err := article.Tokenize(wikitext)
-	if err != nil {
-		t.Fatal(err)
-	}
+	tt := []struct {
+		name     string
+		wikitext string
+		want     string
+		debug    bool
+	}{{
+		name:     "Emmy Noether",
+		wikitext: EmmyNoetherBefore,
+		want:     EmmyNoetherAfter,
+	}}
 
-	text := strings.Builder{}
-	for _, token := range gotParse {
-		text.WriteString(token.Render())
-	}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-	if diff := cmp.Diff(EmmyNoetherAfter, text.String()); diff != "" {
-		t.Errorf("(-want +got): %v", diff)
+			wikitext := article.UnparsedText(tc.wikitext)
+			gotParse, err := article.Tokenize(wikitext)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			text := strings.Builder{}
+			for _, token := range gotParse {
+				text.WriteString(token.Render())
+			}
+
+			diff := cmp.Diff(tc.want, text.String())
+			if diff != "" {
+				if tc.debug {
+					fmt.Println(text.String())
+					t.Fatal()
+				} else {
+					t.Errorf("(-want +got): %v", diff)
+				}
+			}
+		})
 	}
-	// fmt.Println(text.String())
-	// t.Fatal()
 }
