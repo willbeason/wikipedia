@@ -5,7 +5,7 @@ import "regexp"
 type RuleFn func([]Token) ([]Token, bool, error)
 
 func ToLiterals(tokens []Token) ([]Token, bool, error) {
-	var result []Token
+	result := make([]Token, 0, len(tokens))
 	appliedRule := false
 
 	for _, token := range tokens {

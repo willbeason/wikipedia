@@ -150,6 +150,11 @@ func TestParse(t *testing.T) {
 		wikitext: "\n==Notes==\nThings\nMore things\n==Other==\nDisplayed",
 		want: `Other
 Displayed`,
+	}, {
+		name:     "Header and immediate subheader",
+		wikitext: "\n==Biography==\n===Early Life===\n",
+		want: `Biography
+Early Life`,
 	}}
 
 	for _, tc := range tt {
@@ -178,6 +183,8 @@ Displayed`,
 }
 
 func TestTokenize_Noether(t *testing.T) {
+	t.Parallel()
+
 	wikitext := article.UnparsedText(EmmyNoetherBefore)
 	gotParse, err := article.Tokenize(wikitext)
 	if err != nil {

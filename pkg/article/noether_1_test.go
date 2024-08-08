@@ -42,7 +42,7 @@ From 1913 to 1916 Noether published several papers extending and applying Hilber
 In Erlangen, Noether advised two doctoral students: Hans Falckenberg and Fritz Seidelmann, who defended their theses in 1911 and 1916. Despite Noether's significant role, they were both officially under the supervision of her father. Following the completion of his doctorate, Falckenberg spent time in Braunschweig and Königsberg before becoming a professor at the University of Giessen while Seidelmann became a professor in Munich.
 
 University of Göttingen
-===Habilitation and Noether's theorem===
+Habilitation and Noether's theorem
 In the spring of 1915, Noether was invited to return to the University of Göttingen by David Hilbert and Felix Klein. Their effort to recruit her was initially blocked by the philologists and historians among the philosophical faculty, who insisted that women should not become ''privatdozenten''. In a joint department meeting on the matter, one faculty member protested: "What will our soldiers think when they return to the university and find that they are required to learn at the feet of a woman?" Hilbert, who believed Noether's qualifications were the only important issue and that the sex of the candidate was irrelevant, objected with indignation and scolded those protesting her habilitation. Although his exact words have not been preserved, his objection is often said to have included the remark that the university was "not a bathhouse." According to Pavel Alexandrov's recollection, faculty members' opposition to Noether was based not just in sexism, but also in their objections to her social-democratic political beliefs and Jewish ancestry.
 
 In 1915 David Hilbert invited Noether to join the Göttingen mathematics department, challenging the views of some of his colleagues that a woman should not be allowed to teach at a university.
@@ -188,7 +188,7 @@ Words such as "element" and "combining operation" are very general, and can be a
 This is the ''begriffliche Mathematik'' (purely conceptual mathematics) that was characteristic of Noether. This style of mathematics was consequently adopted by other mathematicians, especially in the (then new) field of abstract algebra.
 
 First epoch (1908–1919)
-====Algebraic invariant theory====
+Algebraic invariant theory
 Table 2 from Noether's dissertation  on invariant theory. This table collects 202 of the 331 invariants of ternary biquadratic forms. These forms are graded in two variables ''x'' and ''u''. The horizontal direction of the table lists the invariants with increasing grades in ''x'', while the vertical direction lists them with increasing grades in ''u''.
 Much of Noether's work in the first epoch of her career was associated with invariant theory, principally algebraic invariant theory. Invariant theory is concerned with expressions that remain constant (invariant) under a group of transformations. As an everyday example, if a rigid yardstick is rotated, the coordinates  and  of its endpoints change, but its length  given by the formula   remains the same. Invariant theory was an active area of research in the later nineteenth century, prompted in part by Felix Klein's Erlangen program, according to which different types of geometry should be characterized by their invariants under transformations, e.g., the cross-ratio of projective geometry.
 
@@ -225,7 +225,7 @@ If the theory has a continuous symmetry, then Noether's theorem guarantees that 
 
 
 Second epoch (1920–1926)
-====Ascending and descending chain conditions====
+Ascending and descending chain conditions
 In this epoch, Noether became famous for her deft use of ascending (''Teilerkettensatz'') or descending (''Vielfachenkettensatz'') chain conditions. A sequence of non-empty subsets , etc. of a set  is usually said to be ''ascending'', if each is a subset of the next
 :_math_
 
@@ -273,7 +273,7 @@ This algebraic approach to topology was also developed independently in Austria.
 Helmut Hasse worked with Noether and others to found the theory of central simple algebras.
 
 Third epoch (1927–1935)
-====Hypercomplex numbers and representation theory====
+Hypercomplex numbers and representation theory
 Much work on hypercomplex numbers and group representations was carried out in the nineteenth and early twentieth centuries, but remained disparate. Noether united these earlier results and gave the first general representation theory of groups and algebras. This single work by Noether was said to have ushered in a new period in modern algebra and to have been of fundamental importance for its development.
 
 Briefly, Noether subsumed the structure theory of associative algebras and the representation theory of groups into a single arithmetic theory of modules and ideals in rings satisfying ascending chain conditions.

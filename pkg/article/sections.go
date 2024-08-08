@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-var HeaderPattern = regexp.MustCompile("\n==[^\n]+==\n")
+var HeaderPattern = regexp.MustCompile("\n==[^\n]+==")
 
 type Header struct {
 	Text  string
@@ -18,12 +18,12 @@ func (t Header) Render() string {
 
 func ParseHeader(s string) Token {
 	nEquals := 2
-	for s[nEquals+1] == '=' && s[len(s)-2-nEquals] == '=' && nEquals < 6 {
+	for s[nEquals+1] == '=' && s[len(s)-1-nEquals] == '=' && nEquals < 6 {
 		nEquals++
 	}
 
 	return Header{
-		Text:  s[nEquals+1 : len(s)-1-nEquals],
+		Text:  s[nEquals+1 : len(s)-nEquals],
 		Level: nEquals,
 	}
 }
@@ -53,7 +53,6 @@ func (s Section) Render() string {
 
 	sb.WriteString("\n")
 	sb.WriteString(s.Header.Render())
-	sb.WriteString("\n")
 	for _, text := range s.Text {
 		sb.WriteString(text.Render())
 	}

@@ -1,8 +1,8 @@
 package article
 
 import (
-	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -62,7 +62,7 @@ func renderBlockquote(args map[string][]Token) string {
 
 func renderIPAcEn(args map[string][]Token) string {
 	unnamed := 1
-	unnamedName := fmt.Sprint(unnamed)
+	unnamedName := strconv.Itoa(unnamed)
 
 	sb := strings.Builder{}
 
@@ -75,7 +75,7 @@ func renderIPAcEn(args map[string][]Token) string {
 		}
 
 		unnamed++
-		unnamedName = fmt.Sprint(unnamed)
+		unnamedName = strconv.Itoa(unnamed)
 		value, exists = args[unnamedName]
 	}
 	sb.WriteString("/")
@@ -84,7 +84,7 @@ func renderIPAcEn(args map[string][]Token) string {
 }
 
 func renderIPADe(args map[string][]Token) string {
-	transcription, _ := args["1"]
+	transcription := args["1"]
 	display, hasDisplay := args["2"]
 
 	sb := strings.Builder{}
@@ -106,7 +106,7 @@ func renderIPADe(args map[string][]Token) string {
 }
 
 func MergeTemplateTokens(tokens []Token) ([]Token, bool, error) {
-	var result []Token
+	result := make([]Token, 0, len(tokens))
 	appliedRule := false
 
 	lastStartIdx := -1
@@ -186,14 +186,13 @@ func parseArguments(tokens []Token) (map[string][]Token, error) {
 				}
 
 				if name == "" {
-					name = fmt.Sprint(unnamed)
+					name = strconv.Itoa(unnamed)
 					unnamed++
 				}
 
 				arguments[name] = value
 
 				argument = nil
-
 			}
 		}
 	}
