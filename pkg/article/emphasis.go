@@ -9,7 +9,7 @@ var (
 
 type EmphasisStart struct{}
 
-func (t EmphasisStart) Render() string {
+func (t EmphasisStart) Original() string {
 	return "<em>"
 }
 
@@ -19,7 +19,7 @@ func ParseEmphasisStart(string) Token {
 
 type EmphasisEnd struct{}
 
-func (t EmphasisEnd) Render() string {
+func (t EmphasisEnd) Original() string {
 	return "</em>"
 }
 
@@ -31,10 +31,10 @@ type Emphasis struct {
 	Quote []Token
 }
 
-func (t Emphasis) Render() string {
+func (t Emphasis) Original() string {
 	return Render(t.Quote)
 }
 
-func ParseEmphasis(tokens []Token) (Token, error) {
-	return Emphasis{tokens[1 : len(tokens)-1]}, nil
+func ParseEmphasis(tokens []Token) Token {
+	return Emphasis{tokens[1 : len(tokens)-1]}
 }

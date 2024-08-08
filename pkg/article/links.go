@@ -12,7 +12,7 @@ var (
 
 type LinkStart struct{}
 
-func (t LinkStart) Render() string {
+func (t LinkStart) Original() string {
 	return "[["
 }
 
@@ -22,7 +22,7 @@ func ParseLinkStart(string) Token {
 
 type LinkEnd struct{}
 
-func (t LinkEnd) Render() string {
+func (t LinkEnd) Original() string {
 	return "]]"
 }
 
@@ -35,11 +35,11 @@ type Link struct {
 	Display LiteralText
 }
 
-func (t Link) Render() string {
+func (t Link) Original() string {
 	if t.Display != "" {
-		return t.Display.Render()
+		return t.Display.Original()
 	}
-	return t.Target.Render()
+	return t.Target.Original()
 }
 
 type LinkFile struct {
@@ -47,11 +47,11 @@ type LinkFile struct {
 	Caption []Token
 }
 
-func (t LinkFile) Render() string {
+func (t LinkFile) Original() string {
 	return Render(t.Caption)
 }
 
-func ParseLink(tokens []Token) (Token, error) {
+func ParseLink(tokens []Token) Token {
 	// Find first pipe
 	text := Render(tokens[1 : len(tokens)-1])
 	splits := strings.SplitN(text, "|", 2)
@@ -71,19 +71,16 @@ func ParseLink(tokens []Token) (Token, error) {
 		result.Display = LiteralText(display)
 	}
 
-	return result, nil
+	return result
 }
 
-func ParseLinkFile(target string, args string) (Token, error) {
+func ParseLinkFile(target string, args string) Token {
 	splits := strings.Split(args, "|")
 
-	caption, err := Tokenize(UnparsedText(splits[len(splits)-1]))
-	if err != nil {
-		return nil, err
-	}
+	caption := Tokenize(UnparsedText(splits[len(splits)-1]))
 
 	return LinkFile{
 		Target:  LiteralText(target),
 		Caption: caption,
-	}, nil
+	}
 }

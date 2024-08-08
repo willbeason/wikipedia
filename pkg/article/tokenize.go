@@ -6,11 +6,24 @@ import (
 
 var ErrTokenize = errors.New("tokenizing article")
 
-func Tokenize(text UnparsedText) ([]Token, error) {
+func Tokenize(text UnparsedText) []Token {
 	tokens := []Token{text}
 
+	nowikiRules := []RuleFn{
+		ExactTokenRule(NowikiSectionStartPattern, func() Token {
+			return NowikiStart{}
+		}),
+		ExactTokenRule(NowikiSectionEndPattern, func() Token {
+			return NowikiEnd{}
+		}),
+		MergeNowikiTokens,
+	}
+
+	for _, rule := range nowikiRules {
+		tokens = rule(tokens)
+	}
+
 	oneTimeRules := []RuleFn{
-		NowikiSectionTokens,
 		PatternTokenRule(NowikiAutoClosePattern, ParseNowikiAutoClose),
 		PatternTokenRule(TemplateStartPattern, ParseTemplateStart),
 		PatternTokenRule(TemplateEndPattern, ParseTemplateEnd),
@@ -32,13 +45,11 @@ func Tokenize(text UnparsedText) ([]Token, error) {
 		ToLiterals,
 	}
 
-	var err error
 	for _, rule := range oneTimeRules {
-		tokens, _, err = rule(tokens)
-		if err != nil {
-			return nil, err
-		}
+		tokens = rule(tokens)
 	}
+
+	tokens = MergeTokens(tokens)
 
 	repeatedRules := []RuleFn{
 		MergeTemplateTokens,
@@ -53,15 +64,9 @@ func Tokenize(text UnparsedText) ([]Token, error) {
 	}
 
 	for _, rule := range repeatedRules {
-		// apply the rule at least once.
-		applied := true
-		for applied {
-			tokens, applied, err = rule(tokens)
-			if err != nil {
-				return nil, err
-			}
-		}
+		tokens = rule(tokens)
+		tokens = rule(tokens)
 	}
 
-	return tokens, nil
+	return tokens
 }

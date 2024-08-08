@@ -10,7 +10,7 @@ var (
 
 type RefStart string
 
-func (t RefStart) Render() string {
+func (t RefStart) Original() string {
 	return string(t)
 }
 
@@ -20,7 +20,7 @@ func ParseRefStart(s string) Token {
 
 type RefEnd struct{}
 
-func (t RefEnd) Render() string {
+func (t RefEnd) Original() string {
 	return "</ref>"
 }
 
@@ -30,7 +30,7 @@ func ParseRefEnd(string) Token {
 
 type RefAutoClose string
 
-func (t RefAutoClose) Render() string {
+func (t RefAutoClose) Original() string {
 	return ""
 }
 
@@ -42,10 +42,14 @@ type Ref struct {
 	Tokens []Token
 }
 
-func (t Ref) Render() string {
+func (t Ref) Original() string {
 	return ""
 }
 
-func ParseRef(tokens []Token) (Token, error) {
-	return Ref{Tokens: tokens[1 : len(tokens)-1]}, nil
+func (t RefEnd) Merge(tokens []Token) Token {
+	return Ref{Tokens: tokens[1 : len(tokens)-1]}
+}
+
+func ParseRef(tokens []Token) Token {
+	return Ref{Tokens: tokens[1 : len(tokens)-1]}
 }

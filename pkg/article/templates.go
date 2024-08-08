@@ -13,7 +13,7 @@ var (
 
 type TemplateStart string
 
-func (t TemplateStart) Render() string {
+func (t TemplateStart) Original() string {
 	return string(t)
 }
 
@@ -23,7 +23,7 @@ func ParseTemplateStart(s string) Token {
 
 type TemplateEnd struct{}
 
-func (t TemplateEnd) Render() string {
+func (t TemplateEnd) Original() string {
 	return "}}"
 }
 
@@ -36,7 +36,7 @@ type Template struct {
 	Arguments map[string][]Token
 }
 
-func (t Template) Render() string {
+func (t Template) Original() string {
 	switch t.Name {
 	case "Blockquote":
 		return renderBlockquote(t.Arguments)
@@ -68,7 +68,7 @@ func renderIPAcEn(args map[string][]Token) string {
 
 	for value, exists := args[unnamedName]; exists; {
 		for _, t := range value {
-			sb.WriteString(t.Render())
+			sb.WriteString(t.Original())
 		}
 		if unnamed == 1 {
 			sb.WriteString(": /")
@@ -105,9 +105,8 @@ func renderIPADe(args map[string][]Token) string {
 	return sb.String()
 }
 
-func MergeTemplateTokens(tokens []Token) ([]Token, bool, error) {
-	result := make([]Token, 0, len(tokens))
-	appliedRule := false
+func MergeTemplateTokens(tokens []Token) []Token {
+	var result []Token
 
 	lastStartIdx := -1
 	var lastStart *TemplateStart
@@ -133,19 +132,13 @@ func MergeTemplateTokens(tokens []Token) ([]Token, bool, error) {
 			continue
 		}
 
-		// We have a start token and the next template token is an end.
-		appliedRule = true
-
 		name := string(*lastStart)
 		// Get rid of first two curly braces.
 		name = name[2:]
 		// Get rid of argument marker if present.
 		name = strings.TrimRight(name, "|")
 
-		args, err := parseArguments(tokens[lastStartIdx+1 : idx])
-		if err != nil {
-			return nil, false, err
-		}
+		args := parseArguments(tokens[lastStartIdx+1 : idx])
 
 		result = append(result, Template{
 			Name:      name,
@@ -161,10 +154,10 @@ func MergeTemplateTokens(tokens []Token) ([]Token, bool, error) {
 		result = append(result, tokens[lastStartIdx:]...)
 	}
 
-	return result, appliedRule, nil
+	return result
 }
 
-func parseArguments(tokens []Token) (map[string][]Token, error) {
+func parseArguments(tokens []Token) map[string][]Token {
 	arguments := make(map[string][]Token)
 
 	var argument []Token
@@ -180,10 +173,7 @@ func parseArguments(tokens []Token) (map[string][]Token, error) {
 		for _, tokenArg := range tokenArgs {
 			argument = append(argument, LiteralText(tokenArg))
 			if len(tokenArgs) > 1 || idx == len(tokens)-1 {
-				name, value, err := parseArgument(argument)
-				if err != nil {
-					return nil, err
-				}
+				name, value := parseArgument(argument)
 
 				if name == "" {
 					name = strconv.Itoa(unnamed)
@@ -197,22 +187,21 @@ func parseArguments(tokens []Token) (map[string][]Token, error) {
 		}
 	}
 
-	return arguments, nil
+	return arguments
 }
 
-func parseArgument(tokens []Token) (string, []Token, error) {
+func parseArgument(tokens []Token) (string, []Token) {
 	wikitext := Render(tokens)
 	if !strings.Contains(wikitext, "=") {
-		return "", tokens, nil
+		tokens2 := Tokenize(UnparsedText(wikitext))
+
+		return "", tokens2
 	}
 
 	splits := strings.Split(wikitext, "=")
 	name := splits[0]
 	value := splits[1]
-	tokens, err := Tokenize(UnparsedText(value))
-	if err != nil {
-		return "", nil, err
-	}
+	tokens = Tokenize(UnparsedText(value))
 
-	return name, tokens, nil
+	return name, tokens
 }

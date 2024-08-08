@@ -9,7 +9,7 @@ type References struct {
 	Tokens []Token
 }
 
-func (t References) Render() string {
+func (t References) Original() string {
 	return ""
 }
 
@@ -17,9 +17,8 @@ func ParseReferences(tokens []Token) References {
 	return References{Tokens: tokens[1 : len(tokens)-1]}
 }
 
-func MergeReferences(tokens []Token) ([]Token, bool, error) {
-	result := make([]Token, 0, len(tokens))
-	appliedRule := false
+func MergeReferences(tokens []Token) []Token {
+	var result []Token
 
 	lastStartIdx := -1
 
@@ -42,8 +41,6 @@ func MergeReferences(tokens []Token) ([]Token, bool, error) {
 			continue
 		}
 
-		appliedRule = true
-
 		result = append(result, ParseReferences(tokens[lastStartIdx:idx+1]))
 
 		lastStartIdx = -1
@@ -53,5 +50,5 @@ func MergeReferences(tokens []Token) ([]Token, bool, error) {
 		result = append(result, tokens[lastStartIdx:]...)
 	}
 
-	return result, appliedRule, nil
+	return result
 }

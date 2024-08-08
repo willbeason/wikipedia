@@ -1,7 +1,6 @@
 package article_test
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -38,6 +37,14 @@ func TestParse(t *testing.T) {
 		name:     "nowiki within nowiki",
 		wikitext: "some <nowiki><nowiki></nowiki> text",
 		want:     "some <nowiki> text",
+	}, {
+		name:     "nowiki within nowiki 2",
+		wikitext: "<nowiki><nowiki></nowiki></nowiki>",
+		want:     "<nowiki></nowiki>",
+	}, {
+		name:     "nowiki not closed",
+		wikitext: "<nowiki>a b c",
+		want:     "<nowiki>a b c",
 	}, {
 		name:     "nowiki autoclose within nowiki",
 		wikitext: "some <nowiki><nowiki /></nowiki> text",
@@ -163,14 +170,11 @@ Early Life`,
 			t.Parallel()
 
 			wikitext := article.UnparsedText(tc.wikitext)
-			gotParse, err := article.Tokenize(wikitext)
-			if !errors.Is(err, tc.wantErr) {
-				t.Fatalf("got error %v, want %v", err, tc.wantErr)
-			}
+			gotParse := article.Tokenize(wikitext)
 
 			sb := strings.Builder{}
 			for _, token := range gotParse {
-				sb.WriteString(token.Render())
+				sb.WriteString(token.Original())
 			}
 
 			text := sb.String()
@@ -202,14 +206,11 @@ func TestTokenize_Noether(t *testing.T) {
 			t.Parallel()
 
 			wikitext := article.UnparsedText(tc.wikitext)
-			gotParse, err := article.Tokenize(wikitext)
-			if err != nil {
-				t.Fatal(err)
-			}
+			gotParse := article.Tokenize(wikitext)
 
 			text := strings.Builder{}
 			for _, token := range gotParse {
-				text.WriteString(token.Render())
+				text.WriteString(token.Original())
 			}
 
 			diff := cmp.Diff(tc.want, text.String())

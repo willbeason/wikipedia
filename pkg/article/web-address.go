@@ -24,6 +24,6 @@ func ParseExternalLink(s string) Token {
 	}
 }
 
-func (t ExternalLink) Render() string {
+func (t ExternalLink) Original() string {
 	return t.Display
 }

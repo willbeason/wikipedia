@@ -11,7 +11,7 @@ var (
 
 type BlockquoteStart struct{}
 
-func (t BlockquoteStart) Render() string {
+func (t BlockquoteStart) Original() string {
 	return "<blockquote>"
 }
 
@@ -21,7 +21,7 @@ func ParseBlockquoteStart(string) Token {
 
 type BlockquoteEnd struct{}
 
-func (t BlockquoteEnd) Render() string {
+func (t BlockquoteEnd) Original() string {
 	return "</blockquote>"
 }
 
@@ -33,15 +33,12 @@ type Blockquote struct {
 	Quote []Token
 }
 
-func (t Blockquote) Render() string {
+func (t Blockquote) Original() string {
 	return "\n" + Render(t.Quote) + "\n"
 }
 
-func ParseBlockquote(tokens []Token) (Token, error) {
-	quote, err := Tokenize(UnparsedText(Render(tokens[1 : len(tokens)-1])))
-	if err != nil {
-		return nil, err
-	}
+func ParseBlockquote(tokens []Token) Token {
+	quote := Tokenize(UnparsedText(Render(tokens[1 : len(tokens)-1])))
 
-	return Blockquote{Quote: quote}, nil
+	return Blockquote{Quote: quote}
 }

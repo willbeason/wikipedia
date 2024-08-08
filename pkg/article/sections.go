@@ -12,7 +12,7 @@ type Header struct {
 	Level int
 }
 
-func (t Header) Render() string {
+func (t Header) Original() string {
 	return t.Text
 }
 
@@ -33,6 +33,7 @@ type Section struct {
 	Text   []Token
 }
 
+// nolint: gochecknoglobals
 var ignoredSection = map[string]bool{
 	"Articles":           true,
 	"External links":     true,
@@ -44,7 +45,7 @@ var ignoredSection = map[string]bool{
 	"Sources":            true,
 }
 
-func (s Section) Render() string {
+func (s Section) Original() string {
 	if ignoredSection[s.Header.Text] {
 		return ""
 	}
@@ -52,17 +53,16 @@ func (s Section) Render() string {
 	sb := strings.Builder{}
 
 	sb.WriteString("\n")
-	sb.WriteString(s.Header.Render())
+	sb.WriteString(s.Header.Original())
 	for _, text := range s.Text {
-		sb.WriteString(text.Render())
+		sb.WriteString(text.Original())
 	}
 
 	return sb.String()
 }
 
-func MergeSections(tokens []Token) ([]Token, bool, error) {
+func MergeSections(tokens []Token) []Token {
 	var result []Token
-	appliedRule := false
 
 	headerIdx := -1
 	var header Header
@@ -87,11 +87,7 @@ func MergeSections(tokens []Token) ([]Token, bool, error) {
 
 		if headerIdx != -1 {
 			// Close off previous header.
-			var err error
-			sectionTokens, _, err = MergeSections(sectionTokens)
-			if err != nil {
-				return nil, false, err
-			}
+			sectionTokens = MergeSections(sectionTokens)
 
 			section := Section{
 				Header: header,
@@ -104,16 +100,11 @@ func MergeSections(tokens []Token) ([]Token, bool, error) {
 
 		headerIdx = idx
 		header = startHeader
-		appliedRule = true
 	}
 
 	if headerIdx != -1 {
 		// Close off previous header.
-		var err error
-		sectionTokens, _, err = MergeSections(sectionTokens)
-		if err != nil {
-			return nil, false, err
-		}
+		sectionTokens = MergeSections(sectionTokens)
 
 		section := Section{
 			Header: header,
@@ -122,5 +113,5 @@ func MergeSections(tokens []Token) ([]Token, bool, error) {
 		result = append(result, section)
 	}
 
-	return result, appliedRule, nil
+	return result
 }

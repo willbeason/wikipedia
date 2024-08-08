@@ -9,7 +9,7 @@ var (
 
 type SubscriptStart struct{}
 
-func (t SubscriptStart) Render() string {
+func (t SubscriptStart) Original() string {
 	return "<sub>"
 }
 
@@ -19,7 +19,7 @@ func ParseSubscriptStart(string) Token {
 
 type SubscriptEnd struct{}
 
-func (t SubscriptEnd) Render() string {
+func (t SubscriptEnd) Original() string {
 	return "</sub>"
 }
 
@@ -31,10 +31,10 @@ type Subscript struct {
 	Quote []Token
 }
 
-func (t Subscript) Render() string {
+func (t Subscript) Original() string {
 	return "_" + Render(t.Quote)
 }
 
-func ParseSubscript(tokens []Token) (Token, error) {
-	return Subscript{tokens[1 : len(tokens)-1]}, nil
+func ParseSubscript(tokens []Token) Token {
+	return Subscript{tokens[1 : len(tokens)-1]}
 }
