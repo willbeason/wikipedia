@@ -52,13 +52,6 @@ func Tokenize(text UnparsedText) []Token {
 	tokens = MergeTokens(tokens)
 
 	repeatedRules := []RuleFn{
-		MergeTemplateTokens,
-		MergeTokenRule[RefStart, RefEnd](ParseRef),
-		MergeTokenRule[LinkStart, LinkEnd](ParseLink),
-		MergeTokenRule[BlockquoteStart, BlockquoteEnd](ParseBlockquote),
-		MergeTokenRule[EmphasisStart, EmphasisEnd](ParseEmphasis),
-		MergeTokenRule[MathStart, MathEnd](ParseMath),
-		MergeTokenRule[SubscriptStart, SubscriptEnd](ParseSubscript),
 		MergeReferences,
 		MergeSections,
 	}

@@ -46,10 +46,11 @@ func (t Ref) Original() string {
 	return ""
 }
 
-func (t RefEnd) Merge(tokens []Token) Token {
-	return Ref{Tokens: tokens[1 : len(tokens)-1]}
-}
+func (t RefEnd) Backtrack(tokens []Token) (Token, int) {
+	_, startIdx, found := BacktrackUntil[RefStart](tokens)
+	if !found {
+		return nil, startIdx
+	}
 
-func ParseRef(tokens []Token) Token {
-	return Ref{Tokens: tokens[1 : len(tokens)-1]}
+	return Ref{Tokens: tokens[startIdx:]}, startIdx
 }

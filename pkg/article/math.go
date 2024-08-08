@@ -37,6 +37,15 @@ func (t Math) Original() string {
 	return MathToken
 }
 
+func (t MathEnd) Backtrack(tokens []Token) (Token, int) {
+	_, startIdx, found := BacktrackUntil[MathStart](tokens)
+	if !found {
+		return nil, startIdx
+	}
+
+	return ParseMath(tokens[startIdx:]), startIdx
+}
+
 func ParseMath(tokens []Token) Token {
-	return Math{tokens[1 : len(tokens)-1]}
+	return Math{append([]Token{}, tokens[1:]...)}
 }

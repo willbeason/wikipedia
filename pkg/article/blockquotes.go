@@ -37,8 +37,17 @@ func (t Blockquote) Original() string {
 	return "\n" + Render(t.Quote) + "\n"
 }
 
+func (t BlockquoteEnd) Backtrack(tokens []Token) (Token, int) {
+	_, startIdx, found := BacktrackUntil[BlockquoteStart](tokens)
+	if !found {
+		return nil, startIdx
+	}
+
+	return ParseBlockquote(tokens[startIdx:]), startIdx
+}
+
 func ParseBlockquote(tokens []Token) Token {
-	quote := Tokenize(UnparsedText(Render(tokens[1 : len(tokens)-1])))
+	quote := Tokenize(UnparsedText(Render(tokens[1:])))
 
 	return Blockquote{Quote: quote}
 }

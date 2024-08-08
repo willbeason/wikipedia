@@ -35,6 +35,15 @@ func (t Subscript) Original() string {
 	return "_" + Render(t.Quote)
 }
 
+func (t SubscriptEnd) Backtrack(tokens []Token) (Token, int) {
+	_, startIdx, found := BacktrackUntil[SubscriptStart](tokens)
+	if !found {
+		return nil, startIdx
+	}
+
+	return ParseSubscript(tokens[startIdx:]), startIdx
+}
+
 func ParseSubscript(tokens []Token) Token {
-	return Subscript{tokens[1 : len(tokens)-1]}
+	return Subscript{Quote: append([]Token{}, tokens[1:]...)}
 }

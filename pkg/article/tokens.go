@@ -10,10 +10,8 @@ type Token interface {
 
 type EndToken interface {
 	Token
-	// MatchesStart returns true if the EndToken should be merged with the passed Token.
-	MatchesStart(t Token) bool
-	// Merge merges a sequence of Tokens into one, assuming this is the end of the sequence.
-	Merge(tokens []Token) Token
+	// Backtrack looks through merges a sequence of Tokens into one, assuming this is the end of the sequence.
+	Backtrack(tokens []Token) (Token, int)
 }
 
 type UnparsedText string
@@ -40,4 +38,17 @@ func Render(tokens []Token) string {
 	}
 
 	return sb.String()
+}
+
+func BacktrackUntil[T Token](tokens []Token) (T, int, bool) {
+	startIdx := len(tokens) - 1
+	for startIdx >= 0 {
+		if token, ok := tokens[startIdx].(T); ok {
+			return token, startIdx, true
+		}
+		startIdx--
+	}
+
+	var zero T
+	return zero, -1, false
 }

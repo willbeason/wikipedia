@@ -105,56 +105,24 @@ func renderIPADe(args map[string][]Token) string {
 	return sb.String()
 }
 
-func MergeTemplateTokens(tokens []Token) []Token {
-	var result []Token
-
-	lastStartIdx := -1
-	var lastStart *TemplateStart
-
-	for idx, token := range tokens {
-		start, isStart := token.(TemplateStart)
-		if isStart {
-			if lastStartIdx != -1 {
-				result = append(result, tokens[lastStartIdx:idx]...)
-			}
-
-			lastStart = &start
-			lastStartIdx = idx
-			continue
-		} else if lastStart == nil {
-			// No template to close even if this is an end token.
-			result = append(result, token)
-			continue
-		}
-
-		_, isEnd := token.(TemplateEnd)
-		if !isEnd {
-			continue
-		}
-
-		name := string(*lastStart)
-		// Get rid of first two curly braces.
-		name = name[2:]
-		// Get rid of argument marker if present.
-		name = strings.TrimRight(name, "|")
-
-		args := parseArguments(tokens[lastStartIdx+1 : idx])
-
-		result = append(result, Template{
-			Name:      name,
-			Arguments: args,
-		})
-
-		lastStart = nil
-		lastStartIdx = -1
+func (t TemplateEnd) Backtrack(tokens []Token) (Token, int) {
+	start, startIdx, found := BacktrackUntil[TemplateStart](tokens)
+	if !found {
+		return nil, startIdx
 	}
 
-	// Fill in remaining tokens.
-	if lastStartIdx != -1 {
-		result = append(result, tokens[lastStartIdx:]...)
-	}
+	name := string(start)
+	// Get rid of first two curly braces.
+	name = name[2:]
+	// Get rid of argument marker if present.
+	name = strings.TrimRight(name, "|")
 
-	return result
+	args := parseArguments(tokens[startIdx+1:])
+
+	return Template{
+		Name:      name,
+		Arguments: args,
+	}, startIdx
 }
 
 func parseArguments(tokens []Token) map[string][]Token {

@@ -114,6 +114,10 @@ func TestParse(t *testing.T) {
 		wikitext: `<em>Noether Boys</em>`,
 		want:     "Noether Boys",
 	}, {
+		name:     "Emphasis2",
+		wikitext: `Other <em>Noether Boys</em> included [[Max Deuring]], [[Hans Fitting]], [[Ernst Witt]], [[Chiungtze C. Tsen]] and`,
+		want:     "Other Noether Boys included Max Deuring, Hans Fitting, Ernst Witt, Chiungtze C. Tsen and",
+	}, {
 		name:     "Math",
 		wikitext: `<math>A_{1} \subset A_{2} \subset A_{3} \subset \cdots.</math>`,
 		want:     article.MathToken,

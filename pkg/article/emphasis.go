@@ -1,6 +1,9 @@
 package article
 
-import "regexp"
+import (
+	"fmt"
+	"regexp"
+)
 
 var (
 	EmphasisStartPattern = regexp.MustCompile(`<em>`)
@@ -32,9 +35,19 @@ type Emphasis struct {
 }
 
 func (t Emphasis) Original() string {
+	fmt.Println(t.Quote[0].Original())
 	return Render(t.Quote)
 }
 
+func (t EmphasisEnd) Backtrack(tokens []Token) (Token, int) {
+	_, startIdx, found := BacktrackUntil[EmphasisStart](tokens)
+	if !found {
+		return nil, startIdx
+	}
+
+	return ParseEmphasis(tokens[startIdx:]), startIdx
+}
+
 func ParseEmphasis(tokens []Token) Token {
-	return Emphasis{tokens[1 : len(tokens)-1]}
+	return Emphasis{Quote: append([]Token{}, tokens[1:]...)}
 }

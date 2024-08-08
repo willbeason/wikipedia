@@ -11,14 +11,13 @@ func MergeTokens(tokens []Token) []Token {
 			continue
 		}
 
-		for idx := len(result) - 1; idx >= 0; idx-- {
-			if endToken.MatchesStart(result[idx]) {
-				mergedToken := endToken.Merge(result[idx:])
-
-				// Cut off all tokens merged into the new token, and append the merged one.
-				result = result[:idx]
-				result = append(result, mergedToken)
-			}
+		mergedToken, idx := endToken.Backtrack(result)
+		if idx >= 0 {
+			// Cut off all tokens merged into the new token, and append the merged one.
+			result = result[:idx]
+			result = append(result, mergedToken)
+		} else {
+			result = append(result, token)
 		}
 	}
 

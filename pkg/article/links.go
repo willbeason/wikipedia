@@ -51,9 +51,18 @@ func (t LinkFile) Original() string {
 	return Render(t.Caption)
 }
 
+func (t LinkEnd) Backtrack(tokens []Token) (Token, int) {
+	_, startIdx, found := BacktrackUntil[LinkStart](tokens)
+	if !found {
+		return nil, startIdx
+	}
+
+	return ParseLink(tokens[startIdx:]), startIdx
+}
+
 func ParseLink(tokens []Token) Token {
 	// Find first pipe
-	text := Render(tokens[1 : len(tokens)-1])
+	text := Render(tokens[1:])
 	splits := strings.SplitN(text, "|", 2)
 
 	target := splits[0]
