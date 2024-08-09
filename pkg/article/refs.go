@@ -5,7 +5,7 @@ import "regexp"
 var (
 	RefStartPattern     = regexp.MustCompile(`<ref( name *= *("[^"]+"|[^">]+))? *>`)
 	RefEndPattern       = regexp.MustCompile("</ref>")
-	RefAutoClosePattern = regexp.MustCompile(`<ref name *= *("[^"]+"|[^">]+) */>`)
+	RefAutoClosePattern = regexp.MustCompile(`<ref ((name|group) *= *("[^"]+"|[^">]+) *)+/>`)
 )
 
 type RefStart string

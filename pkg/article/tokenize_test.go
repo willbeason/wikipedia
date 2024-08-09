@@ -167,6 +167,18 @@ Displayed`,
 		wikitext: "\n==Biography==\n===Early Life===\n",
 		want: `Biography
 Early Life`,
+	}, {
+		name:     "ref group",
+		wikitext: "<ref group=note name=\"sBl2q\" />",
+		want:     ``,
+	}, {
+		name:     "comment",
+		wikitext: "<!-- Please do not change this—see talk page and its many archives.-->",
+		want:     ``,
+	}, {
+		name:     "superscript",
+		wikitext: "E=mc<sup>2</sup>",
+		want:     `E=mc^2`,
 	}}
 
 	for _, tc := range tt {

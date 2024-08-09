@@ -40,8 +40,11 @@ func Tokenize(text UnparsedText) []Token {
 		PatternTokenRule(MathEndPattern, ParseMathEnd),
 		PatternTokenRule(SubscriptStartPattern, ParseSubscriptStart),
 		PatternTokenRule(SubscriptEndPattern, ParseSubscriptEnd),
+		PatternTokenRule(SuperscriptStartPattern, ParseSuperscriptStart),
+		PatternTokenRule(SuperscriptEndPattern, ParseSuperscriptEnd),
 		PatternTokenRule(ExternalLinkPattern, ParseExternalLink),
 		PatternTokenRule(HeaderPattern, ParseHeader),
+		PatternTokenRule(CommentPattern, ParseComment),
 		ToLiterals,
 	}
 
