@@ -58,7 +58,6 @@ func Tokenize(text UnparsedText) []Token {
 
 	for _, rule := range repeatedRules {
 		tokens = rule(tokens)
-		tokens = rule(tokens)
 	}
 
 	return tokens
