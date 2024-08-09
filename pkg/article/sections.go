@@ -12,7 +12,7 @@ type Header struct {
 	Level int
 }
 
-func (t Header) Original() string {
+func (t Header) Render() string {
 	return t.Text
 }
 
@@ -22,8 +22,10 @@ func ParseHeader(s string) Token {
 		nEquals++
 	}
 
+	text := s[nEquals+1 : len(s)-nEquals]
+	text = strings.TrimSpace(text)
 	return Header{
-		Text:  s[nEquals+1 : len(s)-nEquals],
+		Text:  text,
 		Level: nEquals,
 	}
 }
@@ -45,7 +47,7 @@ var ignoredSection = map[string]bool{
 	"Sources":            true,
 }
 
-func (s Section) Original() string {
+func (s Section) Render() string {
 	if ignoredSection[s.Header.Text] {
 		return ""
 	}
@@ -53,9 +55,9 @@ func (s Section) Original() string {
 	sb := strings.Builder{}
 
 	sb.WriteString("\n")
-	sb.WriteString(s.Header.Original())
+	sb.WriteString(s.Header.Render())
 	for _, text := range s.Text {
-		sb.WriteString(text.Original())
+		sb.WriteString(text.Render())
 	}
 
 	return sb.String()

@@ -11,7 +11,7 @@ const MathToken = "_math_"
 
 type MathStart struct{}
 
-func (t MathStart) Original() string {
+func (t MathStart) Render() string {
 	return "<math>"
 }
 
@@ -21,7 +21,7 @@ func ParseMathStart(string) Token {
 
 type MathEnd struct{}
 
-func (t MathEnd) Original() string {
+func (t MathEnd) Render() string {
 	return "</math>"
 }
 
@@ -33,7 +33,7 @@ type Math struct {
 	Quote []Token
 }
 
-func (t Math) Original() string {
+func (t Math) Render() string {
 	return MathToken
 }
 

@@ -1,7 +1,6 @@
 package article
 
 import (
-	"fmt"
 	"regexp"
 )
 
@@ -12,7 +11,7 @@ var (
 
 type EmphasisStart struct{}
 
-func (t EmphasisStart) Original() string {
+func (t EmphasisStart) Render() string {
 	return "<em>"
 }
 
@@ -22,7 +21,7 @@ func ParseEmphasisStart(string) Token {
 
 type EmphasisEnd struct{}
 
-func (t EmphasisEnd) Original() string {
+func (t EmphasisEnd) Render() string {
 	return "</em>"
 }
 
@@ -34,8 +33,8 @@ type Emphasis struct {
 	Quote []Token
 }
 
-func (t Emphasis) Original() string {
-	fmt.Println(t.Quote[0].Original())
+func (t Emphasis) Render() string {
+	// fmt.Println(t.Quote[0].Render())
 	return Render(t.Quote)
 }
 

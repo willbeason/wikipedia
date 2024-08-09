@@ -178,7 +178,7 @@ Early Life`,
 
 			sb := strings.Builder{}
 			for _, token := range gotParse {
-				sb.WriteString(token.Original())
+				sb.WriteString(token.Render())
 			}
 
 			text := sb.String()
@@ -203,6 +203,11 @@ func TestTokenize_Noether(t *testing.T) {
 		name:     "Emmy Noether",
 		wikitext: EmmyNoetherBefore,
 		want:     EmmyNoetherAfter,
+	}, {
+		name:     "Albert Einstein",
+		wikitext: AlbertEinsteinBefore,
+		want:     AlbertEinsteinAfter,
+		// debug:    true,
 	}}
 
 	for _, tc := range tt {
@@ -214,7 +219,7 @@ func TestTokenize_Noether(t *testing.T) {
 
 			text := strings.Builder{}
 			for _, token := range gotParse {
-				text.WriteString(token.Original())
+				text.WriteString(token.Render())
 			}
 
 			diff := cmp.Diff(tc.want, text.String())

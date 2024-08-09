@@ -14,19 +14,19 @@ var NowikiAutoClosePattern = regexp.MustCompile(`<nowiki ?/>`)
 
 type NowikiStart struct{}
 
-func (t NowikiStart) Original() string {
+func (t NowikiStart) Render() string {
 	return NowikiSectionStartPattern
 }
 
 type NowikiEnd struct{}
 
-func (t NowikiEnd) Original() string {
+func (t NowikiEnd) Render() string {
 	return NowikiSectionEndPattern
 }
 
 type NowikiAutoClose struct{}
 
-func (t NowikiAutoClose) Original() string {
+func (t NowikiAutoClose) Render() string {
 	return ""
 }
 
@@ -37,7 +37,7 @@ func ParseNowikiAutoClose(string) Token {
 // Nowiki represents a section of text which should be displayed as-is.
 type Nowiki string
 
-func (t Nowiki) Original() string {
+func (t Nowiki) Render() string {
 	return string(t)
 }
 
@@ -50,7 +50,7 @@ func (t NowikiEnd) Merge(tokens []Token) Token {
 			sb.WriteString(string(s))
 		default:
 			// Get the original text of any parsed tokens.
-			sb.WriteString(s.Original())
+			sb.WriteString(s.Render())
 		}
 	}
 

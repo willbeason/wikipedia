@@ -12,7 +12,7 @@ var (
 
 type LinkStart struct{}
 
-func (t LinkStart) Original() string {
+func (t LinkStart) Render() string {
 	return "[["
 }
 
@@ -22,7 +22,7 @@ func ParseLinkStart(string) Token {
 
 type LinkEnd struct{}
 
-func (t LinkEnd) Original() string {
+func (t LinkEnd) Render() string {
 	return "]]"
 }
 
@@ -35,11 +35,11 @@ type Link struct {
 	Display LiteralText
 }
 
-func (t Link) Original() string {
+func (t Link) Render() string {
 	if t.Display != "" {
-		return t.Display.Original()
+		return t.Display.Render()
 	}
-	return t.Target.Original()
+	return t.Target.Render()
 }
 
 type LinkFile struct {
@@ -47,7 +47,7 @@ type LinkFile struct {
 	Caption []Token
 }
 
-func (t LinkFile) Original() string {
+func (t LinkFile) Render() string {
 	return Render(t.Caption)
 }
 

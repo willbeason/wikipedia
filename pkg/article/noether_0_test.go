@@ -481,4 +481,5 @@ In a letter to ''[[The New York Times]]'', [[Albert Einstein]] wrote:<ref name="
 [[Category:People from the Kingdom of Bavaria]]
 [[Category:Academic staff of the University of Göttingen]]
 [[Category:University of Erlangen-Nuremberg alumni]]
-[[Category:Bavarian emigrants to the United States]]`
+[[Category:Bavarian emigrants to the United States]]
+`

@@ -13,7 +13,7 @@ var (
 
 type TemplateStart string
 
-func (t TemplateStart) Original() string {
+func (t TemplateStart) Render() string {
 	return string(t)
 }
 
@@ -23,7 +23,7 @@ func ParseTemplateStart(s string) Token {
 
 type TemplateEnd struct{}
 
-func (t TemplateEnd) Original() string {
+func (t TemplateEnd) Render() string {
 	return "}}"
 }
 
@@ -36,7 +36,7 @@ type Template struct {
 	Arguments map[string][]Token
 }
 
-func (t Template) Original() string {
+func (t Template) Render() string {
 	switch t.Name {
 	case "Blockquote":
 		return renderBlockquote(t.Arguments)
@@ -68,7 +68,7 @@ func renderIPAcEn(args map[string][]Token) string {
 
 	for value, exists := args[unnamedName]; exists; {
 		for _, t := range value {
-			sb.WriteString(t.Original())
+			sb.WriteString(t.Render())
 		}
 		if unnamed == 1 {
 			sb.WriteString(": /")

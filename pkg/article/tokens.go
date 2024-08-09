@@ -4,8 +4,8 @@ import "strings"
 
 // Token represents a semantic unit of an article.
 type Token interface {
-	// Original returns the exact original text which was parsed into this Token.
-	Original() string
+	// Render returns the text as displayed of this Token.
+	Render() string
 }
 
 type EndToken interface {
@@ -16,7 +16,7 @@ type EndToken interface {
 
 type UnparsedText string
 
-func (t UnparsedText) Original() string {
+func (t UnparsedText) Render() string {
 	panic("attempt to render unparsed text")
 }
 
@@ -24,7 +24,7 @@ type LiteralText string
 
 const NBSP = `&nbsp;`
 
-func (t LiteralText) Original() string {
+func (t LiteralText) Render() string {
 	s := string(t)
 	s = strings.ReplaceAll(s, NBSP, " ")
 	return s
@@ -34,7 +34,7 @@ func Render(tokens []Token) string {
 	sb := strings.Builder{}
 
 	for _, t := range tokens {
-		sb.WriteString(t.Original())
+		sb.WriteString(t.Render())
 	}
 
 	return sb.String()

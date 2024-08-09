@@ -9,7 +9,7 @@ type References struct {
 	Tokens []Token
 }
 
-func (t References) Original() string {
+func (t References) Render() string {
 	return ""
 }
 

@@ -10,7 +10,7 @@ var (
 
 type RefStart string
 
-func (t RefStart) Original() string {
+func (t RefStart) Render() string {
 	return string(t)
 }
 
@@ -20,7 +20,7 @@ func ParseRefStart(s string) Token {
 
 type RefEnd struct{}
 
-func (t RefEnd) Original() string {
+func (t RefEnd) Render() string {
 	return "</ref>"
 }
 
@@ -30,7 +30,7 @@ func ParseRefEnd(string) Token {
 
 type RefAutoClose string
 
-func (t RefAutoClose) Original() string {
+func (t RefAutoClose) Render() string {
 	return ""
 }
 
@@ -42,7 +42,7 @@ type Ref struct {
 	Tokens []Token
 }
 
-func (t Ref) Original() string {
+func (t Ref) Render() string {
 	return ""
 }
 

@@ -9,7 +9,7 @@ var (
 
 type SubscriptStart struct{}
 
-func (t SubscriptStart) Original() string {
+func (t SubscriptStart) Render() string {
 	return "<sub>"
 }
 
@@ -19,7 +19,7 @@ func ParseSubscriptStart(string) Token {
 
 type SubscriptEnd struct{}
 
-func (t SubscriptEnd) Original() string {
+func (t SubscriptEnd) Render() string {
 	return "</sub>"
 }
 
@@ -31,7 +31,7 @@ type Subscript struct {
 	Quote []Token
 }
 
-func (t Subscript) Original() string {
+func (t Subscript) Render() string {
 	return "_" + Render(t.Quote)
 }
 
