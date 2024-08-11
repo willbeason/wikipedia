@@ -238,18 +238,7 @@ Throughout his life, Einstein published hundreds of books and articles. He publi
 1905 – ''Annus Mirabilis'' papers
 The ''Annus Mirabilis'' papers are four articles pertaining to the photoelectric effect (which gave rise to quantum theory), Brownian motion, the special theory of relativity, and ''E'' = ''mc''^2 that Einstein published in the ''Annalen der Physik'' scientific journal in 1905. These four works contributed substantially to the foundation of modern physics and changed views on space, time, and matter. The four papers are:
 
-{| class=wikitable
-|-
-! Title <small>(translated)</small> !!<small>Area of focus</small> !! Received !! Published !! Significance
-|-
-| "On a Heuristic Viewpoint Concerning the Production and Transformation of Light" || Photoelectric effect || 18 March || 9 June || Resolved an unsolved puzzle by suggesting that energy is exchanged only in discrete amounts (quanta). This idea was pivotal to the early development of quantum theory.
-|-
-| "On the Motion of Small Particles Suspended in a Stationary Liquid, as Required by the Molecular Kinetic Theory of Heat" || Brownian motion || 11 May || 18 July || Explained empirical evidence for the atomic theory, supporting the application of statistical physics.
-|-
-| "On the Electrodynamics of Moving Bodies" || Special relativity || 30 June || 26 September || Reconciled Maxwell's equations for electricity and magnetism with the laws of mechanics by introducing changes to mechanics, resulting from analysis based on empirical evidence that the speed of light is independent of the motion of the observer. Discredited the concept of a "luminiferous ether".
-|-
-| "Does the Inertia of a Body Depend Upon Its Energy Content?" || equivalence || 27 September || 21 November || Equivalence of matter and energy, ''E'' = ''mc''^2, the existence of "rest energy", and the basis of nuclear energy.
-|}
+
 
 Statistical mechanics
 

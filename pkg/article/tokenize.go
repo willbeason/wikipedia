@@ -45,6 +45,12 @@ func Tokenize(text UnparsedText) []Token {
 		PatternTokenRule(ExternalLinkPattern, ParseExternalLink),
 		PatternTokenRule(HeaderPattern, ParseHeader),
 		PatternTokenRule(CommentPattern, ParseComment),
+		ExactTokenRule(TableStartPattern, func() Token {
+			return TableStart(TableStartPattern)
+		}),
+		ExactTokenRule(TableEndPattern, func() Token {
+			return TableEnd(TableEndPattern)
+		}),
 		ToLiterals,
 	}
 
