@@ -38,10 +38,6 @@ func Tokenize(text UnparsedText) []Token {
 		PatternTokenRule(EmphasisEndPattern, ParseEmphasisEnd),
 		PatternTokenRule(MathStartPattern, ParseMathStart),
 		PatternTokenRule(MathEndPattern, ParseMathEnd),
-		PatternTokenRule(SubscriptStartPattern, ParseSubscriptStart),
-		PatternTokenRule(SubscriptEndPattern, ParseSubscriptEnd),
-		PatternTokenRule(SuperscriptStartPattern, ParseSuperscriptStart),
-		PatternTokenRule(SuperscriptEndPattern, ParseSuperscriptEnd),
 		PatternTokenRule(ExternalLinkPattern, ParseExternalLink),
 		PatternTokenRule(HeaderPattern, ParseHeader),
 		PatternTokenRule(CommentPattern, ParseComment),
@@ -51,6 +47,8 @@ func Tokenize(text UnparsedText) []Token {
 		ExactTokenRule(TableEndPattern, func() Token {
 			return TableEnd(TableEndPattern)
 		}),
+		PatternTokenRule(HTMLOpenTagPattern, ParseHTMLOpenTag),
+		PatternTokenRule(HTMLCloseTagPattern, ParseHTMLCloseTag),
 		ToLiterals,
 	}
 

@@ -179,6 +179,14 @@ Early Life`,
 		name:     "superscript",
 		wikitext: "E=mc<sup>2</sup>",
 		want:     `E=mc^2`,
+	}, {
+		name:     "comment with angle bracket",
+		wikitext: "<!-- some comment>-->a",
+		want:     `a`,
+	}, {
+		name:     "nested comment",
+		wikitext: "<!-- <!-- nested comment -->  -->",
+		want:     `  -->`,
 	}}
 
 	for _, tc := range tt {

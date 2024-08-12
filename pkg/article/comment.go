@@ -2,7 +2,7 @@ package article
 
 import "regexp"
 
-var CommentPattern = regexp.MustCompile("<!--[^>]*>")
+var CommentPattern = regexp.MustCompile("<!--.*?-->")
 
 type Comment string
 

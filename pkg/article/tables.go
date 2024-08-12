@@ -1,6 +1,6 @@
 package article
 
-var (
+const (
 	TableStartPattern = `{|`
 	TableEndPattern   = `|}`
 )
