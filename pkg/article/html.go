@@ -61,6 +61,37 @@ var allowedTags = []string{
 	"thead",
 	"tfoot",
 	"tbody",
+	// Parser tags
+	"gallery",
+	"includeonly",
+	"noinclude",
+	"nowiki",
+	"onlyinclude",
+	"pre",
+	// Extension tags
+	"categorytree",
+	"charinsert",
+	"chem",
+	"ce", // alias for "chem"
+	"graph",
+	"hiero",
+	"imagemap",
+	"indicator",
+	"inputbox",
+	"mapframe",
+	"maplink",
+	"math",
+	"math chem",
+	"poem",
+	"ref",
+	"references",
+	"score",
+	"section",
+	"syntaxhighlight",
+	"source", // alias for "syntaxhighlight"
+	"templatedata",
+	"templatestyles",
+	"timeline",
 }
 
 var (
