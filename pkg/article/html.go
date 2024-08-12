@@ -133,6 +133,12 @@ func (t NilToken) Render() string {
 
 func ParseHTMLTag(start HTMLOpenTag, tokens []Token) Token {
 	switch start.Name() {
+	case "blockquote":
+		return ParseBlockquote(tokens)
+	case "em":
+		return ParseEmphasis(tokens)
+	case "math":
+		return ParseMath(tokens)
 	case "sub":
 		return ParseSubscript(tokens)
 	case "sup":
