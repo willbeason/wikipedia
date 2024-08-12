@@ -294,4 +294,5 @@ In a letter to ''The New York Times'', Albert Einstein wrote:
 
 In the judgment of the most competent living mathematicians, Fräulein Noether was the most significant creative mathematical genius thus far produced since the higher education of women began. In the realm of algebra, in which the most gifted mathematicians have been busy for centuries, she discovered methods which have proved of enormous importance in the development of the present-day younger generation of mathematicians.
 
+
 `

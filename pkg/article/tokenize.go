@@ -25,6 +25,8 @@ func Tokenize(text UnparsedText) []Token {
 
 	oneTimeRules := []RuleFn{
 		PatternTokenRule(NowikiAutoClosePattern, ParseNowikiAutoClose),
+		PatternTokenRule(HeaderStartPattern, ParseHeaderStart),
+		PatternTokenRule(HeaderEndPattern, ParseHeaderEnd),
 		PatternTokenRule(TemplateStartPattern, ParseTemplateStart),
 		PatternTokenRule(TemplateEndPattern, ParseTemplateEnd),
 		PatternTokenRule(RefAutoClosePattern, ParseRefAutoClose),
@@ -33,7 +35,6 @@ func Tokenize(text UnparsedText) []Token {
 		PatternTokenRule(LinkStartPattern, ParseLinkStart),
 		PatternTokenRule(LinkEndPattern, ParseLinkEnd),
 		PatternTokenRule(ExternalLinkPattern, ParseExternalLink),
-		PatternTokenRule(HeaderPattern, ParseHeader),
 		PatternTokenRule(CommentPattern, ParseComment),
 		ExactTokenRule(TableStartPattern, func() Token {
 			return TableStart(TableStartPattern)

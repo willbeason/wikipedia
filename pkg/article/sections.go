@@ -1,34 +1,83 @@
 package article
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 )
 
-var HeaderPattern = regexp.MustCompile("(?m)^==[^\n]+==$")
+var (
+	HeaderStartPattern    = regexp.MustCompile("(?m)^={2,6}")
+	HeaderEndPattern      = regexp.MustCompile("(?m)={2,6}$")
+	HeaderStartEndPattern = regexp.MustCompile("(?m)^={2,6}$")
+)
+
+type HeaderStart string
+
+func (t HeaderStart) Render() string {
+	return string(t)
+}
+
+func ParseHeaderStart(s string) Token {
+	return HeaderStart(s)
+}
+
+type HeaderEnd string
+
+func (t HeaderEnd) Render() string {
+	return string(t)
+}
+
+func ParseHeaderEnd(s string) Token {
+	return HeaderEnd(s)
+}
+
+func (t HeaderEnd) Backtrack(tokens []Token) (Token, int) {
+	start, startIdx, found := BacktrackUntil[HeaderStart](tokens)
+	if !found {
+		return nil, startIdx
+	}
+
+	text := make([]Token, len(tokens)-(startIdx+1))
+	copy(text, tokens[startIdx+1:])
+
+	return ParseHeader(start, text, t), startIdx
+}
+
+type HeaderStartEnd string
+
+func (t HeaderStartEnd) Render() string {
+	return string(t)
+}
 
 type Header struct {
-	Text  string
+	Text  []Token
 	Level int
 }
 
 func (t Header) Render() string {
-	return t.Text
+	return Render(t.Text)
 }
 
-func ParseHeader(s string) Token {
-	nEquals := 2
-	fmt.Println(s)
-	for s[nEquals] == '=' && s[len(s)-1-nEquals] == '=' && nEquals < 6 {
-		nEquals++
+func ParseHeader(start HeaderStart, text []Token, end HeaderEnd) Token {
+	startLevel := len(start)
+	endLevel := len(end)
+	level := startLevel
+
+	if endLevel < startLevel {
+		startEquals := strings.Repeat("=", startLevel-endLevel)
+		text = append([]Token{LiteralText(startEquals)}, text...)
+		// Begin with equals
+		level = endLevel
+	} else if startLevel < endLevel {
+		// End with equals
+		endEquals := strings.Repeat("=", endLevel-startLevel)
+		text = append(text, LiteralText(endEquals))
+		level = startLevel
 	}
 
-	text := s[nEquals : len(s)-nEquals]
-	text = strings.TrimSpace(text)
 	return Header{
 		Text:  text,
-		Level: nEquals,
+		Level: level,
 	}
 }
 
@@ -50,14 +99,15 @@ var ignoredSection = map[string]bool{
 }
 
 func (s Section) Render() string {
-	if ignoredSection[s.Header.Text] {
+	renderedHeader := Render(s.Header.Text)
+	renderedHeader = strings.TrimSpace(renderedHeader)
+	if ignoredSection[renderedHeader] {
 		return ""
 	}
 
 	sb := strings.Builder{}
 
-	sb.WriteString("\n")
-	sb.WriteString(s.Header.Render())
+	sb.WriteString(renderedHeader)
 	for _, text := range s.Text {
 		sb.WriteString(text.Render())
 	}

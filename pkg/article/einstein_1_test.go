@@ -449,4 +449,5 @@ Others
 * Einstein, Albert (September 1960). Foreword to ''Gandhi Wields the Weapon of Moral Power: Three Case Histories''. Introduction by Bharatan Kumarappa. Ahmedabad: Navajivan Publishing House. pp. v–vi. . Foreword originally written in April 1953.
 *  The ''chasing a light beam'' thought experiment is described on pages 48–51.
 
+
 `

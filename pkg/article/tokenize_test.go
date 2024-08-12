@@ -231,7 +231,7 @@ func TestTokenize_Noether(t *testing.T) {
 		name:     "Albert Einstein",
 		wikitext: AlbertEinsteinBefore,
 		want:     AlbertEinsteinAfter,
-		debug:    true,
+		// debug:    true,
 	}}
 
 	for _, tc := range tt {
