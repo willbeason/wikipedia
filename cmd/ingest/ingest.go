@@ -1,4 +1,4 @@
-package extract
+package ingest
 
 import (
 	"bufio"
@@ -11,6 +11,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -23,71 +24,100 @@ import (
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/protos"
+	"github.com/willbeason/wikipedia/pkg/workflows"
 )
 
 const namespaceKey = "namespace"
 
 func Cmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Args: cobra.ExactArgs(4),
-		Use:  `extract articles_path index_path allowed_namespace out_path`,
-		Short: `Extracts the compressed pages-articles-multistream dump of Wikipedia to an output
-Badger database, given an already-extracted index file.`,
-		RunE: runCmd,
+		Args:  cobra.ExactArgs(2),
+		Use:   "ingest workspace_path articles_path index_path",
+		Short: `extract articles into a wikopticon workspace`,
+		RunE:  runCmd,
 	}
 
-	flags.Parallel(cmd)
 	cmd.Flags().IntSlice(namespaceKey, []int{int(documents.NamespaceArticle)},
-		"the article namespace to ")
+		"the article namespaces to include")
 
 	return cmd
 }
 
 var ErrExtract = errors.New("unable to run extraction")
 
+var (
+	MultistreamPattern      = regexp.MustCompile(`enwiki-(\d+)-pages-articles-multistream(\d*)\.xml-p(\d+)p(\d+)\.bz2`)
+	MultistreamIndexPattern = regexp.MustCompile(`enwiki-(\d+)-pages-articles-multistream-index(\d*)\.txt-p(\d+)p(\d+)\.bz2`)
+)
+
 func runCmd(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 
-	ns, err := strconv.ParseInt(args[2], 10, 16)
+	workspacePath, err := flags.GetWorkspacePath(cmd)
 	if err != nil {
-		return fmt.Errorf("%w: allowed_namespace argument must be an integer", ErrExtract)
+		return err
 	}
-
-	extractCfg := &config.Extract{
-		ArticlesPath: args[0],
-		IndexPath:    args[1],
-		Namespaces:   []int{int(ns)},
-		OutPath:      args[3],
-	}
-
-	return Extract(cmd, extractCfg)
-}
-
-func Extract(cmd *cobra.Command, extract *config.Extract) error {
-	articlesPath := extract.GetArticlesPath()
-	if _, err := os.Stat(articlesPath); os.IsNotExist(err) {
-		return fmt.Errorf("%w: articles not found at %q", ErrExtract, articlesPath)
-	}
-
-	indexPath := extract.GetIndexPath()
-	if _, err := os.Stat(indexPath); os.IsNotExist(err) {
-		return fmt.Errorf("%w: index not found at %q", ErrExtract, indexPath)
-	}
-
-	outPath := extract.GetOutPath()
-	if _, err := os.Stat(outPath); !os.IsNotExist(err) {
-		if err != nil {
-			return fmt.Errorf("%w: unable to determine if output database already exists at %q: %w",
-				ErrExtract, outPath, err)
-		} else {
-			return fmt.Errorf("%w: out directory exists: %q",
-				ErrExtract, outPath)
+	if !filepath.IsAbs(workspacePath) {
+		workingDirectory, err2 := os.Getwd()
+		if err2 != nil {
+			return fmt.Errorf("could not determine working directory: %w", err2)
 		}
+
+		workspacePath = filepath.Join(workingDirectory, workspacePath)
+	}
+
+	cfg, err := config.Load(workspacePath)
+	if err != nil {
+		return err
+	}
+	r := workflows.Runner{Config: cfg}
+
+	// enwiki-20240801-pages-articles-multistream1.xml-p1p41242.bz2
+	articlesPath := args[0]
+	articlesPathMatches := MultistreamPattern.FindStringSubmatch(articlesPath)
+	if len(articlesPathMatches) < 5 {
+		return fmt.Errorf("%w: articles path %q does not match known pattern", ErrExtract, articlesPath)
+	}
+	enwikiDate := articlesPathMatches[1]
+	enwikiShard := articlesPathMatches[2]
+
+	// enwiki-20240801-pages-articles-multistream-index1.txt-p1p41242.bz2
+	indexPath := args[1]
+	indexPathMatches := MultistreamIndexPattern.FindStringSubmatch(indexPath)
+	if len(indexPathMatches) < 5 {
+		return fmt.Errorf("%w: index path %q does not match known pattern", ErrExtract, indexPath)
+	}
+	if indexPathMatches[1] != enwikiDate {
+		return fmt.Errorf("%w: index date %q does not match articles date %q", ErrExtract, indexPath, enwikiDate)
+	}
+	if indexPathMatches[2] != enwikiShard {
+		return fmt.Errorf("%w: index shard %q does not match articles date %q", ErrExtract, indexPath, enwikiDate)
+	}
+
+	if enwikiShard == "" {
+		fmt.Printf("Extracting enwiki %q\n to workspace %q", enwikiDate, workspacePath)
 	} else {
-		err = os.MkdirAll(outPath, os.ModePerm)
-		if err != nil {
-			return fmt.Errorf("creating output directory %q: %w", outPath, err)
-		}
+		fmt.Printf("Extracting enwiki %q shard %q to workspace %q\n", enwikiDate, enwikiShard, workspacePath)
+	}
+
+	var corpusName string
+	if enwikiShard == "" {
+		corpusName = fmt.Sprintf("%s", enwikiDate)
+	} else {
+		corpusName = fmt.Sprintf("%s.%s", enwikiDate, enwikiShard)
+	}
+
+	corpusPath := filepath.Join(workspacePath, corpusName)
+	err = os.MkdirAll(corpusPath, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("%w: could not create corpus directory: %w", ErrExtract, err)
+	}
+
+	// Perform the extraction.
+	extractPath := filepath.Join(corpusPath, config.ArticlesDir)
+	err = flags.CreateOrCheckDirectory(extractPath)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrExtract, err)
 	}
 
 	runner := jobs.NewRunner()
@@ -104,17 +134,20 @@ func Extract(cmd *cobra.Command, extract *config.Extract) error {
 		return err
 	}
 
-	pages := extractPages(cancel, parallel, extract.Namespaces, compressedItems)
-
-	outDB, err := badger.Open(badger.DefaultOptions(outPath))
+	namespaces, err := cmd.Flags().GetIntSlice(namespaceKey)
 	if err != nil {
-		return fmt.Errorf("opening %q: %w", outPath, err)
+		return fmt.Errorf("%w: reading namespace flag :%w", ErrExtract, err)
 	}
+	pages := extractPages(cancel, parallel, namespaces, compressedItems)
 
+	outDB, err := badger.Open(badger.DefaultOptions(extractPath))
+	if err != nil {
+		return fmt.Errorf("opening %q: %w", extractPath, err)
+	}
 	defer func() {
 		closeErr := outDB.Close()
-		if closeErr != nil {
-			cancel(closeErr)
+		if err != nil {
+			err = closeErr
 		}
 	}()
 
@@ -129,6 +162,17 @@ func Extract(cmd *cobra.Command, extract *config.Extract) error {
 
 	if ctx.Err() != nil {
 		return context.Cause(ctx)
+	}
+
+	// Close the DB before reading.
+	err = outDB.Close()
+	if err != nil {
+		return err
+	}
+
+	err = r.RunCorpusWorkflow(cmd, corpusName, config.PostIngestWorkflow)
+	if err != nil && !errors.Is(err, workflows.ErrWorkflowNotExist) {
+		return err
 	}
 
 	return nil

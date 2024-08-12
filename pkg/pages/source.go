@@ -23,7 +23,7 @@ func StreamDB(
 
 		wg, err := inDB.Process(ctx, cancel, documents.ReadPages(pages))
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("streaming database: %w", err)
 		}
 
 		go func() {

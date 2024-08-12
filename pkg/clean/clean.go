@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/spf13/cobra"
-	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/db"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
@@ -19,8 +19,9 @@ import (
 
 func Cmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   `clean articles_path out_path`,
-		Short: `Cleans Wikipedia articles.`,
+		Args:  cobra.ExactArgs(3),
+		Use:   `clean corpus_name articles_path out_path`,
+		Short: `Clean Wikipedia articles`,
 		RunE:  runCmd,
 	}
 
@@ -35,18 +36,23 @@ var ErrClean = errors.New("unable to run article cleaning")
 func runCmd(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 
-	cleanCfg := &config.Clean{
-		ArticlesPath: args[0],
-		OutPath:      args[1],
-	}
-
-	return Clean(cmd, cleanCfg)
+	return Clean(cmd, args[0], args[1], args[2])
 }
 
-func Clean(cmd *cobra.Command, clean *config.Clean) error {
-	articlesPath := clean.GetArticlesPath()
-	if _, err := os.Stat(articlesPath); os.IsNotExist(err) {
-		return fmt.Errorf("%w: articles not found at %q", ErrClean, articlesPath)
+func Clean(cmd *cobra.Command, corpusName, articlesDir, outDir string) error {
+	fmt.Printf("Cleaning corpus %q directory %q and writing to %q\n",
+		corpusName, articlesDir, outDir)
+
+	workspace, err := flags.GetWorkspacePath(cmd)
+	if err != nil {
+		return err
+	}
+
+	articlesDir = filepath.Join(workspace, corpusName, articlesDir)
+	outDir = filepath.Join(workspace, corpusName, outDir)
+
+	if _, err = os.Stat(articlesDir); os.IsNotExist(err) {
+		return fmt.Errorf("%w: articles not found at %q", ErrClean, articlesDir)
 	}
 
 	parallel, err := flags.GetParallel(cmd)
@@ -56,21 +62,7 @@ func Clean(cmd *cobra.Command, clean *config.Clean) error {
 
 	ctx, cancel := context.WithCancelCause(cmd.Context())
 
-	var source pages.Source
-	var compare func(page *documents.Page) error
-
-	if clean.View == nil {
-		source = pages.StreamDB(articlesPath, parallel)
-	} else {
-		beforeSource := pages.StreamDBKeys(articlesPath, parallel, clean.View)
-		beforePages, err2 := beforeSource(ctx, cancel)
-		if err2 != nil {
-			return fmt.Errorf("getting articles before cleaning: %w", err2)
-		}
-		compare = pages.Compare(beforePages)
-
-		source = pages.StreamDBKeys(articlesPath, parallel, clean.View)
-	}
+	source := pages.StreamDB(articlesDir, parallel)
 
 	docs, err := source(ctx, cancel)
 	if err != nil {
@@ -84,17 +76,13 @@ func Clean(cmd *cobra.Command, clean *config.Clean) error {
 
 	var sinkWork jobs.WorkQueue
 	var outDB *badger.DB
-	if clean.OutPath == "" {
-		sinkWork = jobs.ForEach(jobs.WorkBuffer, cleanedChannel, compare)
-	} else {
-		outPath := clean.GetOutPath()
-		outDB, err = toOutDB(outPath)
-		if err != nil {
-			return err
-		}
 
-		sinkWork = jobs.Reduce(jobs.WorkBuffer, cleanedChannel, db.WriteProto[*documents.Page](outDB))
+	outDB, err = toOutDB(outDir)
+	if err != nil {
+		return err
 	}
+
+	sinkWork = jobs.Reduce(jobs.WorkBuffer, cleanedChannel, db.WriteProto[*documents.Page](outDB))
 
 	runner := jobs.NewRunner()
 	cleanWg := runner.Run(ctx, cancel, cleanWork)

@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/pages"
@@ -15,7 +15,8 @@ import (
 
 func Cmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   `title-index path/to/input`,
+		Args:  cobra.ExactArgs(3),
+		Use:   `title-index corpus_name articles_dir out_file`,
 		Short: `Create an index from titles to article IDs`,
 		RunE:  runCmd,
 	}
@@ -30,21 +31,27 @@ var ErrTitleIndex = errors.New("unable to create title index")
 func runCmd(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 
-	cfg := &config.TitleIndex{
-		ArticlesPath: args[0],
-		OutPath:      args[1],
-	}
-
-	return TitleIndex(cmd, cfg)
+	return TitleIndex(cmd, args[0], args[1], args[2])
 }
 
-func TitleIndex(cmd *cobra.Command, cfg *config.TitleIndex) error {
+func TitleIndex(cmd *cobra.Command, corpusName, articlesDir, outFile string) error {
+	fmt.Printf("Creating title index for corpus %q from directory %q and writing to %q\n",
+		corpusName, articlesDir, outFile)
+
 	parallel, err := flags.GetParallel(cmd)
 	if err != nil {
 		return err
 	}
 
-	source := pages.StreamDB(cfg.GetArticlesPath(), parallel)
+	workspace, err := flags.GetWorkspacePath(cmd)
+	if err != nil {
+		return err
+	}
+
+	articlesDir = filepath.Join(workspace, corpusName, articlesDir)
+	outFile = filepath.Join(workspace, corpusName, outFile)
+
+	source := pages.StreamDB(articlesDir, parallel)
 
 	ctx, cancel := context.WithCancelCause(cmd.Context())
 	ps, err := source(ctx, cancel)
@@ -56,7 +63,7 @@ func TitleIndex(cmd *cobra.Command, cfg *config.TitleIndex) error {
 
 	index := <-results
 
-	err = protos.Write(cfg.GetOutPath(), index)
+	err = protos.Write(outFile, index)
 	if err != nil {
 		return fmt.Errorf("%w: writing title index: %w", ErrTitleIndex, err)
 	}

@@ -187,6 +187,10 @@ Early Life`,
 		name:     "nested comment",
 		wikitext: "<!-- <!-- nested comment -->  -->",
 		want:     `  -->`,
+	}, {
+		name:     "link in header",
+		wikitext: "=====[[Geometric abstraction]] and related movements=====",
+		want:     `Geometric abstraction and related movements`,
 	}}
 
 	for _, tc := range tt {

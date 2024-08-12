@@ -69,7 +69,7 @@ func ParseLink(tokens []Token) Token {
 	target = strings.TrimSpace(target)
 
 	if strings.HasPrefix(target, "File:") {
-		return ParseLinkFile(target, splits[1])
+		return ParseLinkFile(target, splits[1:]...)
 	}
 
 	result := Link{Target: LiteralText(target)}
@@ -83,13 +83,15 @@ func ParseLink(tokens []Token) Token {
 	return result
 }
 
-func ParseLinkFile(target string, args string) Token {
-	splits := strings.Split(args, "|")
-
-	caption := Tokenize(UnparsedText(splits[len(splits)-1]))
-
-	return LinkFile{
-		Target:  LiteralText(target),
-		Caption: caption,
+func ParseLinkFile(target string, args ...string) Token {
+	result := LinkFile{
+		Target: LiteralText(target),
 	}
+
+	if len(args) > 0 {
+		splits := strings.Split(args[0], "|")
+		result.Caption = Tokenize(UnparsedText(splits[len(splits)-1]))
+	}
+
+	return result
 }

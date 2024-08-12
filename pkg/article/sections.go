@@ -1,11 +1,12 @@
 package article
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 )
 
-var HeaderPattern = regexp.MustCompile("\n==[^\n]+==")
+var HeaderPattern = regexp.MustCompile("(?m)^==[^\n]+==$")
 
 type Header struct {
 	Text  string
@@ -18,11 +19,12 @@ func (t Header) Render() string {
 
 func ParseHeader(s string) Token {
 	nEquals := 2
-	for s[nEquals+1] == '=' && s[len(s)-1-nEquals] == '=' && nEquals < 6 {
+	fmt.Println(s)
+	for s[nEquals] == '=' && s[len(s)-1-nEquals] == '=' && nEquals < 6 {
 		nEquals++
 	}
 
-	text := s[nEquals+1 : len(s)-nEquals]
+	text := s[nEquals : len(s)-nEquals]
 	text = strings.TrimSpace(text)
 	return Header{
 		Text:  text,

@@ -5,16 +5,18 @@ import (
 	"fmt"
 	"os"
 
-
 	"github.com/spf13/cobra"
-	"github.com/willbeason/wikipedia/cmd/clean"
-	"github.com/willbeason/wikipedia/cmd/extract"
-	title_index "github.com/willbeason/wikipedia/cmd/title-index"
+	"github.com/willbeason/wikipedia/cmd/ingest"
+	"github.com/willbeason/wikipedia/pkg/clean"
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/flags"
+	"github.com/willbeason/wikipedia/pkg/title-index"
+	"github.com/willbeason/wikipedia/pkg/workflows"
 )
 
-const Version = "0.3.0"
+const (
+	Version = "0.3.0"
+)
 
 func main() {
 	err := mainCmd().Execute()
@@ -40,20 +42,21 @@ func mainCmd() *cobra.Command {
 
 	cmd.AddCommand(runCmd())
 
-	cmd.AddCommand(extract.Cmd())
+	cmd.AddCommand(ingest.Cmd())
 	cmd.AddCommand(clean.Cmd())
 	cmd.AddCommand(title_index.Cmd())
 
 	flags.Parallel(cmd)
+	flags.Workspace(cmd)
 
 	return cmd
 }
 
 func runCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Args:    cobra.ExactArgs(2),
-		Use:     `run config_yaml job_name`,
-		Short:   `runs a specific wikopticon job in a configuration file`,
+		Args:    cobra.RangeArgs(1, 2),
+		Use:     `run corpus_name job_name`,
+		Short:   `runs a specific wikopticon job in a corpus`,
 		RunE:    runRunE,
 		Version: Version,
 	}
@@ -64,34 +67,32 @@ func runCmd() *cobra.Command {
 func runRunE(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 
-	configPath := args[0]
-	jobName := args[1]
-
-	c, err := config.Load(configPath)
+	workspacePath, err := flags.GetWorkspacePath(cmd)
 	if err != nil {
 		return err
 	}
 
-	jobConfig, err := c.GetJob(jobName)
+	cfg, err := config.Load(workspacePath)
 	if err != nil {
 		return err
 	}
+	r := workflows.Runner{Config: cfg}
 
-	switch cfg := jobConfig.(type) {
-	case *config.Extract:
-		fmt.Printf("Extracting %q with index %q to directory %q only namespaces %v\n",
-			cfg.GetArticlesPath(), cfg.GetIndexPath(), cfg.GetOutPath(), cfg.Namespaces)
-		return extract.Extract(cmd, cfg)
-	case *config.Clean:
-		fmt.Printf("Cleaning %q to directory %q viewing %v\n",
-			cfg.GetArticlesPath(), cfg.GetOutPath(), cfg.View)
-		return clean.Clean(cmd, cfg)
-	case *config.TitleIndex:
-		fmt.Printf("Creating title index of %q to %q\n",
-			cfg.GetArticlesPath(), cfg.GetOutPath())
-		return title_index.TitleIndex(cmd, cfg)
-	default:
-		return fmt.Errorf("%w: %T",
-			ErrUnknownSubcommandType, jobConfig)
+	toRun := args[0]
+	var corpusName string
+	if len(args) > 1 {
+		corpusName = args[1]
 	}
+
+	if corpusName != "" {
+		err = r.RunCorpusWorkflow(cmd, corpusName, toRun)
+	}
+	if !errors.Is(err, workflows.ErrWorkflowNotExist) {
+		return err
+	} else if err == nil {
+		// Successfully ran a workflow.
+		return nil
+	}
+
+	return r.RunCorpusJob(cmd, corpusName, toRun)
 }

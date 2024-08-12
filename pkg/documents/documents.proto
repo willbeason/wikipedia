@@ -26,3 +26,11 @@ message PageCategories {
 message Categories {
   repeated uint32 categories = 1;
 }
+
+message LinkIndex {
+  map<uint32, Links> articles = 1;
+}
+
+message Links {
+  repeated uint32 links = 1;
+}

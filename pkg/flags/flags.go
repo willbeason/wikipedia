@@ -3,6 +3,7 @@ package flags
 import (
 	"errors"
 	"fmt"
+	"os"
 	"runtime"
 
 	"github.com/spf13/cobra"
@@ -17,6 +18,9 @@ const (
 
 	IDsKey    = "ids"
 	TitlesKey = "titles"
+
+	WorkspaceKey           = "workspace"
+	WikopticonWorkspaceEnv = "WIKOPTICON_WORKSPACE"
 )
 
 var ErrInvalidFlag = errors.New("invalid flag")
@@ -72,4 +76,22 @@ func GetTitles(cmd *cobra.Command) ([]string, error) {
 	}
 
 	return titles, nil
+}
+
+func Workspace(cmd *cobra.Command) {
+	cmd.PersistentFlags().String(WorkspaceKey, os.Getenv(WikopticonWorkspaceEnv),
+		"the workspace to use")
+}
+
+func GetWorkspacePath(cmd *cobra.Command) (string, error) {
+	workspace, err := cmd.Flags().GetString(WorkspaceKey)
+	if err != nil {
+		return "", ParsingFlagError(WorkspaceKey, err)
+	}
+
+	if workspace == "" {
+		return "", ParsingFlagError(WorkspaceKey, errors.New("no workspace specified"))
+	}
+
+	return workspace, nil
 }

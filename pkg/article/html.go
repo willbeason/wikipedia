@@ -65,7 +65,7 @@ var allowedTags = []string{
 	"gallery",
 	"includeonly",
 	"noinclude",
-	"nowiki",
+	//"nowiki", // As a parser tag, this is matched differently than other tags.
 	"onlyinclude",
 	"pre",
 	// Extension tags

@@ -4,15 +4,24 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	Filename           = "config.yaml"
+	ArticlesDir        = "articles"
+	PostIngestWorkflow = "post-ingest"
+)
+
+// Config is the configuration for a particular workspace for analyzing one or more Wikipedia corpora.
 type Config struct {
-	// WorkPath is an exact path to the working directory to store intermediate
-	// and final outputs. All child paths are assumed to be subdirectories of
-	// this path.
-	WorkPath string `yaml:"workPath"`
+	// Ingest configures ingesting new Wikipedia dumps into this workspace.
+	Ingest Ingest `yaml:"ingest"`
+
+	// Workflows is a map from workflow name to a list of Jobs to run sequentially.
+	Workflows map[string][]string
 
 	// Jobs is a map of directory names representing jobs to the configuration
 	// for those jobs. Should be retrieved individually with GetJob.
@@ -26,8 +35,10 @@ type Config struct {
 var ErrLoad = errors.New("unable to load config")
 
 // Load reads a generic Config object from a file.
-func Load(configPath string) (*Config, error) {
+func Load(workspacePath string) (*Config, error) {
 	config := &Config{}
+
+	configPath := filepath.Join(workspacePath, Filename)
 
 	in, err := os.ReadFile(configPath)
 	if err != nil {
@@ -36,43 +47,6 @@ func Load(configPath string) (*Config, error) {
 	err = yaml.Unmarshal(in, config)
 	if err != nil {
 		return nil, fmt.Errorf("%w: unable to parse config file", ErrLoad)
-	}
-
-	return config, nil
-}
-
-// GetJob extracts the configuration for a subCommand.
-func (c *Config) GetJob(name string) (any, error) {
-	job, exists := c.Jobs[name]
-	if !exists {
-		return nil, fmt.Errorf("%w: job %q does not exist", ErrLoad, name)
-	}
-
-	var config JobConfig
-	switch job.SubCommand {
-	case "":
-		return nil, fmt.Errorf("%w: job %q has no subCommand",
-			ErrLoad, name)
-	case "extract":
-		config = &Extract{}
-	case "clean":
-		config = &Clean{}
-	case "title-index":
-		config = &TitleIndex{}
-	default:
-		return nil, fmt.Errorf("%w: job %q has unknown subCommand %q",
-			ErrLoad, name, job.SubCommand)
-	}
-
-	err := job.unmarshall(config)
-	if err != nil {
-		return nil, fmt.Errorf("%w: unmarshalling job config %q to %T: %w",
-			ErrLoad, name, config, err)
-	}
-
-	if config.GetWorkPath() == "" {
-		// Inherit from parent if not set.
-		config.SetWorkPath(c.WorkPath)
 	}
 
 	return config, nil
@@ -90,18 +64,19 @@ type Job struct {
 	Settings map[string]interface{} `yaml:"settings"`
 }
 
-// unmarshall attempts to extract the Job's config into out.
-func (j *Job) unmarshall(out interface{}) error {
+// UnmarshallJob attempts to extract the Job's config into T.
+func UnmarshallJob[T any](j *Job) (*T, error) {
 	in, err := yaml.Marshal(j.Settings)
 	if err != nil {
 		// Should be impossible.
-		return fmt.Errorf("marshalling: %w", err)
+		return nil, fmt.Errorf("marshalling: %w", err)
 	}
 
-	err = yaml.Unmarshal(in, out)
+	var jobConfig T
+	err = yaml.Unmarshal(in, &jobConfig)
 	if err != nil {
-		return fmt.Errorf("unmarshalling to subCommand config %T: %w", out, err)
+		return nil, fmt.Errorf("unmarshalling to subCommand config %T: %w", jobConfig, err)
 	}
 
-	return nil
+	return &jobConfig, nil
 }

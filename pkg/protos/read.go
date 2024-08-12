@@ -13,10 +13,17 @@ import (
 
 var ErrUnsupportedProtoExtension = errors.New("unsupported proto extension")
 
-func Read(file string, out proto.Message) error {
+// Read reads a protocol buffer stored in file to a protocol buffer of type OUT.
+// OUT must be a type whose pointer receiver is a proto.Message.
+func Read[OUT any, POUT interface {
+	*OUT
+	proto.Message
+}](file string) (*OUT, error) {
+	var out POUT = new(OUT)
+
 	bytes, err := os.ReadFile(file)
 	if err != nil {
-		return fmt.Errorf("reading %q: %w", file, err)
+		return out, fmt.Errorf("reading %q: %w", file, err)
 	}
 
 	switch ext := filepath.Ext(file); ext {
@@ -27,14 +34,14 @@ func Read(file string, out proto.Message) error {
 	case ".txt":
 		err = prototext.Unmarshal(bytes, out)
 	default:
-		return fmt.Errorf("%w: %q", ErrUnsupportedProtoExtension, ext)
+		return out, fmt.Errorf("%w: %q", ErrUnsupportedProtoExtension, ext)
 	}
 
 	if err != nil {
-		return fmt.Errorf("unmarshalling %q: %w", file, err)
+		return out, fmt.Errorf("unmarshalling %q: %w", file, err)
 	}
 
-	return nil
+	return out, nil
 }
 
 func Write(path string, p proto.Message) error {
