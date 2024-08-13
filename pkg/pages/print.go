@@ -2,6 +2,7 @@ package pages
 
 import (
 	"fmt"
+
 	"github.com/willbeason/wikipedia/pkg/documents"
 )
 

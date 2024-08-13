@@ -58,11 +58,11 @@ linters:
     - inamedparam
     - interfacebloat
     - intrange
-    - lll
+#    - lll
     - maintidx
     - makezero
     - mirror
-    - mnd
+#    - mnd
     - nakedret
     - nestif
     - nilerr

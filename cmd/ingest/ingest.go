@@ -46,8 +46,8 @@ func Cmd() *cobra.Command {
 var ErrExtract = errors.New("unable to run extraction")
 
 var (
-	MultistreamPattern      = regexp.MustCompile(`enwiki-(\d+)-pages-articles-multistream(\d*)\.xml-p(\d+)p(\d+)\.bz2`)
-	MultistreamIndexPattern = regexp.MustCompile(`enwiki-(\d+)-pages-articles-multistream-index(\d*)\.txt-p(\d+)p(\d+)\.bz2`)
+	MultistreamPattern      = regexp.MustCompile(`enwiki-(\d+)-pages-articles-multistream(\d*)\.xml(?:-p(\d+)p(\d+))?\.bz2`)
+	MultistreamIndexPattern = regexp.MustCompile(`enwiki-(\d+)-pages-articles-multistream-index(\d*)\.txt(?:-p(\d+)p(\d+))?\.bz2`)
 )
 
 func runCmd(cmd *cobra.Command, args []string) error {
@@ -72,37 +72,44 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	}
 	r := workflows.Runner{Config: cfg}
 
+	// enwiki-20240701-pages-articles-multistream.xml.bz2
 	// enwiki-20240801-pages-articles-multistream1.xml-p1p41242.bz2
 	articlesPath := args[0]
 	articlesPathMatches := MultistreamPattern.FindStringSubmatch(articlesPath)
-	if len(articlesPathMatches) < 5 {
+	if len(articlesPathMatches) < 2 {
 		return fmt.Errorf("%w: articles path %q does not match known pattern", ErrExtract, articlesPath)
 	}
 	enwikiDate := articlesPathMatches[1]
-	enwikiShard := articlesPathMatches[2]
+	var enwikiShard string
+	if len(articlesPathMatches) > 2 {
+		enwikiShard = articlesPathMatches[2]
+	}
 
+	// enwiki-20240701-pages-articles-multistream-index.txt.bz2
 	// enwiki-20240801-pages-articles-multistream-index1.txt-p1p41242.bz2
 	indexPath := args[1]
 	indexPathMatches := MultistreamIndexPattern.FindStringSubmatch(indexPath)
-	if len(indexPathMatches) < 5 {
+	if len(indexPathMatches) < 2 {
 		return fmt.Errorf("%w: index path %q does not match known pattern", ErrExtract, indexPath)
 	}
 	if indexPathMatches[1] != enwikiDate {
-		return fmt.Errorf("%w: index date %q does not match articles date %q", ErrExtract, indexPath, enwikiDate)
+		return fmt.Errorf("%w: index date %q does not match articles date %q", ErrExtract, indexPathMatches[1], enwikiDate)
 	}
-	if indexPathMatches[2] != enwikiShard {
-		return fmt.Errorf("%w: index shard %q does not match articles date %q", ErrExtract, indexPath, enwikiDate)
+	if len(indexPathMatches) > 2 {
+		if indexPathMatches[2] != enwikiShard {
+			return fmt.Errorf("%w: index shard %q does not match articles shard %q", ErrExtract, indexPathMatches[2], enwikiDate)
+		}
 	}
 
 	if enwikiShard == "" {
-		fmt.Printf("Extracting enwiki %q\n to workspace %q", enwikiDate, workspacePath)
+		fmt.Printf("Extracting enwiki %q to workspace %q\n", enwikiDate, workspacePath)
 	} else {
 		fmt.Printf("Extracting enwiki %q shard %q to workspace %q\n", enwikiDate, enwikiShard, workspacePath)
 	}
 
 	var corpusName string
 	if enwikiShard == "" {
-		corpusName = fmt.Sprintf("%s", enwikiDate)
+		corpusName = enwikiDate
 	} else {
 		corpusName = fmt.Sprintf("%s.%s", enwikiDate, enwikiShard)
 	}
@@ -167,7 +174,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	// Close the DB before reading.
 	err = outDB.Close()
 	if err != nil {
-		return err
+		return fmt.Errorf("closing ingested articles database: %w", err)
 	}
 
 	err = r.RunCorpusWorkflow(cmd, corpusName, config.PostIngestWorkflow)

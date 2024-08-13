@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/cmd/ingest"
+	"github.com/willbeason/wikipedia/pkg/analysis"
 	"github.com/willbeason/wikipedia/pkg/clean"
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/flags"
@@ -45,6 +46,7 @@ func mainCmd() *cobra.Command {
 	cmd.AddCommand(ingest.Cmd())
 	cmd.AddCommand(clean.Cmd())
 	cmd.AddCommand(title_index.Cmd())
+	cmd.AddCommand(analysis.RenamedArticlesCmd())
 
 	flags.Parallel(cmd)
 	flags.Workspace(cmd)
