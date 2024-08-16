@@ -32,7 +32,7 @@ const namespaceKey = "namespace"
 func Cmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Args:  cobra.ExactArgs(2),
-		Use:   "ingest workspace_path articles_path index_path",
+		Use:   "ingest articles_path index_path",
 		Short: `extract articles into a wikopticon workspace`,
 		RunE:  runCmd,
 	}
@@ -46,8 +46,13 @@ func Cmd() *cobra.Command {
 var ErrExtract = errors.New("unable to run extraction")
 
 var (
+	EnwikiPrefix            = `enwiki`
 	MultistreamPattern      = regexp.MustCompile(`enwiki-(\d+)-pages-articles-multistream(\d*)\.xml(?:-p(\d+)p(\d+))?\.bz2`)
 	MultistreamIndexPattern = regexp.MustCompile(`enwiki-(\d+)-pages-articles-multistream-index(\d*)\.txt(?:-p(\d+)p(\d+))?\.bz2`)
+
+	WikidataPrefix = `wikidata`
+	// WikidataPattern matches wikidata-20240701-all.json.bz2
+	WikidataPattern = regexp.MustCompile(`wikidata-(\d+)-all\.json\.bz2`)
 )
 
 func runCmd(cmd *cobra.Command, args []string) error {
@@ -57,6 +62,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	if !filepath.IsAbs(workspacePath) {
 		workingDirectory, err2 := os.Getwd()
 		if err2 != nil {
@@ -72,6 +78,10 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	}
 	r := workflows.Runner{Config: cfg}
 
+	return ingestEnwiki(cmd, args, workspacePath, r)
+}
+
+func ingestEnwiki(cmd *cobra.Command, args []string, workspacePath string, r workflows.Runner) error {
 	// enwiki-20240701-pages-articles-multistream.xml.bz2
 	// enwiki-20240801-pages-articles-multistream1.xml-p1p41242.bz2
 	articlesPath := args[0]
@@ -115,7 +125,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	corpusPath := filepath.Join(workspacePath, corpusName)
-	err = os.MkdirAll(corpusPath, os.ModePerm)
+	err := os.MkdirAll(corpusPath, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("%w: could not create corpus directory: %w", ErrExtract, err)
 	}
@@ -126,8 +136,6 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrExtract, err)
 	}
-
-	runner := jobs.NewRunner()
 
 	ctx, cancel := context.WithCancelCause(cmd.Context())
 
@@ -158,6 +166,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		}
 	}()
 
+	runner := jobs.NewRunner()
 	sinkWork := jobs.Reduce(jobs.WorkBuffer, pages, db.WriteProto[protos.ID](outDB))
 	sinkWg := runner.Run(ctx, cancel, sinkWork)
 	sinkWg.Wait()
@@ -177,7 +186,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("closing ingested articles database: %w", err)
 	}
 
-	err = r.RunCorpusWorkflow(cmd, corpusName, config.PostIngestWorkflow)
+	err = r.RunWorkflow(cmd, config.PostIngestWorkflow, corpusName)
 	if err != nil && !errors.Is(err, workflows.ErrWorkflowNotExist) {
 		return err
 	}

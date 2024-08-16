@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/willbeason/wikipedia/pkg/config"
+
 	"github.com/dgraph-io/badger/v3"
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/db"
@@ -36,10 +38,22 @@ var ErrClean = errors.New("unable to run article cleaning")
 func runCmd(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 
-	return Clean(cmd, args[0], args[1], args[2])
+	cfg := &config.Clean{
+		In:  args[1],
+		Out: args[2],
+	}
+
+	return Clean(cmd, cfg, args[0])
 }
 
-func Clean(cmd *cobra.Command, corpusName, articlesDir, outDir string) error {
+func Clean(cmd *cobra.Command, cfg *config.Clean, corpusNames ...string) error {
+	if len(corpusNames) != 1 {
+		return fmt.Errorf("%w: must have exactly one corpus but got %+v", ErrClean, corpusNames)
+	}
+	corpusName := corpusNames[0]
+
+	articlesDir := cfg.In
+	outDir := cfg.Out
 	fmt.Printf("Cleaning corpus %q directory %q and writing to %q\n",
 		corpusName, articlesDir, outDir)
 
@@ -62,7 +76,7 @@ func Clean(cmd *cobra.Command, corpusName, articlesDir, outDir string) error {
 
 	ctx, cancel := context.WithCancelCause(cmd.Context())
 
-	source := pages.StreamDB(articlesDir, parallel)
+	source := pages.StreamDB[documents.Page](articlesDir, parallel)
 
 	docs, err := source(ctx, cancel)
 	if err != nil {

@@ -6,9 +6,12 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func ReadPages(pages chan<- *Page) func([]byte) error {
+func ReadPages[T any, PT interface {
+	*T
+	proto.Message
+}](pages chan<- PT) func([]byte) error {
 	return func(bytes []byte) error {
-		page := &Page{}
+		var page PT = new(T)
 
 		err := proto.Unmarshal(bytes, page)
 		if err != nil {

@@ -4,9 +4,12 @@ import (
 	"errors"
 	"fmt"
 
+	gender_frequency "github.com/willbeason/wikipedia/pkg/analysis/gender-frequency"
+
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/clean"
 	"github.com/willbeason/wikipedia/pkg/config"
+	ingest_wikidata "github.com/willbeason/wikipedia/pkg/ingest-wikidata"
 	"github.com/willbeason/wikipedia/pkg/links"
 	title_index "github.com/willbeason/wikipedia/pkg/title-index"
 )
@@ -21,12 +24,7 @@ type Runner struct {
 	Config *config.Config
 }
 
-func (r *Runner) RunCorpusWorkflow(cmd *cobra.Command, corpusName, workflowName string) error {
-	if corpusName == "" {
-		return fmt.Errorf("%w, unable to run workflow %q: corpusName must be non-empty",
-			ErrWorkflow, workflowName)
-	}
-
+func (r *Runner) RunWorkflow(cmd *cobra.Command, workflowName string, corpusNames ...string) error {
 	workflow, exists := r.Config.Workflows[workflowName]
 	if !exists {
 		return fmt.Errorf("%w: %q",
@@ -34,7 +32,7 @@ func (r *Runner) RunCorpusWorkflow(cmd *cobra.Command, corpusName, workflowName 
 	}
 
 	for _, jobName := range workflow {
-		err := r.RunCorpusJob(cmd, corpusName, jobName)
+		err := r.RunJob(cmd, jobName, corpusNames...)
 		if err != nil {
 			return fmt.Errorf("running job %q in workflow %q: %w",
 				jobName, workflowName, err)
@@ -44,12 +42,7 @@ func (r *Runner) RunCorpusWorkflow(cmd *cobra.Command, corpusName, workflowName 
 	return nil
 }
 
-func (r *Runner) RunCorpusJob(cmd *cobra.Command, corpusName, jobName string) error {
-	if corpusName == "" {
-		return fmt.Errorf("%w, unable to run job %q: corpusName must be non-empty",
-			ErrWorkflow, jobName)
-	}
-
+func (r *Runner) RunJob(cmd *cobra.Command, jobName string, args ...string) error {
 	job, exists := r.Config.Jobs[jobName]
 	if !exists {
 		return fmt.Errorf("%w: job %q does not exist",
@@ -66,21 +59,36 @@ func (r *Runner) RunCorpusJob(cmd *cobra.Command, corpusName, jobName string) er
 			return err
 		}
 
-		return clean.Clean(cmd, corpusName, cleanCfg.In, cleanCfg.Out)
+		return clean.Clean(cmd, cleanCfg, args...)
+
+	case "gender-frequency":
+		cfg, err := config.UnmarshallJob[config.GenderFrequency](job)
+		if err != nil {
+			return err
+		}
+
+		return gender_frequency.GenderFrequency(cmd, cfg, args...)
 	case "links":
 		linksCfg, err := config.UnmarshallJob[config.Links](job)
 		if err != nil {
 			return err
 		}
 
-		return links.Links(cmd, corpusName, linksCfg.In, linksCfg.Index, linksCfg.Out)
+		return links.Links(cmd, linksCfg, args...)
 	case "title-index":
 		titleCfg, err := config.UnmarshallJob[config.TitleIndex](job)
 		if err != nil {
 			return err
 		}
 
-		return title_index.TitleIndex(cmd, corpusName, titleCfg.In, titleCfg.Out)
+		return title_index.TitleIndex(cmd, titleCfg, args...)
+	case "ingest-wikidata":
+		wikidataCfg, err := config.UnmarshallJob[config.IngestWikidata](job)
+		if err != nil {
+			return err
+		}
+
+		return ingest_wikidata.IngestWikidata(cmd, wikidataCfg, args...)
 	default:
 		return fmt.Errorf("%w: job %q has unknown subCommand %q",
 			config.ErrLoad, jobName, job.SubCommand)

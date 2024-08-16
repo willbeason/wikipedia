@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/willbeason/wikipedia/pkg/config"
+
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/article"
 	"github.com/willbeason/wikipedia/pkg/documents"
@@ -30,10 +32,22 @@ func Cmd() *cobra.Command {
 func runCmd(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 
-	return Links(cmd, args[0], args[1], args[2], args[3])
+	cfg := &config.Links{
+		In:    args[1],
+		Index: args[2],
+		Out:   args[3],
+	}
+
+	return Links(cmd, cfg, args[0])
 }
 
-func Links(cmd *cobra.Command, corpusName, articlesDir, titleIndexPath, outFile string) error {
+func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
+	if len(corpusNames) != 1 {
+		return fmt.Errorf("%w: must have exactly one corpus but got %+v", ErrLinks, corpusNames)
+	}
+	corpusName := corpusNames[0]
+	articlesDir := cfg.In
+	outFile := cfg.Out
 	fmt.Printf("Creating link network for corpus %q from directory %q and writing to %q\n",
 		corpusName, articlesDir, outFile)
 
@@ -49,9 +63,9 @@ func Links(cmd *cobra.Command, corpusName, articlesDir, titleIndexPath, outFile 
 
 	articlesDir = filepath.Join(workspace, corpusName, articlesDir)
 	outFile = filepath.Join(workspace, corpusName, outFile)
-	titleIndexPath = filepath.Join(workspace, corpusName, titleIndexPath)
+	titleIndexPath := filepath.Join(workspace, corpusName, cfg.Index)
 
-	source := pages.StreamDB(articlesDir, parallel)
+	source := pages.StreamDB[documents.Page](articlesDir, parallel)
 
 	ctx, cancel := context.WithCancelCause(cmd.Context())
 	ps, err := source(ctx, cancel)

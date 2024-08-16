@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+option go_package = "pkg/entities";
+
+message Entity {
+  // id is the unique Wikipedia article identifier. Persists across article title changes.
+  // Not identical to the wikidata ID.
+  uint32 id = 1;
+  string wikidata_id = 2;
+  map<string,SiteLink> sitelinks = 3;
+  map<string,Claims> claims = 4;
+}
+
+message SiteLink {
+  string site = 1;
+  string title = 2;
+  string url = 3;
+}
+
+message Claims {
+  repeated Claim claim = 1;
+}
+
+message Claim {
+  string property = 1;
+  string value = 2;
+  string rank = 3;
+}

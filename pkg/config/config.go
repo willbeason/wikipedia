@@ -12,6 +12,7 @@ import (
 const (
 	Filename           = "config.yaml"
 	ArticlesDir        = "articles"
+	WikidataDir        = "wikidata"
 	PostIngestWorkflow = "post-ingest"
 )
 

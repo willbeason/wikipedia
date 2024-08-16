@@ -50,7 +50,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 	inDB := args[0]
 
-	source := pages.StreamDB(inDB, parallel)
+	source := pages.StreamDB[documents.Page](inDB, parallel)
 
 	ctx, cancel := context.WithCancelCause(cmd.Context())
 
@@ -105,7 +105,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	network := make(map[uint32][]uint32)
 	networkMtx := sync.Mutex{}
 
-	source2 := pages.StreamDB(inDB, parallel)
+	source2 := pages.StreamDB[documents.Page](inDB, parallel)
 	docs2, err := source2(ctx, cancel)
 	if err != nil {
 		return err

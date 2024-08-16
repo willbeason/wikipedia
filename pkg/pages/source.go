@@ -6,20 +6,28 @@ import (
 	"math"
 	"sync"
 
+	"google.golang.org/protobuf/proto"
+
 	"github.com/willbeason/wikipedia/pkg/db"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/jobs"
 )
 
-type Source func(ctx context.Context, cancel context.CancelCauseFunc) (<-chan *documents.Page, error)
+type Source[T any, PT interface {
+	*T
+	proto.Message
+}] func(ctx context.Context, cancel context.CancelCauseFunc) (<-chan PT, error)
 
-func StreamDB(
+func StreamDB[T any, PT interface {
+	*T
+	proto.Message
+}](
 	inDBPath string,
 	parallel int,
-) Source {
-	return func(ctx context.Context, cancel context.CancelCauseFunc) (<-chan *documents.Page, error) {
+) Source[T, PT] {
+	return func(ctx context.Context, cancel context.CancelCauseFunc) (<-chan PT, error) {
 		inDB := db.NewRunner(inDBPath, parallel)
-		pages := make(chan *documents.Page, jobs.WorkBuffer)
+		pages := make(chan PT, jobs.WorkBuffer)
 
 		wg, err := inDB.Process(ctx, cancel, documents.ReadPages(pages))
 		if err != nil {
@@ -35,19 +43,22 @@ func StreamDB(
 	}
 }
 
-func StreamDBKeys(
+func StreamDBKeys[T any, PT interface {
+	*T
+	proto.Message
+}](
 	inDBPath string,
 	parallel int,
 	keys []uint,
-) Source {
-	return func(ctx context.Context, cancel context.CancelCauseFunc) (<-chan *documents.Page, error) {
+) Source[T, PT] {
+	return func(ctx context.Context, cancel context.CancelCauseFunc) (<-chan PT, error) {
 		var (
 			wg  *sync.WaitGroup
 			err error
 		)
 
 		inDB := db.NewRunner(inDBPath, parallel)
-		pages := make(chan *documents.Page, jobs.WorkBuffer)
+		pages := make(chan PT, jobs.WorkBuffer)
 
 		wg, err = inDB.ProcessIDs(ctx, cancel, documents.ReadPages(pages), toUint32Chan(keys))
 		if err != nil {

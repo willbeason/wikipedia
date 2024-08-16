@@ -23,8 +23,7 @@ func (r *Runner) Process(
 	dbOpts := badger.
 		DefaultOptions(r.path).
 		WithLoggingLevel(badger.WARNING).
-		WithNumGoroutines(r.parallel).
-		WithReadOnly(true)
+		WithNumGoroutines(r.parallel)
 
 	db, err := badger.Open(dbOpts)
 	if err != nil {

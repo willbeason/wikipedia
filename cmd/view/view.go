@@ -85,10 +85,10 @@ func runCmd(cmd *cobra.Command, args []string) error {
 
 	var source func(ctx context.Context, cancel context.CancelCauseFunc) (<-chan *documents.Page, error)
 	if len(pageIDs) == 0 {
-		source = pages.StreamDB(inDB, parallel)
+		source = pages.StreamDB[documents.Page](inDB, parallel)
 	} else {
 		fmt.Println("Page IDs", pageIDs)
-		source = pages.StreamDBKeys(inDB, parallel, pageIDs)
+		source = pages.StreamDBKeys[documents.Page](inDB, parallel, pageIDs)
 	}
 
 	runner := jobs.NewRunner()

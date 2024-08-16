@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/willbeason/wikipedia/pkg/ingest-wikidata"
+
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/cmd/ingest"
 	"github.com/willbeason/wikipedia/pkg/analysis"
@@ -47,6 +49,7 @@ func mainCmd() *cobra.Command {
 	cmd.AddCommand(clean.Cmd())
 	cmd.AddCommand(title_index.Cmd())
 	cmd.AddCommand(analysis.RenamedArticlesCmd())
+	cmd.AddCommand(ingest_wikidata.Cmd())
 
 	flags.Parallel(cmd)
 	flags.Workspace(cmd)
@@ -56,8 +59,8 @@ func mainCmd() *cobra.Command {
 
 func runCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Args:    cobra.RangeArgs(1, 2),
-		Use:     `run corpus_name job_name`,
+		Args:    cobra.RangeArgs(1, 3),
+		Use:     `run job_name corpus_name...`,
 		Short:   `runs a specific wikopticon job in a corpus`,
 		RunE:    runRunE,
 		Version: Version,
@@ -81,14 +84,9 @@ func runRunE(cmd *cobra.Command, args []string) error {
 	r := workflows.Runner{Config: cfg}
 
 	toRun := args[0]
-	var corpusName string
-	if len(args) > 1 {
-		corpusName = args[1]
-	}
+	corpusNames := args[1:]
 
-	if corpusName != "" {
-		err = r.RunCorpusWorkflow(cmd, corpusName, toRun)
-	}
+	err = r.RunWorkflow(cmd, toRun, corpusNames...)
 	if !errors.Is(err, workflows.ErrWorkflowNotExist) {
 		return err
 	} else if err == nil {
@@ -96,5 +94,5 @@ func runRunE(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	return r.RunCorpusJob(cmd, corpusName, toRun)
+	return r.RunJob(cmd, toRun, corpusNames...)
 }

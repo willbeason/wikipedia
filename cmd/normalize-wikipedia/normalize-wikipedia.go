@@ -55,7 +55,7 @@ func runCmd(cmd *cobra.Command, _ []string) error {
 
 	ctx, cancel := context.WithCancelCause(cmd.Context())
 
-	source := pages.StreamDB(inDB, parallel)
+	source := pages.StreamDB[documents.Page](inDB, parallel)
 	docs, err := source(ctx, cancel)
 	if err != nil {
 		return err

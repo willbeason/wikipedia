@@ -92,7 +92,7 @@ func runCmd(cmd *cobra.Command, _ []string) error {
 			Dictionary: ngramDictionary,
 		}
 
-		source := pages.StreamDB(inDB, parallel)
+		source := pages.StreamDB[documents.Page](inDB, parallel)
 		docs, err2 := source(ctx, cancel)
 		if err2 != nil {
 			return err2
