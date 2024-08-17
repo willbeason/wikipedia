@@ -167,7 +167,7 @@ func ingestEnwiki(cmd *cobra.Command, args []string, workspacePath string, r wor
 	}()
 
 	runner := jobs.NewRunner()
-	sinkWork := jobs.Reduce(jobs.WorkBuffer, pages, db.WriteProto[protos.ID](outDB))
+	sinkWork := jobs.Reduce(ctx, jobs.WorkBuffer, pages, db.WriteProto[protos.ID](outDB))
 	sinkWg := runner.Run(ctx, cancel, sinkWork)
 	sinkWg.Wait()
 

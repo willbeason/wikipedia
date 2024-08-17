@@ -72,7 +72,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	idMapWork := jobs.Reduce(
+	idMapWork := jobs.Reduce(ctx,
 		jobs.WorkBuffer,
 		docs,
 		addPageToGenderMap(checker, &resultMtx, idMap, titleMap, biographies, genders),
@@ -111,7 +111,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	networkWork := jobs.Reduce(jobs.WorkBuffer, docs2, addToNetwork(idMap, &networkMtx, network))
+	networkWork := jobs.Reduce(ctx, jobs.WorkBuffer, docs2, addToNetwork(idMap, &networkMtx, network))
 
 	networkWg := runner.Run(ctx, cancel, networkWork)
 	networkWg.Wait()

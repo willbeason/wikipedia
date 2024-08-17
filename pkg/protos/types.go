@@ -2,7 +2,6 @@ package protos
 
 import (
 	"context"
-	"sync"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -15,4 +14,14 @@ type ID interface {
 	ID() uint32
 }
 
-type Sink func(context.Context, <-chan ID, chan<- error) (*sync.WaitGroup, error)
+type Proto[T any] interface {
+	*T
+	proto.Message
+}
+
+type Sink[IN any, PIN Proto[IN], OUT any] func(
+	context.Context,
+	context.CancelCauseFunc,
+	<-chan PIN,
+	chan<- error,
+) (<-chan OUT, error)

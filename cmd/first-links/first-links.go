@@ -68,7 +68,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	idMapWork := jobs.Reduce(jobs.WorkBuffer, docs, idTitleFn)
+	idMapWork := jobs.Reduce(ctx, jobs.WorkBuffer, docs, idTitleFn)
 
 	runner := jobs.NewRunner()
 	idMapWg := runner.Run(ctx, cancel, idMapWork)
@@ -87,7 +87,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	networkWork := jobs.Reduce(jobs.WorkBuffer, docs2, addPageToNetwork(idMap, &networkMtx, network))
+	networkWork := jobs.Reduce(ctx, jobs.WorkBuffer, docs2, addPageToNetwork(idMap, &networkMtx, network))
 
 	networkWg := runner.Run(ctx, cancel, networkWork)
 	networkWg.Wait()

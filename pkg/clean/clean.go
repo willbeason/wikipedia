@@ -96,7 +96,7 @@ func Clean(cmd *cobra.Command, cfg *config.Clean, corpusNames ...string) error {
 		return err
 	}
 
-	sinkWork = jobs.Reduce(jobs.WorkBuffer, cleanedChannel, db.WriteProto[*documents.Page](outDB))
+	sinkWork = jobs.Reduce(ctx, jobs.WorkBuffer, cleanedChannel, db.WriteProto[*documents.Page](outDB))
 
 	runner := jobs.NewRunner()
 	cleanWg := runner.Run(ctx, cancel, cleanWork)

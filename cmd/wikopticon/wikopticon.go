@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime/pprof"
 
 	"github.com/willbeason/wikipedia/pkg/ingest-wikidata"
 
@@ -66,10 +67,25 @@ func runCmd() *cobra.Command {
 		Version: Version,
 	}
 
+	cmd.Flags().String("cpuprofile", "", "write cpu profile to file")
+
 	return cmd
 }
 
 func runRunE(cmd *cobra.Command, args []string) error {
+	cpuprofile, _ := cmd.Flags().GetString("cpuprofile")
+	if cpuprofile != "" {
+		f, err := os.Create(cpuprofile)
+		if err != nil {
+			return err
+		}
+		err = pprof.StartCPUProfile(f)
+		if err != nil {
+			return err
+		}
+		defer pprof.StopCPUProfile()
+	}
+
 	cmd.SilenceUsage = true
 
 	workspacePath, err := flags.GetWorkspacePath(cmd)

@@ -6,22 +6,16 @@ import (
 	"math"
 	"sync"
 
-	"google.golang.org/protobuf/proto"
+	"github.com/willbeason/wikipedia/pkg/protos"
 
 	"github.com/willbeason/wikipedia/pkg/db"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/jobs"
 )
 
-type Source[T any, PT interface {
-	*T
-	proto.Message
-}] func(ctx context.Context, cancel context.CancelCauseFunc) (<-chan PT, error)
+type Source[T any, PT protos.Proto[T]] func(ctx context.Context, cancel context.CancelCauseFunc) (<-chan PT, error)
 
-func StreamDB[T any, PT interface {
-	*T
-	proto.Message
-}](
+func StreamDB[T any, PT protos.Proto[T]](
 	inDBPath string,
 	parallel int,
 ) Source[T, PT] {
@@ -43,10 +37,7 @@ func StreamDB[T any, PT interface {
 	}
 }
 
-func StreamDBKeys[T any, PT interface {
-	*T
-	proto.Message
-}](
+func StreamDBKeys[T any, PT protos.Proto[T]](
 	inDBPath string,
 	parallel int,
 	keys []uint,

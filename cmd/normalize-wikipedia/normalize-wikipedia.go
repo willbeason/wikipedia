@@ -69,7 +69,7 @@ func runCmd(cmd *cobra.Command, _ []string) error {
 	runner := jobs.NewRunner()
 	cleanWg := runner.Run(ctx, cancel, cleanWork)
 
-	sinkWork := jobs.Reduce(jobs.WorkBuffer, cleanedChannel, db.WriteProto[protos.ID](outDB))
+	sinkWork := jobs.Reduce(ctx, jobs.WorkBuffer, cleanedChannel, db.WriteProto[protos.ID](outDB))
 	sinkWg := runner.Run(ctx, cancel, sinkWork)
 
 	cleanWg.Wait()

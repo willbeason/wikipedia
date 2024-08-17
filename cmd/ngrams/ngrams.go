@@ -131,7 +131,7 @@ func runCmd(cmd *cobra.Command, _ []string) error {
 		}
 		knownNgramsMtx := sync.Mutex{}
 
-		frequencyMapWork := jobs.Reduce(jobs.WorkBuffer, countsChanel, func(m map[string]uint32) error {
+		frequencyMapWork := jobs.Reduce(ctx, jobs.WorkBuffer, countsChanel, func(m map[string]uint32) error {
 			knownNgramsMtx.Lock()
 			knownNgrams.Add(m)
 			knownNgramsMtx.Unlock()

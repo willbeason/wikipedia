@@ -15,10 +15,7 @@ var ErrUnsupportedProtoExtension = errors.New("unsupported proto extension")
 
 // Read reads a protocol buffer stored in file to a protocol buffer of type OUT.
 // OUT must be a type whose pointer receiver is a proto.Message.
-func Read[OUT any, POUT interface {
-	*OUT
-	proto.Message
-}](file string) (*OUT, error) {
+func Read[OUT any, POUT Proto[OUT]](file string) (*OUT, error) {
 	var out POUT = new(OUT)
 
 	bytes, err := os.ReadFile(file)

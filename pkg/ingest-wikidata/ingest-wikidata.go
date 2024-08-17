@@ -145,7 +145,7 @@ func IngestWikidata(cmd *cobra.Command, wikidataCfg *config.IngestWikidata, args
 	}()
 
 	runner := jobs.NewRunner()
-	sinkWork := jobs.Reduce(jobs.WorkBuffer, parsedEntities, db.WriteProto[protos.ID](outDB))
+	sinkWork := jobs.Reduce(ctx, jobs.WorkBuffer, parsedEntities, db.WriteProto[protos.ID](outDB))
 	sinkWg := runner.Run(ctx, cancel, sinkWork)
 	sinkWg.Wait()
 

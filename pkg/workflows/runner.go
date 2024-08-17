@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	gender_frequency "github.com/willbeason/wikipedia/pkg/analysis/gender-frequency"
+	gender_frequency "github.com/willbeason/wikipedia/pkg/analysis/gender"
 
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/clean"

@@ -153,14 +153,19 @@ func ForEach[FROM any](buffer int, in <-chan FROM, fn func(FROM) error) WorkQueu
 }
 
 // Reduce consumes a channel.
-func Reduce[T any](buffer int, in <-chan T, fn func(T) error) WorkQueue {
+func Reduce[IN any](ctx context.Context, buffer int, in <-chan IN, fn func(IN) error) WorkQueue {
 	work := make(chan Work, buffer)
 
 	go func() {
 		for i := range in {
-			x := i
-			work <- func() error {
-				return fn(x)
+			select {
+			case <-ctx.Done():
+				break
+			default:
+				x := i
+				work <- func() error {
+					return fn(x)
+				}
 			}
 		}
 
@@ -168,4 +173,82 @@ func Reduce[T any](buffer int, in <-chan T, fn func(T) error) WorkQueue {
 	}()
 
 	return work
+}
+
+func NewMap[K comparable, V any]() map[K]V {
+	return make(map[K]V)
+}
+
+// MergeInto merges KV pairs from fromMap into intoMap. Assumes sets of keys are disjoint.
+func MergeInto[K comparable, V any](intoMap map[K]V, fromMap map[K]V) (map[K]V, error) {
+	for k, v := range fromMap {
+		intoMap[k] = v
+	}
+
+	return intoMap, nil
+}
+
+func Reduce2[IN any, OUT any](
+	ctx context.Context,
+	cancel context.CancelCauseFunc,
+	parallel int,
+	buffer int,
+	in <-chan IN,
+	newOut func() OUT,
+	reduceIn func(OUT, IN) error,
+	reduceOut func(OUT, OUT) (OUT, error),
+) <-chan OUT {
+	partialOuts := make(chan OUT, buffer)
+	partialOutWg := &sync.WaitGroup{}
+
+	for range parallel {
+		partialOutWg.Add(1)
+
+		go func() {
+			partialOut := newOut()
+
+			for i := range in {
+				select {
+				case <-ctx.Done():
+					break
+				default:
+					err := reduceIn(partialOut, i)
+					if err != nil {
+						cancel(err)
+					}
+				}
+			}
+
+			partialOuts <- partialOut
+			partialOutWg.Done()
+		}()
+	}
+
+	go func() {
+		partialOutWg.Wait()
+		close(partialOuts)
+	}()
+
+	out := make(chan OUT)
+
+	go func() {
+		finalOut := newOut()
+		for partialOut := range partialOuts {
+			select {
+			case <-ctx.Done():
+				break
+			default:
+				var err error
+				finalOut, err = reduceOut(finalOut, partialOut)
+				if err != nil {
+					cancel(err)
+				}
+			}
+		}
+
+		out <- finalOut
+		close(out)
+	}()
+
+	return out
 }
