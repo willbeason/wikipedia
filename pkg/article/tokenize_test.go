@@ -234,7 +234,7 @@ func TestLinks_RealARticles(t *testing.T) {
 
 			wikitext := article.UnparsedText(tc.wikitext)
 			gotParse := article.Tokenize(wikitext)
-			gotLinks := article.ToLinkTargets(gotParse)
+			gotLinks := article.ToLinkTargets(gotParse, nil)
 
 			diff := cmp.Diff(gotLinks, tc.want)
 			if diff != "" {

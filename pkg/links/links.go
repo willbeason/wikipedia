@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/article"
@@ -77,7 +78,12 @@ func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
 		return err
 	}
 
-	linksChannel := makeLinks((*titleIndex).Titles, ps)
+	ignoredSections := make(map[string]bool)
+	for _, s := range cfg.IgnoredSections {
+		ignoredSections[s] = true
+	}
+
+	linksChannel := makeLinks((*titleIndex).Titles, ignoredSections, cfg.IgnoreCategories, ps)
 	links := <-linksChannel
 
 	err = protos.Write(outFile, links)
@@ -88,7 +94,7 @@ func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
 	return nil
 }
 
-func makeLinks(titleIndex map[string]uint32, pages <-chan *documents.Page) <-chan *documents.LinkIndex {
+func makeLinks(titleIndex map[string]uint32, ignoredSections map[string]bool, ignoreCategories bool, pages <-chan *documents.Page) <-chan *documents.LinkIndex {
 	results := make(chan *documents.LinkIndex)
 
 	go func() {
@@ -100,16 +106,19 @@ func makeLinks(titleIndex map[string]uint32, pages <-chan *documents.Page) <-cha
 
 			links := &documents.Links{}
 
-			for _, token := range tokens {
-				switch t := token.(type) {
-				case article.Link:
-					id, found := titleIndex[t.Target.Render()]
-					if !found {
+			for _, link := range article.ToLinkTargets(tokens, ignoredSections) {
+				if ignoreCategories {
+					if strings.HasPrefix(link, "Category:") {
 						continue
 					}
-
-					links.Links = append(links.Links, id)
 				}
+
+				id, found := titleIndex[link]
+				if !found {
+					continue
+				}
+
+				links.Links = append(links.Links, id)
 			}
 
 			result.Articles[page.Id] = links

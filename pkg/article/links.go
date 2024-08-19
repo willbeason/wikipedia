@@ -96,15 +96,18 @@ func ParseLinkFile(target string, args ...string) Token {
 	return result
 }
 
-func ToLinkTargets(tokens []Token) []string {
+func ToLinkTargets(tokens []Token, ignoredSections map[string]bool) []string {
 	var result []string
 
 	for _, token := range tokens {
 		switch l := token.(type) {
 		case Link:
-			result = append(result, string(l.Target))
+			result = append(result, l.Target.Render())
 		case Section:
-			result = append(result, ToLinkTargets(l.Text)...)
+			if ignoredSections[l.Header.Render()] {
+				continue
+			}
+			result = append(result, ToLinkTargets(l.Text, ignoredSections)...)
 		}
 	}
 
