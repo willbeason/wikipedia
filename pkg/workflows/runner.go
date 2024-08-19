@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	gender_frequency "github.com/willbeason/wikipedia/pkg/analysis/gender"
+	"github.com/willbeason/wikipedia/pkg/analysis/gender"
 
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/clean"
@@ -67,7 +67,14 @@ func (r *Runner) RunJob(cmd *cobra.Command, jobName string, args ...string) erro
 			return err
 		}
 
-		return gender_frequency.GenderFrequency(cmd, cfg, args...)
+		return gender.Frequency(cmd, cfg, args...)
+	case "gender-comparison":
+		cfg, err := config.UnmarshallJob[config.GenderComparison](job)
+		if err != nil {
+			return err
+		}
+
+		return gender.Comparison(cmd, cfg, args...)
 	case "links":
 		linksCfg, err := config.UnmarshallJob[config.Links](job)
 		if err != nil {

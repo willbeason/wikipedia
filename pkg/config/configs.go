@@ -54,3 +54,8 @@ type GenderFrequency struct {
 	// InPath is the filepath to the extracted Wikidata.
 	In string `yaml:"in"`
 }
+
+type GenderComparison struct {
+	// InPath is the filepath to the extracted Wikidata.
+	In string `yaml:"in"`
+}

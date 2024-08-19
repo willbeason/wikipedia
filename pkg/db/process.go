@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/dgraph-io/badger/v3/pb"
+
 	"github.com/dgraph-io/badger/v3"
 	"github.com/dgraph-io/ristretto/z"
 )
@@ -30,32 +32,54 @@ func (r *Runner) Process(
 		return nil, fmt.Errorf("opening Badger DB %q: %w", r.path, err)
 	}
 
-	wg := sync.WaitGroup{}
-	wg.Add(1)
+	lists := make(chan *pb.KVList)
 
 	go func() {
 		defer func() {
+			close(lists)
 			err2 := db.Close()
 			if err2 != nil {
 				cancel(err2)
 			}
-
-			wg.Done()
 		}()
 
-		err = r.process(ctx, db, process)
+		err = r.process(ctx, db, lists)
 		if err != nil {
 			cancel(err)
 		}
 	}()
 
+	wg := sync.WaitGroup{}
+	for range r.parallel {
+		wg.Add(1)
+		go func() {
+			for list := range lists {
+				select {
+				case <-ctx.Done():
+					break
+				default:
+					kvs := list.GetKv()
+					for _, kv := range kvs {
+						value := kv.GetValue()
+
+						processErr := process(value)
+						if processErr != nil {
+							cancel(processErr)
+						}
+					}
+				}
+			}
+			wg.Done()
+		}()
+	}
+
 	return &wg, nil
 }
 
-func (r *Runner) process(ctx context.Context, db *badger.DB, process Process) error {
+func (r *Runner) process(ctx context.Context, db *badger.DB, lists chan<- *pb.KVList) error {
 	stream := db.NewStream()
 	stream.NumGo = r.parallel
-	stream.Send = send(process)
+	stream.Send = send(lists)
 
 	err := stream.Orchestrate(ctx)
 	if err != nil {
@@ -65,22 +89,13 @@ func (r *Runner) process(ctx context.Context, db *badger.DB, process Process) er
 	return nil
 }
 
-func send(process Process) func(buf *z.Buffer) error {
+func send(lists chan<- *pb.KVList) func(buf *z.Buffer) error {
 	return func(buf *z.Buffer) error {
 		list, err := badger.BufferToKVList(buf)
 		if err != nil {
 			return fmt.Errorf("badger.BufferToKVList: %w", err)
 		}
-
-		kvs := list.GetKv()
-		for _, kv := range kvs {
-			value := kv.GetValue()
-
-			err = process(value)
-			if err != nil {
-				return err
-			}
-		}
+		lists <- list
 
 		return nil
 	}

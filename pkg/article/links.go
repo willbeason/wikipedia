@@ -95,3 +95,18 @@ func ParseLinkFile(target string, args ...string) Token {
 
 	return result
 }
+
+func ToLinkTargets(tokens []Token) []string {
+	var result []string
+
+	for _, token := range tokens {
+		switch l := token.(type) {
+		case Link:
+			result = append(result, string(l.Target))
+		case Section:
+			result = append(result, ToLinkTargets(l.Text)...)
+		}
+	}
+
+	return result
+}

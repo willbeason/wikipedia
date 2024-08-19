@@ -9,7 +9,7 @@ import (
 	"github.com/willbeason/wikipedia/pkg/article"
 )
 
-func TestParse(t *testing.T) {
+func TestClean(t *testing.T) {
 	t.Parallel()
 
 	tt := []struct {
@@ -215,7 +215,36 @@ Early Life`,
 	}
 }
 
-func TestTokenize_Noether(t *testing.T) {
+func TestLinks_RealARticles(t *testing.T) {
+	t.Parallel()
+
+	tt := []struct {
+		name     string
+		wikitext string
+		want     []string
+	}{{
+		name:     "Emmy Noether",
+		wikitext: EmmyNoetherBefore,
+		want:     NoetherLinks,
+	}}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			wikitext := article.UnparsedText(tc.wikitext)
+			gotParse := article.Tokenize(wikitext)
+			gotLinks := article.ToLinkTargets(gotParse)
+
+			diff := cmp.Diff(gotLinks, tc.want)
+			if diff != "" {
+				t.Errorf("(-want +got): %v", diff)
+			}
+		})
+	}
+}
+
+func TestClean_RealArticles(t *testing.T) {
 	t.Parallel()
 
 	tt := []struct {

@@ -22,14 +22,14 @@ import (
 
 var ErrGenderFrequency = errors.New("running gender frequency calculation")
 
-const GenderClaim = "P21"
+const Claim = "P21"
 
 type KeyCount struct {
 	Key   string
 	Count int
 }
 
-func GenderFrequency(cmd *cobra.Command, cfg *config.GenderFrequency, corpusNames ...string) error {
+func Frequency(cmd *cobra.Command, cfg *config.GenderFrequency, corpusNames ...string) error {
 	if len(corpusNames) != 1 {
 		return fmt.Errorf("%w: must have exactly one corpus but got %+v", ErrGenderFrequency, corpusNames)
 	}
@@ -119,7 +119,7 @@ func processEntity(entity *entities.Entity) (string, error) {
 		return "", ErrNotHuman
 	}
 
-	genderClaims, hasGenderClaims := entity.Claims[GenderClaim]
+	genderClaims, hasGenderClaims := entity.Claims[Claim]
 	if !hasGenderClaims {
 		return NoClaims, nil
 	}
