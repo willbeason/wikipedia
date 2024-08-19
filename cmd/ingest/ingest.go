@@ -51,7 +51,7 @@ var (
 	MultistreamIndexPattern = regexp.MustCompile(`enwiki-(\d+)-pages-articles-multistream-index(\d*)\.txt(?:-p(\d+)p(\d+))?\.bz2`)
 
 	WikidataPrefix = `wikidata`
-	// WikidataPattern matches wikidata-20240701-all.json.bz2
+	// WikidataPattern matches wikidata-20240701-all.json.bz2.
 	WikidataPattern = regexp.MustCompile(`wikidata-(\d+)-all\.json\.bz2`)
 )
 

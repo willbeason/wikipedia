@@ -15,20 +15,15 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/willbeason/wikipedia/pkg/documents"
-
 	"github.com/dgraph-io/badger/v3"
-	"github.com/willbeason/wikipedia/pkg/db"
-
-	"github.com/willbeason/wikipedia/pkg/entities"
-
-	"github.com/willbeason/wikipedia/pkg/protos"
-
-	"github.com/willbeason/wikipedia/pkg/jobs"
-
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/config"
+	"github.com/willbeason/wikipedia/pkg/db"
+	"github.com/willbeason/wikipedia/pkg/documents"
+	"github.com/willbeason/wikipedia/pkg/entities"
 	"github.com/willbeason/wikipedia/pkg/flags"
+	"github.com/willbeason/wikipedia/pkg/jobs"
+	"github.com/willbeason/wikipedia/pkg/protos"
 )
 
 func Cmd() *cobra.Command {
@@ -46,12 +41,12 @@ var ErrIngestWikidata = errors.New("unable to run wikidata extraction")
 
 var (
 	WikidataPrefix = `wikidata`
-	// WikidataPattern matches wikidata-20240701-all.json.bz2
+	// WikidataPattern matches wikidata-20240701-all.json.bz2.
 	WikidataPattern = regexp.MustCompile(`wikidata-(\d+)-all\.json\.bz2`)
 )
 
 func runCmd(cmd *cobra.Command, args []string) error {
-	//cmd.SilenceUsage = true
+	// cmd.SilenceUsage = true
 	//
 	//workspacePath, err := flags.GetWorkspacePath(cmd)
 	//if err != nil {

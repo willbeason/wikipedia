@@ -3,16 +3,15 @@ package gender
 import (
 	"context"
 
+	"github.com/spf13/cobra"
+	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/entities"
 	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/pages"
-
-	"github.com/spf13/cobra"
-	"github.com/willbeason/wikipedia/pkg/config"
 )
 
 func Comparison(cmd *cobra.Command, cfg *config.GenderComparison, corpusNames ...string) error {
-	//if len(corpusNames) != 2 {
+	// if len(corpusNames) != 2 {
 	//	return fmt.Errorf("%w: must have exactly two corpora but got %+v", ErrGenderFrequency, corpusNames)
 	//}
 	//beforeCorpusName := corpusNames[0]

@@ -1,3 +1,4 @@
+// nolint
 package article_test
 
 const AlbertEinsteinAfter = `

@@ -6,11 +6,10 @@ import (
 	"math"
 	"sync"
 
-	"github.com/willbeason/wikipedia/pkg/protos"
-
 	"github.com/willbeason/wikipedia/pkg/db"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/jobs"
+	"github.com/willbeason/wikipedia/pkg/protos"
 )
 
 type Source[T any, PT protos.Proto[T]] func(ctx context.Context, cancel context.CancelCauseFunc) (<-chan PT, error)

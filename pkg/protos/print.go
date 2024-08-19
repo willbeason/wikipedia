@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"sync"
 
-	"google.golang.org/protobuf/proto"
-
 	"google.golang.org/protobuf/encoding/prototext"
+	"google.golang.org/protobuf/proto"
 )
 
 // PrintProtos prints passed protos as JSON to the stdout.

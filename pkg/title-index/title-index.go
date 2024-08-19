@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/willbeason/wikipedia/pkg/config"
-
 	"github.com/spf13/cobra"
+	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/pages"

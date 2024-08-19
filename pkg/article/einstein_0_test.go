@@ -1,3 +1,4 @@
+// nolint
 package article_test
 
 const AlbertEinsteinBefore = `{{Short description|German-born physicist (1879–1955)}}

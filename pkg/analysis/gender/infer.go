@@ -86,7 +86,7 @@ func Infer(claims []*entities.Claim) string {
 	}
 
 	//// If "eunuch" and exactly one other gender claim, use that one.
-	//delete(claimedGenders, EunuchGender)
+	// delete(claimedGenders, EunuchGender)
 	//if len(claimedGenders) == 1 {
 	//	for k := range claimedGenders {
 	//		return k, nil

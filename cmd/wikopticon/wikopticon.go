@@ -6,14 +6,13 @@ import (
 	"os"
 	"runtime/pprof"
 
-	"github.com/willbeason/wikipedia/pkg/ingest-wikidata"
-
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/cmd/ingest"
 	"github.com/willbeason/wikipedia/pkg/analysis"
 	"github.com/willbeason/wikipedia/pkg/clean"
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/flags"
+	"github.com/willbeason/wikipedia/pkg/ingest-wikidata"
 	"github.com/willbeason/wikipedia/pkg/title-index"
 	"github.com/willbeason/wikipedia/pkg/workflows"
 )

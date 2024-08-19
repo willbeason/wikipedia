@@ -4,9 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/willbeason/wikipedia/pkg/analysis/gender"
-
 	"github.com/spf13/cobra"
+	"github.com/willbeason/wikipedia/pkg/analysis/gender"
 	"github.com/willbeason/wikipedia/pkg/clean"
 	"github.com/willbeason/wikipedia/pkg/config"
 	ingest_wikidata "github.com/willbeason/wikipedia/pkg/ingest-wikidata"

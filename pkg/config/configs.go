@@ -14,7 +14,7 @@ type Clean struct {
 }
 
 type Links struct {
-	// In is the workspace subdirectory from which to clean articles.
+	// In is the workspace subdirectory from which to read articles.
 	In string `yaml:"in"`
 
 	// Index is the filepath to the title index.
@@ -22,6 +22,12 @@ type Links struct {
 
 	// Out is the filepath to store the links index.
 	Out string `yaml:"out"`
+
+	// Links in IgnoredSections are not added to the network.
+	IgnoredSections []string `yaml:"ignored_sections"`
+
+	// If IgnoreCategories is enabled, no Category links are added to the network.
+	IgnoreCategories bool `yaml:"ignore_categories"`
 }
 
 type TitleIndex struct {

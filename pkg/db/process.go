@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/dgraph-io/badger/v3/pb"
-
 	"github.com/dgraph-io/badger/v3"
+	"github.com/dgraph-io/badger/v3/pb"
 	"github.com/dgraph-io/ristretto/z"
 )
 

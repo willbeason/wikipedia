@@ -7,17 +7,13 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/willbeason/wikipedia/pkg/jobs"
-
-	ingest_wikidata "github.com/willbeason/wikipedia/pkg/ingest-wikidata"
-
-	"github.com/willbeason/wikipedia/pkg/flags"
-	"github.com/willbeason/wikipedia/pkg/pages"
-
+	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/entities"
-
-	"github.com/spf13/cobra"
+	"github.com/willbeason/wikipedia/pkg/flags"
+	ingest_wikidata "github.com/willbeason/wikipedia/pkg/ingest-wikidata"
+	"github.com/willbeason/wikipedia/pkg/jobs"
+	"github.com/willbeason/wikipedia/pkg/pages"
 )
 
 var ErrGenderFrequency = errors.New("running gender frequency calculation")
