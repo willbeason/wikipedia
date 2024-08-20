@@ -14,7 +14,7 @@ func Comparison(cmd *cobra.Command, cfg *config.GenderComparison, corpusNames ..
 	// if len(corpusNames) != 2 {
 	//	return fmt.Errorf("%w: must have exactly two corpora but got %+v", ErrGenderFrequency, corpusNames)
 	//}
-	//beforeCorpusName := corpusNames[0]
+	// beforeCorpusName := corpusNames[0]
 	//afterCorpusName := corpusNames[1]
 	//
 	//parallel, err := flags.GetParallel(cmd)

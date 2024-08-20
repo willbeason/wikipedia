@@ -48,7 +48,7 @@ var (
 func runCmd(cmd *cobra.Command, args []string) error {
 	// cmd.SilenceUsage = true
 	//
-	//workspacePath, err := flags.GetWorkspacePath(cmd)
+	// workspacePath, err := flags.GetWorkspacePath(cmd)
 	//if err != nil {
 	//	return err
 	//}

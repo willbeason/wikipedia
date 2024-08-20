@@ -16,8 +16,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/willbeason/wikipedia/pkg/protos"
-
 	"github.com/dgraph-io/badger/v3"
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/config"
@@ -25,6 +23,7 @@ import (
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
+	"github.com/willbeason/wikipedia/pkg/protos"
 	"github.com/willbeason/wikipedia/pkg/workflows"
 )
 

@@ -112,7 +112,7 @@ func ToLinkTargets(tokens []Token, ignoredSections map[string]bool) []string {
 		switch l := token.(type) {
 		case Link:
 			target := l.Target.Render()
-			//if len(target) == 0 {
+			// if len(target) == 0 {
 			//	fmt.Println(n, "/", len(tokens))
 			//	for i, t := range tokens {
 			//		fmt.Printf("%d. %T %q\n", i, t, t.Render())

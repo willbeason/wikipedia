@@ -122,7 +122,6 @@ func makeLinks(parallel int, titleIndex map[string]uint32, redirects *documents.
 			}()
 
 			for page = range pages {
-
 				tokens := article.Tokenize(article.UnparsedText(page.Text))
 
 				links := &documents.Links{}
@@ -148,16 +147,16 @@ func makeLinks(parallel int, titleIndex map[string]uint32, redirects *documents.
 				}
 
 				result.Articles[page.Id] = links
-				if len(links.Links) == 0 {
-					// fmt.Println(page.Title, "has no links")
-					//fmt.Printf("No links in article %q\n", page.Title)
-					//if page.Title == "Nana Fujii" {
-					//	for i, token := range tokens {
-					//		fmt.Printf("%d: %T, %q\n", i, token, token.Render())
-					//	}
-					//	panic("No links in viewed article")
-					//}
-				}
+				// if len(links.Links) == 0 {
+				// fmt.Println(page.Title, "has no links")
+				//fmt.Printf("No links in article %q\n", page.Title)
+				//if page.Title == "Nana Fujii" {
+				//	for i, token := range tokens {
+				//		fmt.Printf("%d: %T, %q\n", i, token, token.Render())
+				//	}
+				//	panic("No links in viewed article")
+				//}
+				//}
 			}
 
 			results <- result

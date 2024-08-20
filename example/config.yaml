@@ -1,0 +1,89 @@
+ingest:
+  # Only read from Article namespace.
+  namespaces: [ 0 ]
+  out: articles
+  outRedirects: redirects.txt
+workflows:
+  post-ingest: [ clean, title-index ]
+jobs:
+  clean:
+    subCommand: clean
+    settings:
+      in: articles
+      out: clean
+  title-index:
+    subCommand: title-index
+    settings:
+      in: articles
+      out: title-index.pb
+  links:
+    subCommand: links
+    settings:
+      in: articles
+      index: title-index.pb
+      out: links.pb
+      ignoredSections:
+        - Articles
+        - External links
+        - Further reading
+        - Notes
+        - Online biographies
+        - References
+        - See also
+        - Sources
+      ignoreCategories: true
+      redirects: redirects.txt
+  ingest-wikidata:
+    subCommand: ingest-wikidata
+    settings:
+      index: title-index.pb
+      instanceOf: # Only store values which are an instanceOf this
+        - Q5 # human
+        - Q28640 # profession
+        - Q12737077 # occupation
+        - Q4164871 # position
+        - Q192581 # job activity
+        - Q48264 # gender identity
+        - Q4369513 # sex of humans
+        - Q6256 # country
+        - Q6266 # nation
+        - Q7275 # state
+        - Q2472587 # people
+        - Q101352 # family name
+        - Q202444 # given name
+        - Q461718 # female given name
+        - Q12308941 # male given name
+        - Q3981665 # unisex given name
+        - Q83076627 # composite given name
+        - Q122068532 # compound given name
+        - Q123905640 # simple given name
+        - Q41710 # ethnic group
+        - Q11197007 # ethnoreligious group
+        - Q25380035 # ethnic community
+        - Q108788952 # ethnic group by residency
+        - Q11862829 # academic discipline
+      requireWikipedia:
+        - Q5
+      claims: # Store all values for these claims
+        - P21 # sex or gender
+        - P27 # country of citizenship
+        - P31 # instance of
+        - P39 # position held
+        - P101 # field of work
+        - P106 # occupation
+        - P172 # ethnic group
+        - P279 # subclass of
+        - P361 # part of
+        - P569 # date of birth
+        - P570 # date of death
+        - P734 # family name
+        - P735 # given name
+      out: wikidata
+  gender-frequency:
+    subCommand: gender-frequency
+    settings:
+      in: wikidata
+  gender-comparison:
+    subCommand: gender-frequency
+    settings:
+      in: wikidata
