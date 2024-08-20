@@ -88,7 +88,9 @@ func Comparison(cmd *cobra.Command, cfg *config.GenderComparison, corpusNames ..
 		return beforeGenderCounts[i].Count > beforeGenderCounts[j].Count
 	})
 	for rank, beforeGenderCount := range beforeGenderCounts {
-		fmt.Printf("%d,%s,%d,%d,%d\n", rank, beforeGenderCount.String, beforeGenderCount.Count, beforeGenderLinkCountsMap[beforeGenderCount.String], genderLinkTargetsMap[beforeGenderCount.String])
+		fmt.Printf("%d,%s,%d,%d,%d\n",
+			rank, beforeGenderCount.String, beforeGenderCount.Count,
+			beforeGenderLinkCountsMap[beforeGenderCount.String], genderLinkTargetsMap[beforeGenderCount.String])
 	}
 
 	beforeSectionCounts := make([]StringCount, 0, len(beforeSectionCountsMap))

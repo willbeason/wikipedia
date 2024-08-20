@@ -46,9 +46,13 @@ func Cmd() *cobra.Command {
 var ErrExtract = errors.New("unable to run extraction")
 
 var (
-	EnwikiPrefix            = `enwiki`
-	MultistreamPattern      = regexp.MustCompile(`enwiki-(\d+)-pages-articles-multistream(\d*)\.xml(?:-p(\d+)p(\d+))?\.bz2`)
-	MultistreamIndexPattern = regexp.MustCompile(`enwiki-(\d+)-pages-articles-multistream-index(\d*)\.txt(?:-p(\d+)p(\d+))?\.bz2`)
+	EnwikiPrefix       = `enwiki`
+	MultistreamPattern = regexp.MustCompile(
+		`enwiki-(\d+)-pages-articles-multistream(\d*)\.xml(?:-p(\d+)p(\d+))?\.bz2`,
+	)
+	MultistreamIndexPattern = regexp.MustCompile(
+		`enwiki-(\d+)-pages-articles-multistream-index(\d*)\.txt(?:-p(\d+)p(\d+))?\.bz2`,
+	)
 
 	WikidataPrefix = `wikidata`
 	// WikidataPattern matches wikidata-20240701-all.json.bz2.
@@ -292,7 +296,12 @@ func extractEndIndices(ctx context.Context, cancel context.CancelCauseFunc, inde
 	return endIndices
 }
 
-func extractArticles(ctx context.Context, cancel context.CancelCauseFunc, repo string, endIndices <-chan int64) <-chan compressedDocument {
+func extractArticles(
+	ctx context.Context,
+	cancel context.CancelCauseFunc,
+	repo string,
+	endIndices <-chan int64,
+) <-chan compressedDocument {
 	// Create a channel of the compressed Wikipedia pages.
 	work := make(chan compressedDocument, jobs.WorkBuffer*100)
 
@@ -382,7 +391,12 @@ func extractPages(
 	return pages, redirects
 }
 
-func extractPagesWorker(namespaces []int, compressed <-chan compressedDocument, redirects chan<- *documents.Redirect, pages chan<- *documents.Page) error {
+func extractPagesWorker(
+	namespaces []int,
+	compressed <-chan compressedDocument,
+	redirects chan<- *documents.Redirect,
+	pages chan<- *documents.Page,
+) error {
 	allowedNamespaces := make(map[documents.Namespace]bool, len(namespaces))
 	for _, ns := range namespaces {
 		allowedNamespaces[documents.Namespace(ns)] = true
@@ -424,7 +438,12 @@ func decompressBz2(compressed []byte) ([]byte, error) {
 	return uncompressed, nil
 }
 
-func decompress(allowedNamespaces map[documents.Namespace]bool, compressed []byte, outRedirects chan<- *documents.Redirect, outPages chan<- *documents.Page) error {
+func decompress(
+	allowedNamespaces map[documents.Namespace]bool,
+	compressed []byte,
+	outRedirects chan<- *documents.Redirect,
+	outPages chan<- *documents.Page,
+) error {
 	uncompressed, err := decompressBz2(compressed)
 	if err != nil {
 		return err

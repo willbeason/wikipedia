@@ -101,7 +101,12 @@ func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
 	return nil
 }
 
-func makeLinks(parallel int, titleIndex map[string]uint32, redirects *documents.Redirects, pages <-chan *documents.Page) <-chan *documents.LinkIndex {
+func makeLinks(
+	parallel int,
+	titleIndex map[string]uint32,
+	redirects *documents.Redirects,
+	pages <-chan *documents.Page,
+) <-chan *documents.LinkIndex {
 	results := make(chan *documents.LinkIndex, jobs.WorkBuffer)
 
 	linksWg := sync.WaitGroup{}

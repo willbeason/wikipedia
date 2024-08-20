@@ -228,7 +228,12 @@ func parseObjects(
 
 var count atomic.Int64
 
-func parseObjectsWorker(cfg *config.IngestWikidata, index *documents.TitleIndex, unparsedObjects <-chan unparsedObject, parsedEntities chan<- protos.ID) error {
+func parseObjectsWorker(
+	cfg *config.IngestWikidata,
+	index *documents.TitleIndex,
+	unparsedObjects <-chan unparsedObject,
+	parsedEntities chan<- protos.ID,
+) error {
 	allowedInstances := make(map[string]bool)
 	for _, instanceOf := range cfg.InstanceOf {
 		allowedInstances[instanceOf] = true
@@ -271,7 +276,13 @@ const (
 	InstanceOf = "P31"
 )
 
-func ParseObject(allowedInstances map[string]bool, requireWikipediaArticle map[string]bool, keepClaims []string, index *documents.TitleIndex, unparsedObj []byte) (*entities.Entity, error) {
+func ParseObject(
+	allowedInstances map[string]bool,
+	requireWikipediaArticle map[string]bool,
+	keepClaims []string,
+	index *documents.TitleIndex,
+	unparsedObj []byte,
+) (*entities.Entity, error) {
 	rawEntity := &Entity{}
 	err := json.Unmarshal(unparsedObj, &rawEntity)
 	if err != nil {

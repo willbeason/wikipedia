@@ -58,7 +58,7 @@ linters:
     - inamedparam
     - interfacebloat
     - intrange
-#    - lll
+    - lll
     - maintidx
     - makezero
     - mirror
