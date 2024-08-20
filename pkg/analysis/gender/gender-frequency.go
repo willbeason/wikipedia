@@ -68,7 +68,7 @@ func Frequency(cmd *cobra.Command, cfg *config.GenderFrequency, corpusNames ...s
 		result[gender]++
 	}
 
-	var counts []KeyCount
+	counts := make([]KeyCount, 0, len(result))
 	for k, v := range result {
 		counts = append(counts, KeyCount{k, v})
 	}

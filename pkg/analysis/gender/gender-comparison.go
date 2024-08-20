@@ -77,7 +77,7 @@ func Comparison(cmd *cobra.Command, cfg *config.GenderComparison, corpusNames ..
 		genderSectionLinkCounts[gender] = sectionLinkCounts
 	}
 
-	var beforeGenderCounts []StringCount
+	beforeGenderCounts := make([]StringCount, 0, len(beforeGenderCountsMap))
 	for gender, count := range beforeGenderCountsMap {
 		beforeGenderCounts = append(beforeGenderCounts, StringCount{
 			String: gender,
@@ -91,7 +91,7 @@ func Comparison(cmd *cobra.Command, cfg *config.GenderComparison, corpusNames ..
 		fmt.Printf("%d,%s,%d,%d,%d\n", rank, beforeGenderCount.String, beforeGenderCount.Count, beforeGenderLinkCountsMap[beforeGenderCount.String], genderLinkTargetsMap[beforeGenderCount.String])
 	}
 
-	var beforeSectionCounts []StringCount
+	beforeSectionCounts := make([]StringCount, 0, len(beforeSectionCountsMap))
 	for gender, count := range beforeSectionCountsMap {
 		beforeSectionCounts = append(beforeSectionCounts, StringCount{
 			String: gender,

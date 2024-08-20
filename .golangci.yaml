@@ -71,7 +71,7 @@ linters:
     - nonamedreturns
     - paralleltest
     - perfsprint
-#    - prealloc
+    - prealloc
     - predeclared
     - reassign
     - tenv

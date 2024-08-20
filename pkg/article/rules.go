@@ -9,16 +9,15 @@ type RuleFn func([]Token) []Token
 
 // ToLiterals converts all unparsed text to LiteralText.
 func ToLiterals(tokens []Token) []Token {
-	var result []Token
+	result := make([]Token, len(tokens))
 
-	for _, token := range tokens {
+	for i, token := range tokens {
 		unparsed, isUnparsed := token.(UnparsedText)
-		if !isUnparsed {
-			result = append(result, token)
-			continue
+		if isUnparsed {
+			result[i] = LiteralText(unparsed)
+		} else {
+			result[i] = token
 		}
-
-		result = append(result, LiteralText(unparsed))
 	}
 
 	return result

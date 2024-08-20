@@ -18,7 +18,7 @@ func ParseReferences(tokens []Token) References {
 }
 
 func MergeReferences(tokens []Token) []Token {
-	var result []Token
+	result := make([]Token, 0, len(tokens))
 
 	lastStartIdx := -1
 
