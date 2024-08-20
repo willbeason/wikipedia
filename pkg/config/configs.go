@@ -69,7 +69,18 @@ type GenderFrequency struct {
 	In string `yaml:"in"`
 }
 
+type GenderIndex struct {
+	// Wikidata is the filepath to the extracted Wikidata.
+	Wikidata string `yaml:"wikidata"`
+
+	// Out is the filepath to write the protobuf containing gender information.
+	Out string `yaml:"out"`
+}
+
 type GenderComparison struct {
-	// InPath is the filepath to the extracted Wikidata.
-	In string `yaml:"in"`
+	// GenderIndex is the filepath to the GenderIndex.
+	GenderIndex string `yaml:"genderIndex"`
+
+	// Links is the filepath to the list of links by article.
+	Links string `yaml:"links"`
 }

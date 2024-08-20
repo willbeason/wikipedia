@@ -74,6 +74,14 @@ func (r *Runner) RunJob(cmd *cobra.Command, jobName string, args ...string) erro
 		}
 
 		return gender.Comparison(cmd, cfg, args...)
+
+	case "gender-index":
+		cfg, err := config.UnmarshallJob[config.GenderIndex](job)
+		if err != nil {
+			return err
+		}
+
+		return gender.Index(cmd, cfg, args...)
 	case "links":
 		linksCfg, err := config.UnmarshallJob[config.Links](job)
 		if err != nil {

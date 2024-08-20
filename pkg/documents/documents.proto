@@ -28,6 +28,10 @@ message TitleIndex {
   map<string, uint32> titles = 1;
 }
 
+message GenderIndex {
+  map<uint32, string> genders = 1;
+}
+
 message PageCategories {
   map<uint32, Categories> pages = 1;
 }

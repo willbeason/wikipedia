@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"runtime/pprof"
 
@@ -15,6 +16,10 @@ import (
 	"github.com/willbeason/wikipedia/pkg/ingest-wikidata"
 	"github.com/willbeason/wikipedia/pkg/title-index"
 	"github.com/willbeason/wikipedia/pkg/workflows"
+)
+
+import (
+	_ "net/http/pprof"
 )
 
 const (
@@ -34,6 +39,8 @@ var (
 )
 
 func mainCmd() *cobra.Command {
+	go http.ListenAndServe("localhost:8080", nil)
+
 	cmd := &cobra.Command{
 		Use:   `wikopticon subcommand`,
 		Short: `Runs.`,

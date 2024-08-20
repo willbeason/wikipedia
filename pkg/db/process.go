@@ -25,7 +25,6 @@ func (r *Runner) Process(
 		DefaultOptions(r.path).
 		WithMetricsEnabled(false).
 		WithLoggingLevel(badger.WARNING).
-		WithNumGoroutines(r.parallel).
 		WithReadOnly(true)
 
 	db, err := badger.Open(dbOpts)
@@ -33,8 +32,7 @@ func (r *Runner) Process(
 		fmt.Printf("Recovering DB %q from crash\n", r.path)
 		// Open/close with not readonly. This allows Badger to replay any logs.
 		dbOpts2 := badger.
-			DefaultOptions(r.path).
-			WithNumGoroutines(r.parallel)
+			DefaultOptions(r.path)
 		db2, err2 := badger.Open(dbOpts2)
 		if err2 != nil {
 			return nil, fmt.Errorf("opening dummy Badger DB %q: %w", r.path, err)
@@ -71,28 +69,33 @@ func (r *Runner) Process(
 	}()
 
 	wg := sync.WaitGroup{}
-	for range r.parallel {
-		wg.Add(1)
-		go func() {
-			for list := range lists {
-				select {
-				case <-ctx.Done():
-					break
-				default:
-					kvs := list.GetKv()
-					for _, kv := range kvs {
-						value := kv.GetValue()
+	wg.Add(1)
+	// While technically threadsafe to parallelize, it does not result in increased performance, only increased memory
+	// usage.
+	go func() {
+		for list := range lists {
+			select {
+			case <-ctx.Done():
+				break
+			default:
+				kvs := list.GetKv()
+				for _, kv := range kvs {
+					value := kv.GetValue()
 
-						processErr := process(value)
-						if processErr != nil {
-							cancel(processErr)
-						}
+					processErr := process(value)
+					if processErr != nil {
+						cancel(processErr)
 					}
 				}
 			}
-			wg.Done()
-		}()
-	}
+			//err = RunGC(db)
+			//if err != nil {
+			//	cancel(err)
+			//	return
+			//}
+		}
+		wg.Done()
+	}()
 
 	return &wg, nil
 }

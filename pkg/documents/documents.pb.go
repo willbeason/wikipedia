@@ -282,6 +282,53 @@ func (x *TitleIndex) GetTitles() map[string]uint32 {
 	return nil
 }
 
+type GenderIndex struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Genders map[uint32]string `protobuf:"bytes,1,rep,name=genders,proto3" json:"genders,omitempty" protobuf_key:"varint,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+}
+
+func (x *GenderIndex) Reset() {
+	*x = GenderIndex{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_documents_documents_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GenderIndex) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenderIndex) ProtoMessage() {}
+
+func (x *GenderIndex) ProtoReflect() protoreflect.Message {
+	mi := &file_documents_documents_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GenderIndex.ProtoReflect.Descriptor instead.
+func (*GenderIndex) Descriptor() ([]byte, []int) {
+	return file_documents_documents_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GenderIndex) GetGenders() map[uint32]string {
+	if x != nil {
+		return x.Genders
+	}
+	return nil
+}
+
 type PageCategories struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -293,7 +340,7 @@ type PageCategories struct {
 func (x *PageCategories) Reset() {
 	*x = PageCategories{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_documents_documents_proto_msgTypes[5]
+		mi := &file_documents_documents_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -306,7 +353,7 @@ func (x *PageCategories) String() string {
 func (*PageCategories) ProtoMessage() {}
 
 func (x *PageCategories) ProtoReflect() protoreflect.Message {
-	mi := &file_documents_documents_proto_msgTypes[5]
+	mi := &file_documents_documents_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -319,7 +366,7 @@ func (x *PageCategories) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PageCategories.ProtoReflect.Descriptor instead.
 func (*PageCategories) Descriptor() ([]byte, []int) {
-	return file_documents_documents_proto_rawDescGZIP(), []int{5}
+	return file_documents_documents_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *PageCategories) GetPages() map[uint32]*Categories {
@@ -340,7 +387,7 @@ type Categories struct {
 func (x *Categories) Reset() {
 	*x = Categories{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_documents_documents_proto_msgTypes[6]
+		mi := &file_documents_documents_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -353,7 +400,7 @@ func (x *Categories) String() string {
 func (*Categories) ProtoMessage() {}
 
 func (x *Categories) ProtoReflect() protoreflect.Message {
-	mi := &file_documents_documents_proto_msgTypes[6]
+	mi := &file_documents_documents_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -366,7 +413,7 @@ func (x *Categories) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Categories.ProtoReflect.Descriptor instead.
 func (*Categories) Descriptor() ([]byte, []int) {
-	return file_documents_documents_proto_rawDescGZIP(), []int{6}
+	return file_documents_documents_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *Categories) GetCategories() []uint32 {
@@ -387,7 +434,7 @@ type LinkIndex struct {
 func (x *LinkIndex) Reset() {
 	*x = LinkIndex{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_documents_documents_proto_msgTypes[7]
+		mi := &file_documents_documents_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -400,7 +447,7 @@ func (x *LinkIndex) String() string {
 func (*LinkIndex) ProtoMessage() {}
 
 func (x *LinkIndex) ProtoReflect() protoreflect.Message {
-	mi := &file_documents_documents_proto_msgTypes[7]
+	mi := &file_documents_documents_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -413,7 +460,7 @@ func (x *LinkIndex) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LinkIndex.ProtoReflect.Descriptor instead.
 func (*LinkIndex) Descriptor() ([]byte, []int) {
-	return file_documents_documents_proto_rawDescGZIP(), []int{7}
+	return file_documents_documents_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *LinkIndex) GetArticles() map[uint32]*Links {
@@ -434,7 +481,7 @@ type Links struct {
 func (x *Links) Reset() {
 	*x = Links{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_documents_documents_proto_msgTypes[8]
+		mi := &file_documents_documents_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -447,7 +494,7 @@ func (x *Links) String() string {
 func (*Links) ProtoMessage() {}
 
 func (x *Links) ProtoReflect() protoreflect.Message {
-	mi := &file_documents_documents_proto_msgTypes[8]
+	mi := &file_documents_documents_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -460,7 +507,7 @@ func (x *Links) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Links.ProtoReflect.Descriptor instead.
 func (*Links) Descriptor() ([]byte, []int) {
-	return file_documents_documents_proto_rawDescGZIP(), []int{8}
+	return file_documents_documents_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *Links) GetLinks() []*Link {
@@ -482,7 +529,7 @@ type Link struct {
 func (x *Link) Reset() {
 	*x = Link{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_documents_documents_proto_msgTypes[9]
+		mi := &file_documents_documents_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -495,7 +542,7 @@ func (x *Link) String() string {
 func (*Link) ProtoMessage() {}
 
 func (x *Link) ProtoReflect() protoreflect.Message {
-	mi := &file_documents_documents_proto_msgTypes[9]
+	mi := &file_documents_documents_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -508,7 +555,7 @@ func (x *Link) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Link.ProtoReflect.Descriptor instead.
 func (*Link) Descriptor() ([]byte, []int) {
-	return file_documents_documents_proto_rawDescGZIP(), []int{9}
+	return file_documents_documents_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Link) GetTarget() uint32 {
@@ -556,6 +603,14 @@ var file_documents_documents_proto_rawDesc = []byte{
 	0x65, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01,
 	0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c,
 	0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a,
+	0x02, 0x38, 0x01, 0x22, 0x7e, 0x0a, 0x0b, 0x47, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x49, 0x6e, 0x64,
+	0x65, 0x78, 0x12, 0x33, 0x0a, 0x07, 0x67, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x73, 0x18, 0x01, 0x20,
+	0x03, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x47, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x49, 0x6e, 0x64, 0x65,
+	0x78, 0x2e, 0x47, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x52, 0x07,
+	0x67, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x73, 0x1a, 0x3a, 0x0a, 0x0c, 0x47, 0x65, 0x6e, 0x64, 0x65,
+	0x72, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0d, 0x52, 0x03, 0x6b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c,
+	0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a,
 	0x02, 0x38, 0x01, 0x22, 0x89, 0x01, 0x0a, 0x0e, 0x50, 0x61, 0x67, 0x65, 0x43, 0x61, 0x74, 0x65,
 	0x67, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x12, 0x30, 0x0a, 0x05, 0x70, 0x61, 0x67, 0x65, 0x73, 0x18,
 	0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x50, 0x61, 0x67, 0x65, 0x43, 0x61, 0x74, 0x65,
@@ -598,37 +653,40 @@ func file_documents_documents_proto_rawDescGZIP() []byte {
 	return file_documents_documents_proto_rawDescData
 }
 
-var file_documents_documents_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_documents_documents_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_documents_documents_proto_goTypes = []interface{}{
 	(*Document)(nil),       // 0: Document
 	(*Page)(nil),           // 1: Page
 	(*Redirects)(nil),      // 2: Redirects
 	(*Redirect)(nil),       // 3: Redirect
 	(*TitleIndex)(nil),     // 4: TitleIndex
-	(*PageCategories)(nil), // 5: PageCategories
-	(*Categories)(nil),     // 6: Categories
-	(*LinkIndex)(nil),      // 7: LinkIndex
-	(*Links)(nil),          // 8: Links
-	(*Link)(nil),           // 9: Link
-	nil,                    // 10: Redirects.RedirectsEntry
-	nil,                    // 11: TitleIndex.TitlesEntry
-	nil,                    // 12: PageCategories.PagesEntry
-	nil,                    // 13: LinkIndex.ArticlesEntry
+	(*GenderIndex)(nil),    // 5: GenderIndex
+	(*PageCategories)(nil), // 6: PageCategories
+	(*Categories)(nil),     // 7: Categories
+	(*LinkIndex)(nil),      // 8: LinkIndex
+	(*Links)(nil),          // 9: Links
+	(*Link)(nil),           // 10: Link
+	nil,                    // 11: Redirects.RedirectsEntry
+	nil,                    // 12: TitleIndex.TitlesEntry
+	nil,                    // 13: GenderIndex.GendersEntry
+	nil,                    // 14: PageCategories.PagesEntry
+	nil,                    // 15: LinkIndex.ArticlesEntry
 }
 var file_documents_documents_proto_depIdxs = []int32{
 	1,  // 0: Document.pages:type_name -> Page
-	10, // 1: Redirects.redirects:type_name -> Redirects.RedirectsEntry
-	11, // 2: TitleIndex.titles:type_name -> TitleIndex.TitlesEntry
-	12, // 3: PageCategories.pages:type_name -> PageCategories.PagesEntry
-	13, // 4: LinkIndex.articles:type_name -> LinkIndex.ArticlesEntry
-	9,  // 5: Links.links:type_name -> Link
-	6,  // 6: PageCategories.PagesEntry.value:type_name -> Categories
-	8,  // 7: LinkIndex.ArticlesEntry.value:type_name -> Links
-	8,  // [8:8] is the sub-list for method output_type
-	8,  // [8:8] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	11, // 1: Redirects.redirects:type_name -> Redirects.RedirectsEntry
+	12, // 2: TitleIndex.titles:type_name -> TitleIndex.TitlesEntry
+	13, // 3: GenderIndex.genders:type_name -> GenderIndex.GendersEntry
+	14, // 4: PageCategories.pages:type_name -> PageCategories.PagesEntry
+	15, // 5: LinkIndex.articles:type_name -> LinkIndex.ArticlesEntry
+	10, // 6: Links.links:type_name -> Link
+	7,  // 7: PageCategories.PagesEntry.value:type_name -> Categories
+	9,  // 8: LinkIndex.ArticlesEntry.value:type_name -> Links
+	9,  // [9:9] is the sub-list for method output_type
+	9,  // [9:9] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_documents_documents_proto_init() }
@@ -698,7 +756,7 @@ func file_documents_documents_proto_init() {
 			}
 		}
 		file_documents_documents_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PageCategories); i {
+			switch v := v.(*GenderIndex); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -710,7 +768,7 @@ func file_documents_documents_proto_init() {
 			}
 		}
 		file_documents_documents_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Categories); i {
+			switch v := v.(*PageCategories); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -722,7 +780,7 @@ func file_documents_documents_proto_init() {
 			}
 		}
 		file_documents_documents_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*LinkIndex); i {
+			switch v := v.(*Categories); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -734,7 +792,7 @@ func file_documents_documents_proto_init() {
 			}
 		}
 		file_documents_documents_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Links); i {
+			switch v := v.(*LinkIndex); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -746,6 +804,18 @@ func file_documents_documents_proto_init() {
 			}
 		}
 		file_documents_documents_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Links); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_documents_documents_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Link); i {
 			case 0:
 				return &v.state
@@ -764,7 +834,7 @@ func file_documents_documents_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_documents_documents_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

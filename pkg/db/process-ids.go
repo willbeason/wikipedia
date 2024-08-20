@@ -23,7 +23,6 @@ func (r *Runner) ProcessIDs(
 		DefaultOptions(r.path).
 		WithMetricsEnabled(false).
 		WithLoggingLevel(badger.WARNING).
-		WithNumGoroutines(r.parallel).
 		WithReadOnly(true)
 
 	db, err := badger.Open(dbOpts)

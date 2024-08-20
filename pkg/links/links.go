@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/willbeason/wikipedia/pkg/jobs"
+
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/article"
 	"github.com/willbeason/wikipedia/pkg/config"
@@ -86,6 +88,11 @@ func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
 
 	linksChannel := makeLinks(parallel, titleIndex.Titles, redirectIndex, ps)
 	links := <-linksChannel
+	for toMerge := range linksChannel {
+		for articleId, articleLinks := range toMerge.Articles {
+			links.Articles[articleId] = articleLinks
+		}
+	}
 
 	err = protos.Write(outFile, links)
 	if err != nil {
@@ -96,10 +103,10 @@ func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
 }
 
 func makeLinks(parallel int, titleIndex map[string]uint32, redirects *documents.Redirects, pages <-chan *documents.Page) <-chan *documents.LinkIndex {
-	results := make(chan *documents.LinkIndex)
+	results := make(chan *documents.LinkIndex, jobs.WorkBuffer)
 
 	linksWg := sync.WaitGroup{}
-	for range parallel {
+	for range parallel / 4 {
 		linksWg.Add(1)
 		go func() {
 			result := &documents.LinkIndex{Articles: make(map[uint32]*documents.Links)}
