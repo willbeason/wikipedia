@@ -46,17 +46,12 @@ func Cmd() *cobra.Command {
 var ErrExtract = errors.New("unable to run extraction")
 
 var (
-	EnwikiPrefix       = `enwiki`
 	MultistreamPattern = regexp.MustCompile(
 		`enwiki-(\d+)-pages-articles-multistream(\d*)\.xml(?:-p(\d+)p(\d+))?\.bz2`,
 	)
 	MultistreamIndexPattern = regexp.MustCompile(
 		`enwiki-(\d+)-pages-articles-multistream-index(\d*)\.txt(?:-p(\d+)p(\d+))?\.bz2`,
 	)
-
-	WikidataPrefix = `wikidata`
-	// WikidataPattern matches wikidata-20240701-all.json.bz2.
-	WikidataPattern = regexp.MustCompile(`wikidata-(\d+)-all\.json\.bz2`)
 )
 
 func runCmd(cmd *cobra.Command, args []string) error {

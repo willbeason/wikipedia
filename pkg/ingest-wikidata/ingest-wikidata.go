@@ -39,11 +39,10 @@ func Cmd() *cobra.Command {
 
 var ErrIngestWikidata = errors.New("unable to run wikidata extraction")
 
-var (
-	WikidataPrefix = `wikidata`
-	// WikidataPattern matches wikidata-20240701-all.json.bz2.
-	WikidataPattern = regexp.MustCompile(`wikidata-(\d+)-all\.json\.bz2`)
-)
+const WikidataPrefix = `wikidata`
+
+// WikidataPattern matches wikidata-20240701-all.json.bz2.
+var WikidataPattern = regexp.MustCompile(`wikidata-(\d+)-all\.json\.bz2`)
 
 func runCmd(cmd *cobra.Command, args []string) error {
 	return fmt.Errorf("%w: not implemented to run outside a workspace", ErrIngestWikidata)
