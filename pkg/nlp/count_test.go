@@ -91,7 +91,7 @@ func TestNgramTokenizer_Tokenize(t *testing.T) {
 			got := tokenizer.Tokenize(tc.s)
 
 			if diff := cmp.Diff(tc.want, got); diff != "" {
-				t.Errorf(diff)
+				t.Error(diff)
 			}
 		})
 	}

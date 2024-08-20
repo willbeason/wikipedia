@@ -54,11 +54,11 @@ func Infer(claims []*entities.Claim) string {
 	preferred := ""
 	claimedGenders := make(map[string]int)
 	for _, claim := range claims {
-		switch claim.Rank {
-		case PreferredRank:
+		if claim.Rank == PreferredRank {
 			preferred = claim.Value
 			numPreferred++
 		}
+
 		switch claim.Value {
 		case XGender:
 			claimedGenders[NonBinaryGender]++
@@ -84,30 +84,6 @@ func Infer(claims []*entities.Claim) string {
 			return k
 		}
 	}
-
-	//// If "eunuch" and exactly one other gender claim, use that one.
-	// delete(claimedGenders, EunuchGender)
-	// if len(claimedGenders) == 1 {
-	//	for k := range claimedGenders {
-	//		return k, nil
-	//	}
-	//}
-	//
-	//// If "intersex" and exactly one other gender claim, use that one.
-	//delete(claimedGenders, IntersexGender)
-	//if len(claimedGenders) == 1 {
-	//	for k := range claimedGenders {
-	//		return k, nil
-	//	}
-	//}
-	//
-	//// If "transgender" and exactly one other gender claim, use that one.
-	//delete(claimedGenders, TransgenderGender)
-	//if len(claimedGenders) == 1 {
-	//	for k := range claimedGenders {
-	//		return k, nil
-	//	}
-	//}
 
 	return ConflictingClaims
 }

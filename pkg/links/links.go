@@ -7,13 +7,12 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/willbeason/wikipedia/pkg/jobs"
-
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/article"
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
+	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/pages"
 	"github.com/willbeason/wikipedia/pkg/protos"
 )
@@ -144,15 +143,6 @@ func makeLinks(parallel int, titleIndex map[string]uint32, redirects *documents.
 					})
 
 					result.Articles[page.Id] = links
-					// if len(links.Links) == 0 {
-					// fmt.Println(page.Title, "has no links")
-					//fmt.Printf("No links in article %q\n", page.Title)
-					//if page.Title == "Nana Fujii" {
-					//	for i, token := range tokens {
-					//		fmt.Printf("%d: %T, %q\n", i, token, token.Render())
-					//	}
-					//	panic("No links in viewed article")
-					//}
 				}
 			}
 

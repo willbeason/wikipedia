@@ -133,6 +133,7 @@ func (t HTMLCloseTag) Name() string {
 	return string(t[2 : len(t)-1])
 }
 
+// nolint: unused
 var standaloneTags = []string{
 	"br",
 	"hr",

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"runtime/pprof"
 
@@ -16,10 +17,6 @@ import (
 	"github.com/willbeason/wikipedia/pkg/ingest-wikidata"
 	"github.com/willbeason/wikipedia/pkg/title-index"
 	"github.com/willbeason/wikipedia/pkg/workflows"
-)
-
-import (
-	_ "net/http/pprof"
 )
 
 const (
@@ -39,8 +36,6 @@ var (
 )
 
 func mainCmd() *cobra.Command {
-	go http.ListenAndServe("localhost:8080", nil)
-
 	cmd := &cobra.Command{
 		Use:   `wikopticon subcommand`,
 		Short: `Runs.`,
@@ -78,16 +73,25 @@ func runCmd() *cobra.Command {
 	return cmd
 }
 
+var ErrWikopticon = errors.New("unable to start wikopticon")
+
 func runRunE(cmd *cobra.Command, args []string) error {
+	go func() {
+		httpErr := http.ListenAndServe("localhost:8080", nil)
+		if httpErr != nil {
+			fmt.Println(httpErr)
+		}
+	}()
+
 	cpuprofile, _ := cmd.Flags().GetString("cpuprofile")
 	if cpuprofile != "" {
 		f, err := os.Create(cpuprofile)
 		if err != nil {
-			return err
+			return fmt.Errorf("%w: %w", ErrWikopticon, err)
 		}
 		err = pprof.StartCPUProfile(f)
 		if err != nil {
-			return err
+			return fmt.Errorf("%w: %w", ErrWikopticon, err)
 		}
 		defer pprof.StopCPUProfile()
 	}

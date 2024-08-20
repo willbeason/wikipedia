@@ -46,29 +46,6 @@ var (
 )
 
 func runCmd(cmd *cobra.Command, args []string) error {
-	// cmd.SilenceUsage = true
-	//
-	// workspacePath, err := flags.GetWorkspacePath(cmd)
-	//if err != nil {
-	//	return err
-	//}
-	//if !filepath.IsAbs(workspacePath) {
-	//	workingDirectory, err2 := os.Getwd()
-	//	if err2 != nil {
-	//		return fmt.Errorf("could not determine working directory: %w", err2)
-	//	}
-	//
-	//	workspacePath = filepath.Join(workingDirectory, workspacePath)
-	//}
-	//
-	//cfg, err := config.Load(workspacePath)
-	//if err != nil {
-	//	return err
-	//}
-	//r := workflows.Runner{Config: cfg}
-	//
-	//return IngestWikidata(cmd, args[0], workspacePath, &r)
-
 	return fmt.Errorf("%w: not implemented to run outside a workspace", ErrIngestWikidata)
 }
 
@@ -202,7 +179,7 @@ func source(cancel context.CancelCauseFunc, wikidata string) (<-chan unparsedObj
 func extractFile(r *bufio.Reader, unparsedObjects chan<- unparsedObject) error {
 	_, err := r.ReadBytes('\n')
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: reading first line: %w", ErrIngestWikidata, err)
 	}
 	// Skip first line.
 
@@ -212,7 +189,7 @@ func extractFile(r *bufio.Reader, unparsedObjects chan<- unparsedObject) error {
 	}
 
 	if !errors.Is(err, io.EOF) {
-		return err
+		return fmt.Errorf("%w: reading line: %w", ErrIngestWikidata, err)
 	}
 
 	// Skip last line since it just closes the massive list of entities.
@@ -375,36 +352,7 @@ func ParseObject(allowedInstances map[string]bool, requireWikipediaArticle map[s
 				}
 				relevantClaim = true
 
-				value, isValue := c.Mainsnak.DataValue.Value.(map[string]interface{})
-				if !isValue {
-					fmt.Printf("Strange claim for %q: %+v\n", wikidataId, c)
-					panic("Strange claim")
-				}
-
-				var valueStr string
-
-				switch claimID {
-				case "P569", "P570":
-					var isStr bool
-					valueStr, isStr = value["time"].(string)
-					if !isStr {
-						fmt.Printf("Strange claim for %q: %+v\n", wikidataId, c)
-						panic("Strange claim")
-					}
-				default:
-					var isStr bool
-					valueStr, isStr = value["id"].(string)
-					if !isStr {
-						fmt.Printf("Strange claim for %q: %+v\n", wikidataId, c)
-						panic("Strange claim")
-					}
-				}
-
-				entityClaims.Claim = append(entityClaims.Claim, &entities.Claim{
-					Property: c.Mainsnak.Property,
-					Value:    valueStr,
-					Rank:     c.Rank,
-				})
+				parseClaims(c, wikidataId, claimID, entityClaims)
 			}
 
 			parsedEntity.Claims[claimID] = entityClaims
@@ -423,6 +371,39 @@ func ParseObject(allowedInstances map[string]bool, requireWikipediaArticle map[s
 	parsedEntity.Id = id
 
 	return parsedEntity, nil
+}
+
+func parseClaims(c Claim, wikidataId string, claimID string, entityClaims *entities.Claims) {
+	value, isValue := c.Mainsnak.DataValue.Value.(map[string]interface{})
+	if !isValue {
+		fmt.Printf("Strange claim for %q: %+v\n", wikidataId, c)
+		panic("Strange claim")
+	}
+
+	var valueStr string
+
+	switch claimID {
+	case "P569", "P570":
+		var isStr bool
+		valueStr, isStr = value["time"].(string)
+		if !isStr {
+			fmt.Printf("Strange claim for %q: %+v\n", wikidataId, c)
+			panic("Strange claim")
+		}
+	default:
+		var isStr bool
+		valueStr, isStr = value["id"].(string)
+		if !isStr {
+			fmt.Printf("Strange claim for %q: %+v\n", wikidataId, c)
+			panic("Strange claim")
+		}
+	}
+
+	entityClaims.Claim = append(entityClaims.Claim, &entities.Claim{
+		Property: c.Mainsnak.Property,
+		Value:    valueStr,
+		Rank:     c.Rank,
+	})
 }
 
 type Entity struct {

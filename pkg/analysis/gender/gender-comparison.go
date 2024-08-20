@@ -7,12 +7,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/willbeason/wikipedia/pkg/documents"
-	"github.com/willbeason/wikipedia/pkg/protos"
-
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/config"
+	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
+	"github.com/willbeason/wikipedia/pkg/protos"
 )
 
 var ErrGenderComparison = errors.New("running gender comparison")
@@ -22,7 +21,6 @@ func Comparison(cmd *cobra.Command, cfg *config.GenderComparison, corpusNames ..
 		return fmt.Errorf("%w: must have exactly two corpora but got %+v", ErrGenderComparison, corpusNames)
 	}
 	beforeCorpusName := corpusNames[0]
-	afterCorpusName := corpusNames[1]
 
 	workspace, err := flags.GetWorkspacePath(cmd)
 	if err != nil {
@@ -35,20 +33,8 @@ func Comparison(cmd *cobra.Command, cfg *config.GenderComparison, corpusNames ..
 		return err
 	}
 
-	afterGenderPath := filepath.Join(workspace, afterCorpusName, cfg.GenderIndex)
-	_, err = protos.Read[documents.GenderIndex](afterGenderPath)
-	if err != nil {
-		return err
-	}
-
 	beforeLinksPath := filepath.Join(workspace, beforeCorpusName, cfg.Links)
 	beforeLinks, err := protos.Read[documents.LinkIndex](beforeLinksPath)
-	if err != nil {
-		return err
-	}
-
-	afterLinksPath := filepath.Join(workspace, afterCorpusName, cfg.Links)
-	_, err = protos.Read[documents.LinkIndex](afterLinksPath)
 	if err != nil {
 		return err
 	}

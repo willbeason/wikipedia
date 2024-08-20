@@ -88,11 +88,6 @@ func (r *Runner) Process(
 					}
 				}
 			}
-			//err = RunGC(db)
-			//if err != nil {
-			//	cancel(err)
-			//	return
-			//}
 		}
 		wg.Done()
 	}()

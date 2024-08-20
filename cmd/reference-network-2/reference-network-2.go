@@ -10,11 +10,12 @@ import (
 	"sync"
 
 	"github.com/spf13/cobra"
+	gender2 "github.com/willbeason/wikipedia/pkg/analysis/gender"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
-	"github.com/willbeason/wikipedia/pkg/nlp"
 	"github.com/willbeason/wikipedia/pkg/pages"
+	"github.com/willbeason/wikipedia/pkg/protos"
 )
 
 // clean removes parts of articles we never want to analyze, such as xml tags, tables, and
@@ -67,20 +68,25 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	genders, err := protos.Read[documents.GenderIndex]("")
+	if err != nil {
+		return err
+	}
+
 	idMapWork := jobs.Reduce(ctx, jobs.WorkBuffer, docs, func(page *documents.Page) error {
-		gender := nlp.InferGender(page.Text)
+		gender := genders.Genders[page.Id]
 
 		resultMtx.Lock()
 		idMap[page.Title] = page.Id
 		titleMap[page.Id] = page.Title
 		switch gender {
-		case nlp.Female:
+		case gender2.WomanGender:
 			female[page.Id] = true
-		case nlp.Male:
+		case gender2.ManGender:
 			male[page.Id] = true
-		case nlp.Nonbinary, nlp.Multiple:
+		case gender2.NonBinaryGender, gender2.ConflictingClaims:
 			other[page.Id] = true
-		case nlp.Unknown:
+		default:
 			unknown[page.Id] = true
 		}
 		resultMtx.Unlock()

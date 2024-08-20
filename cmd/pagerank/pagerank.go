@@ -11,12 +11,13 @@ import (
 	"sync"
 
 	"github.com/spf13/cobra"
+	gender2 "github.com/willbeason/wikipedia/pkg/analysis/gender"
 	"github.com/willbeason/wikipedia/pkg/charts"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
-	"github.com/willbeason/wikipedia/pkg/nlp"
 	"github.com/willbeason/wikipedia/pkg/pages"
+	"github.com/willbeason/wikipedia/pkg/protos"
 )
 
 func main() {
@@ -58,7 +59,10 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	titleMap := make(map[uint32]string)
 
 	biographies := make(map[uint32]bool)
-	genders := make(map[uint32]nlp.Gender)
+	genders, err := protos.Read[documents.GenderIndex]("")
+	if err != nil {
+		return err
+	}
 
 	resultMtx := sync.Mutex{}
 
@@ -75,7 +79,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	idMapWork := jobs.Reduce(ctx,
 		jobs.WorkBuffer,
 		docs,
-		addPageToGenderMap(checker, &resultMtx, idMap, titleMap, biographies, genders),
+		addPageToGenderMap(checker, &resultMtx, idMap, titleMap, biographies, genders.Genders),
 	)
 
 	runner := jobs.NewRunner()
@@ -84,16 +88,16 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	idMapWg.Wait()
 
 	fmt.Println("Articles:", len(idMap))
-	fmt.Println("Biographies:", len(genders))
+	fmt.Println("Biographies:", len(genders.Genders))
 
 	nFemale, nMale, nOther := 0, 0, 0
-	for _, gender := range genders {
+	for _, gender := range genders.Genders {
 		switch gender {
-		case nlp.Female:
+		case gender2.WomanGender:
 			nFemale++
-		case nlp.Male:
+		case gender2.ManGender:
 			nMale++
-		case nlp.Nonbinary, nlp.Unknown, nlp.Multiple:
+		default:
 			nOther++
 		}
 	}
@@ -125,7 +129,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		weights[id] = startWeight
 	}
 
-	fw, mw := RelativeWeights(genders, weights)
+	fw, mw := RelativeWeights(genders.Genders, weights)
 	fmt.Printf("Start (%.03f, %.03f)\n", fw, mw)
 
 	var stop bool
@@ -168,14 +172,14 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		}
 
 		bin := toBin(n, bins)
-		switch genders[pageRank.id] {
-		case nlp.Female:
+		switch genders.Genders[pageRank.id] {
+		case gender2.WomanGender:
 			femaleBins[bin]++
 			femaleTraffic += pageRank.rank
-		case nlp.Male:
+		case gender2.ManGender:
 			maleBins[bin]++
 			maleTraffic += pageRank.rank
-		case nlp.Nonbinary, nlp.Multiple, nlp.Unknown:
+		default:
 			// Not currently studying.
 		}
 
@@ -328,7 +332,7 @@ func addPageToGenderMap(
 	idMap map[string]uint32,
 	titleMap map[uint32]string,
 	biographies map[uint32]bool,
-	genders map[uint32]nlp.Gender,
+	genders map[uint32]string,
 ) func(page *documents.Page) error {
 	return func(page *documents.Page) error {
 		if !checker.Matches(page.Text) {
@@ -339,7 +343,7 @@ func addPageToGenderMap(
 			return nil
 		}
 
-		gender := nlp.InferGender(page.Text)
+		gender := genders[page.Id]
 
 		resultMtx.Lock()
 		idMap[page.Title] = page.Id
@@ -372,17 +376,17 @@ type PageRank struct {
 	rank float64
 }
 
-func RelativeWeights(genders map[uint32]nlp.Gender, weights map[uint32]float64) (float64, float64) {
+func RelativeWeights(genders map[uint32]string, weights map[uint32]float64) (float64, float64) {
 	femaleWeight := 0.0
 	maleWeight := 0.0
 
 	for id, weight := range weights {
 		switch genders[id] {
-		case nlp.Female:
+		case gender2.WomanGender:
 			femaleWeight += weight
-		case nlp.Male:
+		case gender2.ManGender:
 			maleWeight += weight
-		case nlp.Nonbinary, nlp.Unknown, nlp.Multiple:
+		default:
 			// Not studying for now.
 		}
 	}

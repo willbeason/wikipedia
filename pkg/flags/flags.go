@@ -23,7 +23,10 @@ const (
 	WikopticonWorkspaceEnv = "WIKOPTICON_WORKSPACE"
 )
 
-var ErrInvalidFlag = errors.New("invalid flag")
+var (
+	ErrInvalidFlag = errors.New("invalid flag")
+	ErrMissingFlag = errors.New("missing flag")
+)
 
 func InvalidFlagError(flag string, message string) error {
 	return fmt.Errorf("%w %q: %s", ErrInvalidFlag, flag, message)
@@ -90,7 +93,7 @@ func GetWorkspacePath(cmd *cobra.Command) (string, error) {
 	}
 
 	if workspace == "" {
-		return "", ParsingFlagError(WorkspaceKey, errors.New("no workspace specified"))
+		return "", ParsingFlagError(WorkspaceKey, fmt.Errorf("%w: \"--%s\" flag not specified", ErrMissingFlag, WorkspaceKey))
 	}
 
 	return workspace, nil

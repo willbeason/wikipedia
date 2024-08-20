@@ -9,12 +9,12 @@ import (
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/spf13/cobra"
+	"github.com/willbeason/wikipedia/pkg/article"
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/db"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
-	"github.com/willbeason/wikipedia/pkg/nlp"
 	"github.com/willbeason/wikipedia/pkg/pages"
 )
 
@@ -83,7 +83,8 @@ func Clean(cmd *cobra.Command, cfg *config.Clean, corpusNames ...string) error {
 	}
 
 	cleanedChannel, cleanWork := jobs.Map(jobs.WorkBuffer, docs, func(from *documents.Page) (*documents.Page, error) {
-		from.Text = nlp.CleanArticle(from.Text)
+		tokens := article.Tokenize(article.UnparsedText(from.Text))
+		from.Text = article.Render(tokens)
 		return from, nil
 	})
 
