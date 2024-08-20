@@ -1,6 +1,7 @@
 package article
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 )
@@ -57,6 +58,11 @@ func (t LinkEnd) Backtrack(tokens []Token) (Token, int) {
 		return nil, startIdx
 	}
 
+	if startIdx == len(tokens)-1 {
+		// This is an empty link, literally just "[[]]".
+		return LiteralText("[[]]"), startIdx
+	}
+
 	return ParseLink(tokens[startIdx:]), startIdx
 }
 
@@ -67,6 +73,9 @@ func ParseLink(tokens []Token) Token {
 
 	target := splits[0]
 	target = strings.TrimSpace(target)
+	if len(target) == 0 {
+		return LiteralText(fmt.Sprintf("[[%s]]", splits[0]))
+	}
 
 	if strings.HasPrefix(target, "File:") {
 		return ParseLinkFile(target, splits[1:]...)
@@ -102,7 +111,18 @@ func ToLinkTargets(tokens []Token, ignoredSections map[string]bool) []string {
 	for _, token := range tokens {
 		switch l := token.(type) {
 		case Link:
-			result = append(result, l.Target.Render())
+			target := l.Target.Render()
+			//if len(target) == 0 {
+			//	fmt.Println(n, "/", len(tokens))
+			//	for i, t := range tokens {
+			//		fmt.Printf("%d. %T %q\n", i, t, t.Render())
+			//	}
+			//}
+			target = strings.ToUpper(target[0:1]) + target[1:]
+			if strings.Contains(target, "#") {
+				target = strings.Split(target, "#")[0]
+			}
+			result = append(result, target)
 		case Section:
 			if ignoredSections[l.Header.Render()] {
 				continue

@@ -38,7 +38,7 @@ func ReadFrequencyTables(paths ...string) (*FrequencyTable, error) {
 	result := &FrequencyTable{}
 
 	for _, path := range paths {
-		fmt.Println(path)
+		// fmt.Println(path)
 
 		bytes, err := os.ReadFile(path)
 		if err != nil {

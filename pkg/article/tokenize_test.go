@@ -215,7 +215,7 @@ Early Life`,
 	}
 }
 
-func TestLinks_RealARticles(t *testing.T) {
+func TestLinks(t *testing.T) {
 	t.Parallel()
 
 	tt := []struct {
@@ -223,9 +223,35 @@ func TestLinks_RealARticles(t *testing.T) {
 		wikitext string
 		want     []string
 	}{{
-		name:     "Emmy Noether",
-		wikitext: EmmyNoetherBefore,
-		want:     NoetherLinks,
+		name: "normal link",
+		wikitext: `==Practice==
+[[Joey Logano]] was the fastest in the practice session with a time of 32.603 seconds and a speed of {{Convert|138.024|mph|km/h|abbr=on}}.<ref>{{cite web|last=Utter|first=Jim|title=Gateway NASCAR Cup: Penske drivers top Saturday practice|url=https://us.motorsport.com/nascar-cup/news/gateway-nascar-cup-penske-drivers-top-saturday-practice-/10618437/|website=[[Motorsport.com]]|publisher=[[Motorsport Network]]|access-date=June 1, 2024|location=[[Madison, Illinois]]|date=June 1, 2024}}</ref>`,
+		want: []string{
+			"Joey Logano",
+		},
+	}, {
+		name:     "empty link",
+		wikitext: `'''Sør-Gjæslingan''' is an archipelago in [[]], [[Trøndelag]], [[Norway]].`,
+		want: []string{
+			"Trøndelag",
+			"Norway",
+		},
+	}, {
+		name: "whitespace-only link",
+		wikitext: `'''Sør-Gjæslingan''' is an archipelago in [[
+
+]], [[Trøndelag]], [[Norway]].`,
+		want: []string{
+			"Trøndelag",
+			"Norway",
+		},
+	}, {
+		name:     "whitespace-only link",
+		wikitext: `{{nihongo |'''Nana Fujii'''|藤井 奈々|Fujii Nana|born March 31, 1998}} is a Japanese [[Professional shogi player#Women's professionals|women's professional shogi player]] ranked 1-[[Dan (rank)#Modern usage in shogi|dan]].<ref>{{cite web|url=https://www.shogi.or.jp/player/lady/63.html|script-title=ja:女流棋士データベース: 藤井奈々|title=Joryū Kishi Dētabēsu: Fujii Nana|language=ja|trans-title=Women's Professional Shogi Player Database: Nana Fujii |publisher=[[Japan Shogi Association]]|access-date=April 6, 2020}}</ref>`,
+		want: []string{
+			"Professional shogi player",
+			"Dan (rank)",
+		},
 	}}
 
 	for _, tc := range tt {
@@ -239,6 +265,56 @@ func TestLinks_RealARticles(t *testing.T) {
 			diff := cmp.Diff(gotLinks, tc.want)
 			if diff != "" {
 				t.Errorf("(-want +got): %v", diff)
+				// for _, l := range gotLinks {
+				// 	fmt.Printf("%q,\n", l)
+				// }
+			}
+		})
+	}
+}
+
+func TestLinks_RealArticles(t *testing.T) {
+	t.Parallel()
+
+	tt := []struct {
+		name            string
+		wikitext        string
+		want            []string
+		ignoredSections []string
+	}{{
+		name:     "Emmy Noether",
+		wikitext: EmmyNoether,
+		want:     NoetherLinks,
+	}, {
+		name:     "Pungtungia Hilgendorfi",
+		wikitext: PungtungiaHilgendorfi,
+		want:     PungtungiaHilgendorfiLinks,
+	}, {
+		name:            "Pungtungia Hilgendorfi Filter",
+		wikitext:        PungtungiaHilgendorfi,
+		want:            PungtungiaHilgendorfiLinksFiltered,
+		ignoredSections: []string{"References"},
+	}}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ignoredSections := make(map[string]bool)
+			for _, s := range tc.ignoredSections {
+				ignoredSections[s] = true
+			}
+
+			wikitext := article.UnparsedText(tc.wikitext)
+			gotParse := article.Tokenize(wikitext)
+			gotLinks := article.ToLinkTargets(gotParse, ignoredSections)
+
+			diff := cmp.Diff(gotLinks, tc.want)
+			if diff != "" {
+				t.Errorf("(-want +got): %v", diff)
+				// for _, l := range gotLinks {
+				// 	fmt.Printf("%q,\n", l)
+				// }
 			}
 		})
 	}
@@ -254,11 +330,11 @@ func TestClean_RealArticles(t *testing.T) {
 		debug    bool
 	}{{
 		name:     "Emmy Noether",
-		wikitext: EmmyNoetherBefore,
+		wikitext: EmmyNoether,
 		want:     EmmyNoetherAfter,
 	}, {
 		name:     "Albert Einstein",
-		wikitext: AlbertEinsteinBefore,
+		wikitext: AlbertEinstein,
 		want:     AlbertEinsteinAfter,
 		// debug:    true,
 	}}

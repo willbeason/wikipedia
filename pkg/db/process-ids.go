@@ -21,6 +21,7 @@ func (r *Runner) ProcessIDs(
 ) (*sync.WaitGroup, error) {
 	dbOpts := badger.
 		DefaultOptions(r.path).
+		WithMetricsEnabled(false).
 		WithLoggingLevel(badger.WARNING).
 		WithNumGoroutines(r.parallel).
 		WithReadOnly(true)

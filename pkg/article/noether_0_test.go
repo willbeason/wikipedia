@@ -1,7 +1,7 @@
 // nolint
 package article_test
 
-const EmmyNoetherBefore = `{{Short description|German mathematician (1882–1935)}}
+const EmmyNoether = `{{Short description|German mathematician (1882–1935)}}
 {{Use dmy dates|date=January 2018}}
 {{Infobox scientist
 | name              = Emmy Noether

@@ -16,6 +16,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/willbeason/wikipedia/pkg/protos"
+
 	"github.com/dgraph-io/badger/v3"
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/config"
@@ -23,7 +25,6 @@ import (
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
-	"github.com/willbeason/wikipedia/pkg/protos"
 	"github.com/willbeason/wikipedia/pkg/workflows"
 )
 
@@ -139,10 +140,7 @@ func ingestEnwiki(cmd *cobra.Command, args []string, workspacePath string, r wor
 
 	ctx, cancel := context.WithCancelCause(cmd.Context())
 
-	compressedItems, err := source(cancel, articlesPath, indexPath)
-	if err != nil {
-		return err
-	}
+	compressedItems := source(ctx, cancel, articlesPath, indexPath)
 
 	parallel, err := flags.GetParallel(cmd)
 	if err != nil {
@@ -153,9 +151,13 @@ func ingestEnwiki(cmd *cobra.Command, args []string, workspacePath string, r wor
 	if err != nil {
 		return fmt.Errorf("%w: reading namespace flag :%w", ErrExtract, err)
 	}
-	pages := extractPages(cancel, parallel, namespaces, compressedItems)
+	pages, redirects := extractPages(cancel, parallel, namespaces, compressedItems)
 
-	outDB, err := badger.Open(badger.DefaultOptions(extractPath))
+	outDB, err := badger.Open(
+		badger.DefaultOptions(extractPath).
+			WithMetricsEnabled(false).
+			WithLoggingLevel(badger.WARNING),
+	)
 	if err != nil {
 		return fmt.Errorf("opening %q: %w", extractPath, err)
 	}
@@ -167,9 +169,30 @@ func ingestEnwiki(cmd *cobra.Command, args []string, workspacePath string, r wor
 	}()
 
 	runner := jobs.NewRunner()
-	sinkWork := jobs.Reduce(ctx, jobs.WorkBuffer, pages, db.WriteProto[protos.ID](outDB))
+	sinkWork := jobs.Reduce(ctx, jobs.WorkBuffer*100, pages, db.WriteProto[*documents.Page](outDB))
 	sinkWg := runner.Run(ctx, cancel, sinkWork)
+
+	redirectsWg := sync.WaitGroup{}
+	redirectsWg.Add(1)
+	go func() {
+		redirectsProto := &documents.Redirects{
+			Redirects: make(map[string]string),
+		}
+		for redirect := range redirects {
+			redirectsProto.Redirects[redirect.GetTitle()] = redirect.GetRedirect()
+		}
+
+		redirectsPath := filepath.Join(corpusPath, "redirects.txt")
+		protoErr := protos.Write(redirectsPath, redirectsProto)
+		if protoErr != nil {
+			cancel(err)
+		}
+
+		redirectsWg.Done()
+	}()
+
 	sinkWg.Wait()
+	redirectsWg.Wait()
 
 	err = db.RunGC(outDB)
 	if err != nil {
@@ -194,102 +217,140 @@ func ingestEnwiki(cmd *cobra.Command, args []string, workspacePath string, r wor
 	return nil
 }
 
-func source(cancel context.CancelCauseFunc, repo, index string) (<-chan compressedDocument, error) {
-	// Open the compressed data file.
-	fRepo, err := os.Open(repo)
-	if err != nil {
-		return nil, fmt.Errorf("opening %q: %w", repo, err)
-	}
+func source(ctx context.Context, cancel context.CancelCauseFunc, repo, index string) <-chan compressedDocument {
+	// Decouple file operations: reading indices from the index and extracting articles.
+	endIndices := extractEndIndices(ctx, cancel, index)
+	compressedItems := extractArticles(ctx, cancel, repo, endIndices)
 
-	// Open the index file.
-	fIndex, err := os.Open(index)
-	if err != nil {
-		return nil, fmt.Errorf("opening %q: %w", index, err)
-	}
+	return compressedItems
+}
 
-	// Create a channel of the compressed Wikipedia pages.
-	compressedItems := make(chan compressedDocument, jobs.WorkBuffer)
+func extractEndIndices(ctx context.Context, cancel context.CancelCauseFunc, index string) <-chan int64 {
+	endIndices := make(chan int64, jobs.WorkBuffer*100)
 
 	go func() {
+		defer close(endIndices)
+
+		// Open the index file.
+		fIndex, err := os.Open(index)
+		if err != nil {
+			cancel(fmt.Errorf("%w: opening %q: %w", ErrExtract, index, err))
+			return
+		}
+
+		defer func() {
+			closeErr := fIndex.Close()
+			if closeErr != nil {
+				fmt.Println(fmt.Errorf("%w: closing %q: %w", ErrExtract, index, closeErr))
+			}
+		}()
+
+		var rIndex *bufio.Reader
+		switch filepath.Ext(index) {
+		case ".bz2":
+			rIndex = bufio.NewReader(bzip2.NewReader(fIndex))
+		case ".txt":
+			rIndex = bufio.NewReader(fIndex)
+		default:
+			cancel(fmt.Errorf("%w: unrecognized index extension: %q", ErrExtract, index))
+			return
+		}
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				line, readErr := rIndex.ReadString('\n')
+				switch {
+				case errors.Is(readErr, io.EOF):
+					fmt.Println("got last article")
+					return
+				case readErr != nil:
+					cancel(readErr)
+					return
+				case len(line) == 0:
+					continue
+				default:
+					parts := strings.SplitN(line, ":", 3)
+					if len(parts) != 3 {
+						cancel(fmt.Errorf("%w: invalid index line %q", ErrExtract, line))
+						return
+					}
+
+					endIndex, parseErr := strconv.ParseInt(parts[0], 10, strconv.IntSize)
+					if parseErr != nil {
+						cancel(fmt.Errorf("parsing end index from %q: %w", line, parseErr))
+						return
+					}
+
+					endIndices <- endIndex
+				}
+			}
+		}
+	}()
+
+	return endIndices
+}
+
+func extractArticles(ctx context.Context, cancel context.CancelCauseFunc, repo string, endIndices <-chan int64) <-chan compressedDocument {
+	// Create a channel of the compressed Wikipedia pages.
+	work := make(chan compressedDocument, jobs.WorkBuffer*100)
+
+	go func() {
+		defer close(work)
+
+		// Open the compressed data file.
+		fRepo, err := os.Open(repo)
+		if err != nil {
+			cancel(fmt.Errorf("opening %q: %w", repo, err))
+			return
+		}
+
 		defer func() {
 			err = fRepo.Close()
 			if err != nil {
 				cancel(err)
 			}
-
-			err = fIndex.Close()
-			if err != nil {
-				cancel(err)
-			}
 		}()
 
-		var rIndex *bufio.Reader
-		compressed := filepath.Ext(index) == ".bz2"
-		if compressed {
-			rIndex = bufio.NewReader(bzip2.NewReader(fIndex))
-		} else {
-			rIndex = bufio.NewReader(fIndex)
+		var startIndex, endIndex int64
+		var outBytes []byte
+
+		for endIndex = range endIndices {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				if startIndex == endIndex {
+					continue
+				}
+
+				outBytes = make([]byte, endIndex-startIndex)
+
+				_, err = fRepo.Read(outBytes)
+				if err != nil {
+					cancel(fmt.Errorf("reading from %q: %w", fRepo.Name(), err))
+					return
+				}
+
+				work <- outBytes
+
+				startIndex = endIndex
+			}
 		}
 
-		err2 := extractFile(rIndex, fRepo, compressedItems)
-		if err2 != nil {
-			cancel(err2)
-		}
-		close(compressedItems)
-	}()
-
-	return compressedItems, nil
-}
-
-func extractFile(articleIndex *bufio.Reader, fRepo *os.File, work chan<- compressedDocument) error {
-	var startIndex, endIndex int64
-
-	var (
-		line     string
-		err      error
-		outBytes []byte
-	)
-
-	for ; err == nil; line, err = articleIndex.ReadString('\n') {
-		if len(line) == 0 {
-			continue
-		}
-
-		parts := strings.SplitN(line, ":", 3)
-
-		endIndex, err = strconv.ParseInt(parts[0], 10, strconv.IntSize)
-		if err != nil {
-			return fmt.Errorf("parsing end index from %q: %w", line, err)
-		}
-
-		if startIndex == endIndex {
-			continue
-		}
-
-		outBytes = make([]byte, endIndex-startIndex)
-
-		_, err = fRepo.Read(outBytes)
-		if err != nil {
-			return fmt.Errorf("reading from %q: %w", fRepo.Name(), err)
-		}
-
-		work <- outBytes
-
-		startIndex = endIndex
-	}
-
-	if errors.Is(err, io.EOF) {
-		fmt.Println("got last file")
-
+		// Read the last document since it isn't marked in the index.
 		outBytes, err = io.ReadAll(fRepo)
 		if err != nil {
-			return fmt.Errorf("reading from %q: %w", fRepo.Name(), err)
+			cancel(fmt.Errorf("reading from %q: %w", fRepo.Name(), err))
+			return
 		}
 
 		work <- outBytes
-	}
+	}()
 
-	return nil
+	return work
 }
 
 func extractPages(
@@ -297,14 +358,15 @@ func extractPages(
 	parallel int,
 	namespaces []int,
 	compressedItems <-chan compressedDocument,
-) <-chan protos.ID {
-	pages := make(chan protos.ID, jobs.WorkBuffer)
+) (<-chan *documents.Page, <-chan *documents.Redirect) {
+	pages := make(chan *documents.Page, jobs.WorkBuffer*100)
+	redirects := make(chan *documents.Redirect, jobs.WorkBuffer*100)
 
 	wg := sync.WaitGroup{}
 	for range parallel {
 		wg.Add(1)
 		go func() {
-			err := extractPagesWorker(namespaces, compressedItems, pages)
+			err := extractPagesWorker(namespaces, compressedItems, redirects, pages)
 			if err != nil {
 				cancel(err)
 			}
@@ -315,19 +377,20 @@ func extractPages(
 	go func() {
 		wg.Wait()
 		close(pages)
+		close(redirects)
 	}()
 
-	return pages
+	return pages, redirects
 }
 
-func extractPagesWorker(namespaces []int, compressed <-chan compressedDocument, pages chan<- protos.ID) error {
+func extractPagesWorker(namespaces []int, compressed <-chan compressedDocument, redirects chan<- *documents.Redirect, pages chan<- *documents.Page) error {
 	allowedNamespaces := make(map[documents.Namespace]bool, len(namespaces))
 	for _, ns := range namespaces {
 		allowedNamespaces[documents.Namespace(ns)] = true
 	}
 
 	for j := range compressed {
-		err := decompress(allowedNamespaces, j, pages)
+		err := decompress(allowedNamespaces, j, redirects, pages)
 		if err != nil {
 			return err
 		}
@@ -362,7 +425,7 @@ func decompressBz2(compressed []byte) ([]byte, error) {
 	return uncompressed, nil
 }
 
-func decompress(allowedNamespaces map[documents.Namespace]bool, compressed []byte, outPages chan<- protos.ID) error {
+func decompress(allowedNamespaces map[documents.Namespace]bool, compressed []byte, outRedirects chan<- *documents.Redirect, outPages chan<- *documents.Page) error {
 	uncompressed, err := decompressBz2(compressed)
 	if err != nil {
 		return err
@@ -378,14 +441,18 @@ func decompress(allowedNamespaces map[documents.Namespace]bool, compressed []byt
 	}
 
 	for _, page := range doc.Pages {
-		if !allowedNamespaces[page.NS] || page.Redirect.Title != "" {
-			// Ignore redirects and articles in other Namespaces.
+		switch {
+		case !allowedNamespaces[page.NS]:
 			continue
+		case page.Redirect.Title != "":
+			outRedirects <- &documents.Redirect{
+				Title:    page.Title,
+				Redirect: page.Redirect.Title,
+			}
+		default:
+			pageProto := page.ToProto()
+			outPages <- pageProto
 		}
-
-		pageProto := page.ToProto()
-
-		outPages <- pageProto
 	}
 
 	return nil

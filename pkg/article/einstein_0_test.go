@@ -1,7 +1,7 @@
 // nolint
 package article_test
 
-const AlbertEinsteinBefore = `{{Short description|German-born physicist (1879–1955)}}
+const AlbertEinstein = `{{Short description|German-born physicist (1879–1955)}}
 {{Redirect|Einstein||Einstein (disambiguation)|and|Albert Einstein (disambiguation)}}
 {{pp|small=yes}}
 {{pp-move}}

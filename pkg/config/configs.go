@@ -20,6 +20,9 @@ type Links struct {
 	// Index is the filepath to the title index.
 	Index string `yaml:"index"`
 
+	// Redirects is the filepath to the redirects list.
+	Redirects string `yaml:"redirects"`
+
 	// Out is the filepath to store the links index.
 	Out string `yaml:"out"`
 

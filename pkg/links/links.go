@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/article"
@@ -64,6 +65,7 @@ func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
 	articlesDir = filepath.Join(workspace, corpusName, articlesDir)
 	outFile = filepath.Join(workspace, corpusName, outFile)
 	titleIndexPath := filepath.Join(workspace, corpusName, cfg.Index)
+	redirectsPath := filepath.Join(workspace, corpusName, cfg.Redirects)
 
 	source := pages.StreamDB[documents.Page](articlesDir, parallel)
 
@@ -83,7 +85,12 @@ func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
 		ignoredSections[s] = true
 	}
 
-	linksChannel := makeLinks((*titleIndex).Titles, ignoredSections, cfg.IgnoreCategories, ps)
+	redirectIndex, err := protos.Read[documents.Redirects](redirectsPath)
+	if err != nil {
+		return err
+	}
+
+	linksChannel := makeLinks(parallel, titleIndex.Titles, redirectIndex, ignoredSections, cfg.IgnoreCategories, ps)
 	links := <-linksChannel
 
 	err = protos.Write(outFile, links)
@@ -94,37 +101,72 @@ func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
 	return nil
 }
 
-func makeLinks(titleIndex map[string]uint32, ignoredSections map[string]bool, ignoreCategories bool, pages <-chan *documents.Page) <-chan *documents.LinkIndex {
+func makeLinks(parallel int, titleIndex map[string]uint32, redirects *documents.Redirects, ignoredSections map[string]bool, ignoreCategories bool, pages <-chan *documents.Page) <-chan *documents.LinkIndex {
 	results := make(chan *documents.LinkIndex)
 
-	go func() {
-		result := &documents.LinkIndex{Articles: make(map[uint32]*documents.Links)}
+	linksWg := sync.WaitGroup{}
+	for range parallel {
+		linksWg.Add(1)
+		go func() {
+			result := &documents.LinkIndex{Articles: make(map[uint32]*documents.Links)}
 
-		for page := range pages {
-			fmt.Println(page.Title)
-			tokens := article.Tokenize(article.UnparsedText(page.Text))
+			var page *documents.Page
 
-			links := &documents.Links{}
+			defer func() {
+				if r := recover(); r != nil {
+					fmt.Printf("panic called while processing %q\n", page.Title)
+					fmt.Println("Page text as imported:")
+					fmt.Println(page.Text)
+					panic(r)
+				}
+			}()
 
-			for _, link := range article.ToLinkTargets(tokens, ignoredSections) {
-				if ignoreCategories {
-					if strings.HasPrefix(link, "Category:") {
+			for page = range pages {
+
+				tokens := article.Tokenize(article.UnparsedText(page.Text))
+
+				links := &documents.Links{}
+
+				for _, link := range article.ToLinkTargets(tokens, ignoredSections) {
+					if ignoreCategories {
+						if strings.HasPrefix(link, "Category:") {
+							continue
+						}
+					}
+
+					redirectedTarget, err := documents.GetDestination(redirects, titleIndex, link)
+					if err != nil {
+						panic(err)
+					}
+
+					id, found := titleIndex[redirectedTarget]
+					if !found {
 						continue
 					}
+
+					links.Links = append(links.Links, id)
 				}
 
-				id, found := titleIndex[link]
-				if !found {
-					continue
+				result.Articles[page.Id] = links
+				if len(links.Links) == 0 {
+					// fmt.Println(page.Title, "has no links")
+					//fmt.Printf("No links in article %q\n", page.Title)
+					//if page.Title == "Nana Fujii" {
+					//	for i, token := range tokens {
+					//		fmt.Printf("%d: %T, %q\n", i, token, token.Render())
+					//	}
+					//	panic("No links in viewed article")
+					//}
 				}
-
-				links.Links = append(links.Links, id)
 			}
 
-			result.Articles[page.Id] = links
-		}
+			results <- result
+			linksWg.Done()
+		}()
+	}
 
-		results <- result
+	go func() {
+		linksWg.Wait()
 		close(results)
 	}()
 

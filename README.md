@@ -40,6 +40,14 @@ in one of two ways.
     rely on subcommands.
 2. (Not Recommended) Manually call subcommands with `wikopticon subcommand`.
 
+## The Protos
+
+To regenerate the protocol buffers, run:
+
+```shell
+protoc -I=./pkg --go_out=. $(find . -type f -name "*.proto")
+```
+
 ## Warnings
 
 Some commands just fail - they'll panic in bader's DB.Orchestrate. I don't have

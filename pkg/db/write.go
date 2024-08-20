@@ -16,10 +16,10 @@ func WriteProto[PROTO protos.ID](db *badger.DB) func(p PROTO) error {
 }
 
 func write(m protos.ID) func(txn *badger.Txn) error {
-	return func(txn *badger.Txn) error {
-		key := toKey(m.ID())
+	key := toKey(m.ID())
+	bytes, err := proto.Marshal(m)
 
-		bytes, err := proto.Marshal(m)
+	return func(txn *badger.Txn) error {
 		if err != nil {
 			return fmt.Errorf("marshalling %d: %w", fromKey(key), err)
 		}

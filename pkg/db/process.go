@@ -23,10 +23,32 @@ func (r *Runner) Process(
 ) (*sync.WaitGroup, error) {
 	dbOpts := badger.
 		DefaultOptions(r.path).
+		WithMetricsEnabled(false).
 		WithLoggingLevel(badger.WARNING).
-		WithNumGoroutines(r.parallel)
+		WithNumGoroutines(r.parallel).
+		WithReadOnly(true)
 
 	db, err := badger.Open(dbOpts)
+	if err != nil {
+		fmt.Printf("Recovering DB %q from crash\n", r.path)
+		// Open/close with not readonly. This allows Badger to replay any logs.
+		dbOpts2 := badger.
+			DefaultOptions(r.path).
+			WithNumGoroutines(r.parallel)
+		db2, err2 := badger.Open(dbOpts2)
+		if err2 != nil {
+			return nil, fmt.Errorf("opening dummy Badger DB %q: %w", r.path, err)
+		}
+
+		err2 = db2.Close()
+		if err2 != nil {
+			return nil, fmt.Errorf("closing dummy Badger DB %q: %w", r.path, err)
+		}
+
+		// Open properly with readonly.
+		db, err = badger.Open(dbOpts)
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("opening Badger DB %q: %w", r.path, err)
 	}
