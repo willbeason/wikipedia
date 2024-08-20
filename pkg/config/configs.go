@@ -25,6 +25,11 @@ type Links struct {
 
 	// Out is the filepath to store the links index.
 	Out string `yaml:"out"`
+}
+
+type Network struct {
+	// In is the path to the file containing links.
+	In string `yaml:"in"`
 
 	// Links in IgnoredSections are not added to the network.
 	IgnoredSections []string `yaml:"ignored_sections"`

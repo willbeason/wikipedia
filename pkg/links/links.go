@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
-	"strings"
 	"sync"
 
 	"github.com/spf13/cobra"
@@ -80,17 +79,12 @@ func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
 		return err
 	}
 
-	ignoredSections := make(map[string]bool)
-	for _, s := range cfg.IgnoredSections {
-		ignoredSections[s] = true
-	}
-
 	redirectIndex, err := protos.Read[documents.Redirects](redirectsPath)
 	if err != nil {
 		return err
 	}
 
-	linksChannel := makeLinks(parallel, titleIndex.Titles, redirectIndex, ignoredSections, cfg.IgnoreCategories, ps)
+	linksChannel := makeLinks(parallel, titleIndex.Titles, redirectIndex, ps)
 	links := <-linksChannel
 
 	err = protos.Write(outFile, links)
@@ -101,7 +95,7 @@ func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
 	return nil
 }
 
-func makeLinks(parallel int, titleIndex map[string]uint32, redirects *documents.Redirects, ignoredSections map[string]bool, ignoreCategories bool, pages <-chan *documents.Page) <-chan *documents.LinkIndex {
+func makeLinks(parallel int, titleIndex map[string]uint32, redirects *documents.Redirects, pages <-chan *documents.Page) <-chan *documents.LinkIndex {
 	results := make(chan *documents.LinkIndex)
 
 	linksWg := sync.WaitGroup{}
@@ -126,14 +120,8 @@ func makeLinks(parallel int, titleIndex map[string]uint32, redirects *documents.
 
 				links := &documents.Links{}
 
-				for _, link := range article.ToLinkTargets(tokens, ignoredSections) {
-					if ignoreCategories {
-						if strings.HasPrefix(link, "Category:") {
-							continue
-						}
-					}
-
-					redirectedTarget, err := documents.GetDestination(redirects, titleIndex, link)
+				for _, link := range article.ToLinkTargets(tokens) {
+					redirectedTarget, err := documents.GetDestination(redirects, titleIndex, link.Target)
 					if err != nil {
 						panic(err)
 					}
@@ -143,20 +131,22 @@ func makeLinks(parallel int, titleIndex map[string]uint32, redirects *documents.
 						continue
 					}
 
-					links.Links = append(links.Links, id)
-				}
+					links.Links = append(links.Links, &documents.Link{
+						Target:  id,
+						Section: link.Section,
+					})
 
-				result.Articles[page.Id] = links
-				// if len(links.Links) == 0 {
-				// fmt.Println(page.Title, "has no links")
-				//fmt.Printf("No links in article %q\n", page.Title)
-				//if page.Title == "Nana Fujii" {
-				//	for i, token := range tokens {
-				//		fmt.Printf("%d: %T, %q\n", i, token, token.Render())
-				//	}
-				//	panic("No links in viewed article")
-				//}
-				//}
+					result.Articles[page.Id] = links
+					// if len(links.Links) == 0 {
+					// fmt.Println(page.Title, "has no links")
+					//fmt.Printf("No links in article %q\n", page.Title)
+					//if page.Title == "Nana Fujii" {
+					//	for i, token := range tokens {
+					//		fmt.Printf("%d: %T, %q\n", i, token, token.Render())
+					//	}
+					//	panic("No links in viewed article")
+					//}
+				}
 			}
 
 			results <- result

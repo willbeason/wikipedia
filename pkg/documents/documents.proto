@@ -41,5 +41,10 @@ message LinkIndex {
 }
 
 message Links {
-  repeated uint32 links = 1;
+  repeated Link links = 1;
+}
+
+message Link {
+  uint32 target = 1;
+  string section = 2;
 }

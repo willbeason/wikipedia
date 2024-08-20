@@ -260,7 +260,7 @@ func TestLinks(t *testing.T) {
 
 			wikitext := article.UnparsedText(tc.wikitext)
 			gotParse := article.Tokenize(wikitext)
-			gotLinks := article.ToLinkTargets(gotParse, nil)
+			gotLinks := article.ToLinkTargets(gotParse)
 
 			diff := cmp.Diff(gotLinks, tc.want)
 			if diff != "" {
@@ -277,10 +277,9 @@ func TestLinks_RealArticles(t *testing.T) {
 	t.Parallel()
 
 	tt := []struct {
-		name            string
-		wikitext        string
-		want            []string
-		ignoredSections []string
+		name     string
+		wikitext string
+		want     []string
 	}{{
 		name:     "Emmy Noether",
 		wikitext: EmmyNoether,
@@ -289,25 +288,15 @@ func TestLinks_RealArticles(t *testing.T) {
 		name:     "Pungtungia Hilgendorfi",
 		wikitext: PungtungiaHilgendorfi,
 		want:     PungtungiaHilgendorfiLinks,
-	}, {
-		name:            "Pungtungia Hilgendorfi Filter",
-		wikitext:        PungtungiaHilgendorfi,
-		want:            PungtungiaHilgendorfiLinksFiltered,
-		ignoredSections: []string{"References"},
 	}}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			ignoredSections := make(map[string]bool)
-			for _, s := range tc.ignoredSections {
-				ignoredSections[s] = true
-			}
-
 			wikitext := article.UnparsedText(tc.wikitext)
 			gotParse := article.Tokenize(wikitext)
-			gotLinks := article.ToLinkTargets(gotParse, ignoredSections)
+			gotLinks := article.ToLinkTargets(gotParse)
 
 			diff := cmp.Diff(gotLinks, tc.want)
 			if diff != "" {

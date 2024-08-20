@@ -105,8 +105,13 @@ func ParseLinkFile(target string, args ...string) Token {
 	return result
 }
 
-func ToLinkTargets(tokens []Token, ignoredSections map[string]bool) []string {
-	var result []string
+type LinkTargetSection struct {
+	Target  string
+	Section string
+}
+
+func ToLinkTargets(tokens []Token) []LinkTargetSection {
+	var result []LinkTargetSection
 
 	for _, token := range tokens {
 		switch l := token.(type) {
@@ -122,12 +127,15 @@ func ToLinkTargets(tokens []Token, ignoredSections map[string]bool) []string {
 			if strings.Contains(target, "#") {
 				target = strings.Split(target, "#")[0]
 			}
-			result = append(result, target)
+			result = append(result, LinkTargetSection{Target: target})
 		case Section:
-			if ignoredSections[l.Header.Render()] {
-				continue
+			// Keep top-level section links are in.
+			for _, target := range ToLinkTargets(l.Text) {
+				result = append(result, LinkTargetSection{
+					Target:  target.Target,
+					Section: l.Header.Render(),
+				})
 			}
-			result = append(result, ToLinkTargets(l.Text, ignoredSections)...)
 		}
 	}
 
