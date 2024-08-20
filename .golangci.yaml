@@ -8,6 +8,7 @@ linters-settings:
       - '10'
       - '10.0'
       - '100'
+      - '100.0'
     ignored-functions:
       - cobra.ExactArgs
   wrapcheck:
