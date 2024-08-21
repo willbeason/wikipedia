@@ -59,7 +59,7 @@ func WriteStream[IN any, PIN Proto[IN]](
 				}
 
 				// Record length of marshaled message.
-				lengthBuf := make([]byte, 4)
+				lengthBuf := make([]byte, SizeLen)
 				binary.LittleEndian.PutUint32(lengthBuf, uint32(len(bytes)))
 				if _, writeErr := bf.Write(lengthBuf); writeErr != nil {
 					cancel(writeErr)

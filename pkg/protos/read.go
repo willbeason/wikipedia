@@ -16,6 +16,10 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// SizeLen is the number of bytes to use to store the length of the next proto
+// message. At 4, is equivalent to uint32.
+const SizeLen = 4
+
 var ErrUnsupportedProtoExtension = errors.New("unsupported proto extension")
 
 func ReadStream[OUT any, POUT Proto[OUT]](
@@ -61,7 +65,7 @@ func ReadStream[OUT any, POUT Proto[OUT]](
 			case <-ctx.Done():
 				break ScanLoop
 			default:
-				sizeBytes := make([]byte, 4)
+				sizeBytes := make([]byte, SizeLen)
 				if _, readErr := io.ReadFull(bf, sizeBytes); readErr != nil {
 					if !errors.Is(readErr, io.EOF) {
 						cancel(fmt.Errorf("reading size of next message: %w", readErr))
@@ -77,7 +81,7 @@ func ReadStream[OUT any, POUT Proto[OUT]](
 					break ScanLoop
 				}
 
-				fileProgress += int64(len(messageBytes))
+				fileProgress += int64(len(messageBytes)) + SizeLen
 				fileProgressBar.Set(fileProgress)
 
 				var out POUT = new(OUT)
