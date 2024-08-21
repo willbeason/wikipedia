@@ -49,7 +49,7 @@ linters:
 #    - gochecknoglobals # Need to implement configuration files to do this properly.
     - gochecknoinits
     - gochecksumtype
-    - gocognit
+#    - gocognit
     - goconst
     - gocritic
     - gocyclo

@@ -1,17 +1,102 @@
 package protos
 
 import (
+	"bufio"
+	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
+	progress_bar "github.com/willbeason/wikipedia/pkg/progress-bar"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
 )
 
 var ErrUnsupportedProtoExtension = errors.New("unsupported proto extension")
+
+func ReadStream[OUT any, POUT Proto[OUT]](
+	ctx context.Context,
+	cancel context.CancelCauseFunc,
+	file string,
+) <-chan *OUT {
+	result := make(chan *OUT, 100)
+
+	go func() {
+		f, err := os.Open(file)
+		defer func() {
+			closeErr := f.Close()
+			if closeErr != nil {
+				fmt.Printf("closing %q: %v\n", file, closeErr)
+			}
+		}()
+
+		if err != nil {
+			cancel(err)
+			return
+		}
+
+		fInfo, err := f.Stat()
+		if err != nil {
+			cancel(err)
+			return
+		}
+
+		fileSize := fInfo.Size()
+		fileProgress := int64(0)
+		fileProgressBar := progress_bar.NewProgressBar("Loading "+fInfo.Name(), fileSize, os.Stdout)
+		fileProgressBar.Start()
+		defer func() {
+			fileProgressBar.Stop()
+		}()
+
+		bf := bufio.NewReader(f)
+
+	ScanLoop:
+		for {
+			select {
+			case <-ctx.Done():
+				break ScanLoop
+			default:
+				sizeBytes := make([]byte, 4)
+				if _, readErr := io.ReadFull(bf, sizeBytes); readErr != nil {
+					if !errors.Is(readErr, io.EOF) {
+						cancel(fmt.Errorf("reading size of next message: %w", readErr))
+					}
+					break ScanLoop
+				}
+
+				size := binary.LittleEndian.Uint32(sizeBytes)
+
+				messageBytes := make([]byte, size)
+				if _, readErr := io.ReadFull(bf, messageBytes); readErr != nil {
+					cancel(fmt.Errorf("reading next message: %w", readErr))
+					break ScanLoop
+				}
+
+				fileProgress += int64(len(messageBytes))
+				fileProgressBar.Set(fileProgress)
+
+				var out POUT = new(OUT)
+				unmarshalErr := proto.Unmarshal(messageBytes, out)
+
+				if unmarshalErr != nil {
+					cancel(fmt.Errorf("unmarshalling message: %w", unmarshalErr))
+					break ScanLoop
+				}
+
+				result <- out
+			}
+		}
+
+		close(result)
+	}()
+
+	return result
+}
 
 // Read reads a protocol buffer stored in file to a protocol buffer of type OUT.
 // OUT must be a type whose pointer receiver is a proto.Message.

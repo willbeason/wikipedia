@@ -28,6 +28,11 @@ message TitleIndex {
   map<string, uint32> titles = 1;
 }
 
+message ArticleIdGender {
+  uint32 id = 1;
+  string gender = 2;
+}
+
 message GenderIndex {
   map<uint32, string> genders = 1;
 }
@@ -40,12 +45,9 @@ message Categories {
   repeated uint32 categories = 1;
 }
 
-message LinkIndex {
-  map<uint32, Links> articles = 1;
-}
-
-message Links {
-  repeated Link links = 1;
+message ArticleIdLinks {
+  uint32 id = 1;
+  repeated Link links = 2;
 }
 
 message Link {

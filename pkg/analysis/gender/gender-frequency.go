@@ -91,7 +91,7 @@ func genderMapWorkFn(out map[uint32]string, e *entities.Entity) error {
 
 	switch {
 	case errors.Is(err, ErrNotHuman):
-		// Ignore
+		// Ignore non-humans.
 	case err != nil:
 		return err
 	default:

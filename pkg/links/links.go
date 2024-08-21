@@ -86,16 +86,11 @@ func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
 	}
 
 	linksChannel := makeLinks(parallel, titleIndex.Titles, redirectIndex, ps)
-	links := <-linksChannel
-	for toMerge := range linksChannel {
-		for articleId, articleLinks := range toMerge.Articles {
-			links.Articles[articleId] = articleLinks
-		}
-	}
 
-	err = protos.Write(outFile, links)
-	if err != nil {
-		return fmt.Errorf("%w: writing title index: %w", ErrLinks, err)
+	writeWg := protos.WriteStream(ctx, cancel, outFile, linksChannel)
+	writeWg.Wait()
+	if ctx.Err() != nil {
+		return fmt.Errorf("%w: writing title index: %w", ErrLinks, context.Cause(ctx))
 	}
 
 	return nil
@@ -106,15 +101,13 @@ func makeLinks(
 	titleIndex map[string]uint32,
 	redirects *documents.Redirects,
 	pages <-chan *documents.Page,
-) <-chan *documents.LinkIndex {
-	results := make(chan *documents.LinkIndex, jobs.WorkBuffer)
+) <-chan *documents.ArticleIdLinks {
+	results := make(chan *documents.ArticleIdLinks, jobs.WorkBuffer)
 
 	linksWg := sync.WaitGroup{}
 	for range parallel / 4 {
 		linksWg.Add(1)
 		go func() {
-			result := &documents.LinkIndex{Articles: make(map[uint32]*documents.Links)}
-
 			var page *documents.Page
 
 			defer func() {
@@ -129,7 +122,9 @@ func makeLinks(
 			for page = range pages {
 				tokens := article.Tokenize(article.UnparsedText(page.Text))
 
-				links := &documents.Links{}
+				links := &documents.ArticleIdLinks{
+					Id: page.Id,
+				}
 
 				for _, link := range article.ToLinkTargets(tokens) {
 					redirectedTarget, err := documents.GetDestination(redirects, titleIndex, link.Target)
@@ -146,12 +141,10 @@ func makeLinks(
 						Target:  id,
 						Section: link.Section,
 					})
-
-					result.Articles[page.Id] = links
 				}
-			}
 
-			results <- result
+				results <- links
+			}
 			linksWg.Done()
 		}()
 	}

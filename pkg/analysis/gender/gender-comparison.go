@@ -1,8 +1,10 @@
 package gender
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -11,6 +13,7 @@ import (
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
+	progress_bar "github.com/willbeason/wikipedia/pkg/progress-bar"
 	"github.com/willbeason/wikipedia/pkg/protos"
 )
 
@@ -27,16 +30,29 @@ func Comparison(cmd *cobra.Command, cfg *config.GenderComparison, corpusNames ..
 		return err
 	}
 
+	ctx, cancel := context.WithCancelCause(cmd.Context())
+
 	beforeGenderPath := filepath.Join(workspace, beforeCorpusName, cfg.GenderIndex)
-	beforeGender, err := protos.Read[documents.GenderIndex](beforeGenderPath)
-	if err != nil {
-		return err
+	beforeGenderProtos := protos.ReadStream[documents.ArticleIdGender](ctx, cancel, beforeGenderPath)
+
+	beforeGender := make(map[uint32]string)
+	for p := range beforeGenderProtos {
+		beforeGender[p.Id] = p.Gender
+	}
+	if ctx.Err() != nil {
+		return context.Cause(ctx)
 	}
 
 	beforeLinksPath := filepath.Join(workspace, beforeCorpusName, cfg.Links)
-	beforeLinks, err := protos.Read[documents.LinkIndex](beforeLinksPath)
-	if err != nil {
-		return err
+	beforeLinksProtos := protos.ReadStream[documents.ArticleIdLinks](ctx, cancel, beforeLinksPath)
+
+	beforeLinks := make(map[uint32]*documents.ArticleIdLinks)
+	for p := range beforeLinksProtos {
+		beforeLinks[p.Id] = p
+	}
+
+	if ctx.Err() != nil {
+		return context.Cause(ctx)
 	}
 
 	beforeGenderCountsMap := make(map[string]int)
@@ -46,8 +62,14 @@ func Comparison(cmd *cobra.Command, cfg *config.GenderComparison, corpusNames ..
 	totalGenderedLinked := 0
 	genderLinkTargetsMap := make(map[string]int)
 
-	for id, links := range beforeLinks.Articles {
-		gender, hasGender := beforeGender.Genders[id]
+	articlesProgress := progress_bar.NewProgressBar("Articles", int64(len(beforeLinks)), os.Stdout)
+	articlesProgress.Start()
+	n := 0
+	for id, links := range beforeLinks {
+		n++
+		articlesProgress.Increment()
+
+		gender, hasGender := beforeGender[id]
 
 		sectionLinkCounts, exists := genderSectionLinkCounts[gender]
 		if !exists {
@@ -64,18 +86,22 @@ func Comparison(cmd *cobra.Command, cfg *config.GenderComparison, corpusNames ..
 		for _, link := range links.Links {
 			if hasGender {
 				section := strings.TrimSpace(link.Section)
+				if section == "" {
+					section = "Lead"
+				}
 				beforeSectionCountsMap[section]++
 				sectionLinkCounts[section]++
 				beforeGenderLinkCountsMap[gender]++
 			}
 
-			targetGender, targetHasGender := beforeGender.Genders[link.Target]
+			targetGender, targetHasGender := beforeGender[link.Target]
 			if targetHasGender {
 				genderLinkTargetsMap[targetGender]++
 			}
 		}
 		genderSectionLinkCounts[gender] = sectionLinkCounts
 	}
+	articlesProgress.Stop()
 
 	beforeGenderCounts := make([]StringCount, 0, len(beforeGenderCountsMap))
 	for gender, count := range beforeGenderCountsMap {
@@ -123,6 +149,10 @@ func Comparison(cmd *cobra.Command, cfg *config.GenderComparison, corpusNames ..
 			fmt.Printf("%6.02f%%,", percent)
 		}
 		fmt.Println()
+	}
+
+	if ctx.Err() != nil {
+		return context.Cause(ctx)
 	}
 
 	return nil

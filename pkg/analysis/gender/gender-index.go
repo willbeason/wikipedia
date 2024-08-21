@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"sync"
 
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/entities"
 	"github.com/willbeason/wikipedia/pkg/flags"
-	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/pages"
 	"github.com/willbeason/wikipedia/pkg/protos"
 )
@@ -38,33 +38,58 @@ func Index(cmd *cobra.Command, cfg *config.GenderIndex, corpusNames ...string) e
 	source := pages.StreamDB[entities.Entity](wikidataDB, parallel)
 
 	ctx, cancel := context.WithCancelCause(cmd.Context())
-	ps, err := source(ctx, cancel)
+	entitiesChan, err := source(ctx, cancel)
 	if err != nil {
 		return err
 	}
 
-	articleGendersChan := jobs.Reduce2[*entities.Entity, map[uint32]string](
-		ctx,
-		cancel,
-		parallel,
-		10000,
-		ps,
-		jobs.NewMap[uint32, string],
-		genderMapWorkFn,
-		jobs.MergeInto[uint32, string],
-	)
+	protosChan := make(chan *documents.ArticleIdGender, 10000)
+	transformWg := &sync.WaitGroup{}
 
-	articleGenders := <-articleGendersChan
+	for range parallel {
+		transformWg.Add(1)
 
-	result := &documents.GenderIndex{
-		Genders: make(map[uint32]string),
+		go func() {
+		EntitiesLoop:
+			for {
+				select {
+				case <-ctx.Done():
+					break EntitiesLoop
+				case entity, ok := <-entitiesChan:
+					if !ok {
+						break EntitiesLoop
+					}
+
+					inferredGender, inferErr := processEntity(entity)
+					switch {
+					case errors.Is(inferErr, ErrNotHuman):
+						// Ignore non-humans.
+					case inferErr != nil:
+						cancel(inferErr)
+						break EntitiesLoop
+					default:
+						protosChan <- &documents.ArticleIdGender{
+							Id:     entity.Id,
+							Gender: inferredGender,
+						}
+					}
+				}
+			}
+
+			transformWg.Done()
+		}()
 	}
-	for id, gender := range articleGenders {
-		result.Genders[id] = gender
-	}
+
+	go func() {
+		transformWg.Wait()
+		close(protosChan)
+	}()
 
 	outFile := filepath.Join(workspace, corpusName, cfg.Out)
-	err = protos.Write(outFile, result)
+	writeWg := protos.WriteStream(ctx, cancel, outFile, protosChan)
+	writeWg.Wait()
+
+	err = ctx.Err()
 	if err != nil {
 		return fmt.Errorf("%w: writing gender index: %w", ErrIndex, err)
 	}
