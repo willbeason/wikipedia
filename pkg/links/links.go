@@ -89,10 +89,18 @@ func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
 	titlesWg.Wait()
 	titleReduceWg.Wait()
 
-	redirectIndex, err := protos.ReadOne[documents.Redirects](redirectsPath)
-	if err != nil {
-		return err
-	}
+	redirectSource := jobs.NewSource(protos.ReadFile[documents.Redirect](redirectsPath))
+	redirectsWg, redirectsJob, redirects := redirectSource()
+	go redirectsJob(ctx, errs)
+
+	redirectsReduce := jobs.NewMap(documents.MakeRedirectsMapFn)
+	redirectsReduceWg, redirectsReduceJob, redirectIndexes := redirectsReduce(redirects)
+	go redirectsReduceJob(ctx, errs)
+
+	redirectIndex := <-redirectIndexes
+
+	redirectsWg.Wait()
+	redirectsReduceWg.Wait()
 
 	pageSource := jobs.NewSource(protos.ReadDir[documents.Page](articlesDir))
 	pageSourceWg, pageSourceJob, pages := pageSource()
@@ -116,7 +124,7 @@ func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
 func makeLinks(
 	parallel int,
 	titleIndex map[string]uint32,
-	redirects *documents.Redirects,
+	redirects map[string]string,
 	pages <-chan *documents.Page,
 ) <-chan *documents.ArticleIdLinks {
 	results := make(chan *documents.ArticleIdLinks, jobs.WorkBuffer)

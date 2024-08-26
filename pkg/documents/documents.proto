@@ -15,10 +15,6 @@ message Page {
   string text = 3;
 }
 
-message Redirects {
-  map<string, string> redirects = 1;
-}
-
 message Redirect {
   string title = 1;
   string redirect = 2;
