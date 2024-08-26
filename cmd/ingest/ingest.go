@@ -16,15 +16,13 @@ import (
 	"strings"
 	"sync"
 
-	progress_bar "github.com/willbeason/wikipedia/pkg/progress-bar"
-
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
+	progress_bar "github.com/willbeason/wikipedia/pkg/progress-bar"
 	"github.com/willbeason/wikipedia/pkg/protos"
-	"github.com/willbeason/wikipedia/pkg/workflows"
 )
 
 const namespaceKey = "namespace"
@@ -71,16 +69,10 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		workspacePath = filepath.Join(workingDirectory, workspacePath)
 	}
 
-	cfg, err := config.Load(workspacePath)
-	if err != nil {
-		return err
-	}
-	r := workflows.Runner{Config: cfg}
-
-	return ingestEnwiki(cmd, args, workspacePath, r)
+	return ingestEnwiki(cmd, args, workspacePath)
 }
 
-func ingestEnwiki(cmd *cobra.Command, args []string, workspacePath string, r workflows.Runner) error {
+func ingestEnwiki(cmd *cobra.Command, args []string, workspacePath string) error {
 	// enwiki-20240701-pages-articles-multistream.xml.bz2
 	// enwiki-20240801-pages-articles-multistream1.xml-p1p41242.bz2
 	articlesPath := args[0]

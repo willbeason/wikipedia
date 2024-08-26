@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 
 	"github.com/willbeason/wikipedia/pkg/jobs"
-
 	"google.golang.org/protobuf/proto"
 )
 
@@ -82,8 +81,6 @@ ReadLoop:
 			in <- out
 		}
 	}
-
-	return
 }
 
 // readNextMessage reads the next Proto message from r.

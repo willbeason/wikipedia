@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/willbeason/wikipedia/pkg/jobs"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/willbeason/wikipedia/pkg/jobs"
 
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/config"
@@ -62,7 +63,7 @@ func Comparison(cmd *cobra.Command, cfg *config.GenderComparison, corpusNames ..
 	for p := range beforeLinksProtos {
 		beforeLinks[p.Id] = p
 	}
-	
+
 	beforeGenderWg.Wait()
 	beforeLinksWg.Wait()
 

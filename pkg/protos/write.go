@@ -9,7 +9,6 @@ import (
 	"os"
 
 	"github.com/willbeason/wikipedia/pkg/jobs"
-
 	"google.golang.org/protobuf/proto"
 )
 
