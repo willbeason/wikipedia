@@ -10,9 +10,8 @@ import (
 	"os"
 	"path/filepath"
 
-	progress_bar "github.com/willbeason/wikipedia/pkg/progress-bar"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/encoding/prototext"
+	"github.com/willbeason/wikipedia/pkg/jobs"
+
 	"google.golang.org/protobuf/proto"
 )
 
@@ -22,140 +21,93 @@ const SizeLen = 4
 
 var ErrUnsupportedProtoExtension = errors.New("unsupported proto extension")
 
-func ReadStream[OUT any, POUT Proto[OUT]](
-	ctx context.Context,
-	cancel context.CancelCauseFunc,
-	file string,
-) <-chan *OUT {
-	result := make(chan *OUT, 100)
+// ReadFile constructs a jobs.SourceFn from the passed file of protos.
+func ReadFile[IN any, PIN Proto[IN]](path string) jobs.SourceFn[*IN] {
+	return func(in chan<- *IN) jobs.Job {
+		return readFileJob[IN, PIN](path, in)
+	}
+}
 
-	go func() {
-		f, err := os.Open(file)
-		defer func() {
-			closeErr := f.Close()
-			if closeErr != nil {
-				fmt.Printf("closing %q: %v\n", file, closeErr)
-			}
-		}()
+// ReadDir constructs a Source from the passed directory of files of protos.
+func ReadDir[IN any, PIN Proto[IN]](dir string) jobs.SourceFn[*IN] {
+	return func(in chan<- *IN) jobs.Job {
+		return readDirJob[IN, PIN](dir, in)
+	}
+}
 
+func readFileJob[IN any, PIN Proto[IN]](path string, in chan<- *IN) jobs.Job {
+	return func(ctx context.Context, errs chan<- error) {
+		readStream[IN, PIN](ctx, errs, path, in)
+	}
+}
+
+func readDirJob[IN any, PIN Proto[IN]](dir string, in chan<- *IN) jobs.Job {
+	return func(ctx context.Context, errs chan<- error) {
+		files, err := os.ReadDir(dir)
 		if err != nil {
-			cancel(err)
+			errs <- err
 			return
 		}
 
-		fInfo, err := f.Stat()
-		if err != nil {
-			cancel(err)
-			return
+		for _, file := range files {
+			path := filepath.Join(dir, file.Name())
+			readStream[IN, PIN](ctx, errs, path, in)
 		}
+	}
+}
 
-		fileSize := fInfo.Size()
-		fileProgress := int64(0)
-		fileProgressBar := progress_bar.NewProgressBar("Loading "+fInfo.Name(), fileSize, os.Stdout)
-		fileProgressBar.Start()
-		defer func() {
-			fileProgressBar.Stop()
-		}()
+func readStream[IN any, PIN Proto[IN]](ctx context.Context, errs chan<- error, path string, in chan<- *IN) {
+	file, err := os.Open(path)
+	if err != nil {
+		errs <- err
+		return
+	}
 
-		bf := bufio.NewReader(f)
+	defer closeFile(file, errs)
 
-	ScanLoop:
-		for {
-			select {
-			case <-ctx.Done():
-				break ScanLoop
-			default:
-				sizeBytes := make([]byte, SizeLen)
-				if _, readErr := io.ReadFull(bf, sizeBytes); readErr != nil {
-					if !errors.Is(readErr, io.EOF) {
-						cancel(fmt.Errorf("reading size of next message: %w", readErr))
-					}
-					break ScanLoop
-				}
+	reader := bufio.NewReader(file)
 
-				size := binary.LittleEndian.Uint32(sizeBytes)
-
-				messageBytes := make([]byte, size)
-				if _, readErr := io.ReadFull(bf, messageBytes); readErr != nil {
-					cancel(fmt.Errorf("reading next message: %w", readErr))
-					break ScanLoop
-				}
-
-				fileProgress += int64(len(messageBytes)) + SizeLen
-				fileProgressBar.Set(fileProgress)
-
-				var out POUT = new(OUT)
-				unmarshalErr := proto.Unmarshal(messageBytes, out)
-
-				if unmarshalErr != nil {
-					cancel(fmt.Errorf("unmarshalling message: %w", unmarshalErr))
-					break ScanLoop
-				}
-
-				result <- out
+ReadLoop:
+	for {
+		select {
+		case <-ctx.Done():
+			break ReadLoop
+		default:
+			out, _, readErr := readNextMessage[IN, PIN](reader)
+			if readErr != nil {
+				errs <- readErr
+				break ReadLoop
 			}
+
+			in <- out
 		}
+	}
 
-		close(result)
-	}()
-
-	return result
+	return
 }
 
-// Read reads a protocol buffer stored in file to a protocol buffer of type OUT.
-// OUT must be a type whose pointer receiver is a proto.Message.
-func Read[OUT any, POUT Proto[OUT]](file string) (*OUT, error) {
-	var out POUT = new(OUT)
-
-	bytes, err := os.ReadFile(file)
-	if err != nil {
-		return out, fmt.Errorf("reading %q: %w", file, err)
+// readNextMessage reads the next Proto message from r.
+// Returns the marshalled message and the number of bytes consumed from r.
+func readNextMessage[IN any, PIN Proto[IN]](reader io.Reader) (*IN, int, error) {
+	sizeBytes := make([]byte, SizeLen)
+	if _, readErr := io.ReadFull(reader, sizeBytes); readErr != nil {
+		if !errors.Is(readErr, io.EOF) {
+			return nil, 0, fmt.Errorf("reading size of next message: %w", readErr)
+		}
 	}
 
-	switch ext := filepath.Ext(file); ext {
-	case ".pb":
-		err = proto.Unmarshal(bytes, out)
-	case ".json":
-		err = protojson.Unmarshal(bytes, out)
-	case ".txt":
-		err = prototext.Unmarshal(bytes, out)
-	default:
-		return out, fmt.Errorf("%w: %q", ErrUnsupportedProtoExtension, ext)
+	size := binary.LittleEndian.Uint32(sizeBytes)
+	messageBytes := make([]byte, size)
+	if _, readErr := io.ReadFull(reader, messageBytes); readErr != nil {
+		return nil, 0, fmt.Errorf("reading next message bytes: %w", readErr)
 	}
 
-	if err != nil {
-		return out, fmt.Errorf("unmarshalling %q: %w", file, err)
+	var out PIN = new(IN)
+	unmarshalErr := proto.Unmarshal(messageBytes, out)
+
+	if unmarshalErr != nil {
+		return nil, 0, fmt.Errorf("unmarshalling message: %w", unmarshalErr)
 	}
 
-	return out, nil
-}
-
-func Write(path string, p proto.Message) error {
-	err := os.MkdirAll(filepath.Dir(path), os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("writing %q: %w", path, err)
-	}
-
-	var bytes []byte
-
-	switch ext := filepath.Ext(path); ext {
-	case ".pb":
-		bytes, err = proto.Marshal(p)
-	case ".json":
-		bytes, err = protojson.MarshalOptions{Indent: "  "}.Marshal(p)
-	case ".txt":
-		bytes, err = prototext.MarshalOptions{Indent: "  "}.Marshal(p)
-	default:
-		return fmt.Errorf("%w: %q", ErrUnsupportedProtoExtension, ext)
-	}
-	if err != nil {
-		return fmt.Errorf("marshalling %q: %w", path, err)
-	}
-
-	err = os.WriteFile(path, bytes, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("writing %q: %w", path, err)
-	}
-
-	return nil
+	return out, SizeLen + int(size), nil
 }

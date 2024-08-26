@@ -97,7 +97,7 @@ func IngestWikidata(cmd *cobra.Command, wikidataCfg *config.IngestWikidata, args
 	}
 
 	titleIndexPath := filepath.Join(workspacePath, wikidataDate, wikidataCfg.Index)
-	titleIndex, err := protos.Read[documents.TitleIndex](titleIndexPath)
+	titleIndex, err := protos.ReadOne[documents.TitleIndex](titleIndexPath)
 	if err != nil {
 		return err
 	}

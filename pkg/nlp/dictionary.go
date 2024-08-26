@@ -14,7 +14,7 @@ func ReadDictionary(path string) (*Dictionary, error) {
 		return dictionary, nil
 	}
 
-	dictionary, err := protos.Read[Dictionary](path)
+	dictionary, err := protos.ReadOne[Dictionary](path)
 	if err != nil {
 		return nil, err
 	}

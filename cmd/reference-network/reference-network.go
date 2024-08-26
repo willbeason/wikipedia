@@ -70,7 +70,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	genders, err := protos.Read[documents.GenderIndex]("")
+	genders, err := protos.ReadOne[documents.GenderIndex]("")
 	if err != nil {
 		return err
 	}

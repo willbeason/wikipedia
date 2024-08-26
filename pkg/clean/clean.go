@@ -82,7 +82,7 @@ func Clean(cmd *cobra.Command, cfg *config.Clean, corpusNames ...string) error {
 		return fmt.Errorf("reading articles for cleaning: %w", err)
 	}
 
-	cleanedChannel, cleanWork := jobs.Map(jobs.WorkBuffer, docs, func(from *documents.Page) (*documents.Page, error) {
+	cleanedChannel, cleanWork := jobs.MapOld(jobs.WorkBuffer, docs, func(from *documents.Page) (*documents.Page, error) {
 		tokens := article.Tokenize(article.UnparsedText(from.Text))
 		from.Text = article.Render(tokens)
 		return from, nil

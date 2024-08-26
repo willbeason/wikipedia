@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/willbeason/wikipedia/pkg/jobs"
 	"path/filepath"
 	"sync"
 
@@ -85,9 +86,19 @@ func Index(cmd *cobra.Command, cfg *config.GenderIndex, corpusNames ...string) e
 		close(protosChan)
 	}()
 
+	errs := make(chan error)
+	go func() {
+		for err := range errs {
+			cancel(err)
+		}
+	}()
+
 	outFile := filepath.Join(workspace, corpusName, cfg.Out)
-	writeWg := protos.WriteStream(ctx, cancel, outFile, protosChan)
-	writeWg.Wait()
+	writeSink := jobs.NewSink(protos.WriteFile[*documents.ArticleIdGender](outFile))
+	writeSinkWg, writeSinkJob := writeSink(protosChan)
+	go writeSinkJob(ctx, errs)
+
+	writeSinkWg.Wait()
 
 	err = ctx.Err()
 	if err != nil {

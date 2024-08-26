@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/willbeason/wikipedia/pkg/jobs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -32,8 +33,17 @@ func Comparison(cmd *cobra.Command, cfg *config.GenderComparison, corpusNames ..
 
 	ctx, cancel := context.WithCancelCause(cmd.Context())
 
+	errs := make(chan error)
+	go func() {
+		for err := range errs {
+			cancel(err)
+		}
+	}()
+
 	beforeGenderPath := filepath.Join(workspace, beforeCorpusName, cfg.GenderIndex)
-	beforeGenderProtos := protos.ReadStream[documents.ArticleIdGender](ctx, cancel, beforeGenderPath)
+	beforeGenderSource := jobs.NewSource(protos.ReadFile[documents.ArticleIdGender](beforeGenderPath))
+	beforeGenderWg, beforeGenderJob, beforeGenderProtos := beforeGenderSource()
+	go beforeGenderJob(ctx, errs)
 
 	beforeGender := make(map[uint32]string)
 	for p := range beforeGenderProtos {
@@ -44,12 +54,17 @@ func Comparison(cmd *cobra.Command, cfg *config.GenderComparison, corpusNames ..
 	}
 
 	beforeLinksPath := filepath.Join(workspace, beforeCorpusName, cfg.Links)
-	beforeLinksProtos := protos.ReadStream[documents.ArticleIdLinks](ctx, cancel, beforeLinksPath)
+	beforeLinksSource := jobs.NewSource(protos.ReadFile[documents.ArticleIdLinks](beforeLinksPath))
+	beforeLinksWg, beforeLinksJob, beforeLinksProtos := beforeLinksSource()
+	go beforeLinksJob(ctx, errs)
 
 	beforeLinks := make(map[uint32]*documents.ArticleIdLinks)
 	for p := range beforeLinksProtos {
 		beforeLinks[p.Id] = p
 	}
+	
+	beforeGenderWg.Wait()
+	beforeLinksWg.Wait()
 
 	if ctx.Err() != nil {
 		return context.Cause(ctx)

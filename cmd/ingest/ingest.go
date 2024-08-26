@@ -16,10 +16,10 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/dgraph-io/badger/v3"
+	progress_bar "github.com/willbeason/wikipedia/pkg/progress-bar"
+
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/config"
-	"github.com/willbeason/wikipedia/pkg/db"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
@@ -50,7 +50,7 @@ var (
 		`enwiki-(\d+)-pages-articles-multistream(\d*)\.xml(?:-p(\d+)p(\d+))?\.bz2`,
 	)
 	MultistreamIndexPattern = regexp.MustCompile(
-		`enwiki-(\d+)-pages-articles-multistream-index(\d*)\.txt(?:-p(\d+)p(\d+))?\.bz2`,
+		`enwiki-(\d+)-pages-articles-multistream-index(\d*)\.txt(?:-p(\d+)p(\d+))?(\.bz2)?`,
 	)
 )
 
@@ -130,8 +130,8 @@ func ingestEnwiki(cmd *cobra.Command, args []string, workspacePath string, r wor
 	}
 
 	// Perform the extraction.
-	extractPath := filepath.Join(corpusPath, config.ArticlesDir)
-	err = flags.CreateOrCheckDirectory(extractPath)
+	outPath := filepath.Join(corpusPath, config.ArticlesDir)
+	err = flags.CreateOrCheckDirectory(outPath)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrExtract, err)
 	}
@@ -151,65 +151,27 @@ func ingestEnwiki(cmd *cobra.Command, args []string, workspacePath string, r wor
 	}
 	pages, redirects := extractPages(cancel, parallel, namespaces, compressedItems)
 
-	outDB, err := badger.Open(
-		badger.DefaultOptions(extractPath).
-			WithMetricsEnabled(false).
-			WithLoggingLevel(badger.WARNING),
-	)
-	if err != nil {
-		return fmt.Errorf("opening %q: %w", extractPath, err)
-	}
-	defer func() {
-		closeErr := outDB.Close()
-		if err != nil {
-			err = closeErr
-		}
-	}()
-
-	runner := jobs.NewRunner()
-	sinkWork := jobs.Reduce(ctx, jobs.WorkBuffer*100, pages, db.WriteProto[*documents.Page](outDB))
-	sinkWg := runner.Run(ctx, cancel, sinkWork)
-
-	redirectsWg := sync.WaitGroup{}
-	redirectsWg.Add(1)
+	errs := make(chan error)
 	go func() {
-		redirectsProto := &documents.Redirects{
-			Redirects: make(map[string]string),
-		}
-		for redirect := range redirects {
-			redirectsProto.Redirects[redirect.GetTitle()] = redirect.GetRedirect()
-		}
-
-		redirectsPath := filepath.Join(corpusPath, "redirects.txt")
-		protoErr := protos.Write(redirectsPath, redirectsProto)
-		if protoErr != nil {
+		for err := range errs {
 			cancel(err)
 		}
-
-		redirectsWg.Done()
 	}()
 
-	sinkWg.Wait()
-	redirectsWg.Wait()
+	pageSink := jobs.NewSink(protos.WriteDir[*documents.Page](outPath, 100))
+	pageSinkWg, pageSinkJob := pageSink(pages)
+	go pageSinkJob(ctx, errs)
 
-	err = db.RunGC(outDB)
-	if err != nil {
-		return err
-	}
+	redirectsPath := filepath.Join(corpusPath, "redirects.pb")
+	redirectSink := jobs.NewSink(protos.WriteFile[*documents.Redirect](redirectsPath))
+	redirectSinkWg, redirectSinkJob := redirectSink(redirects)
+	go redirectSinkJob(ctx, errs)
+
+	pageSinkWg.Wait()
+	redirectSinkWg.Wait()
 
 	if ctx.Err() != nil {
 		return context.Cause(ctx)
-	}
-
-	// Close the DB before reading.
-	err = outDB.Close()
-	if err != nil {
-		return fmt.Errorf("closing ingested articles database: %w", err)
-	}
-
-	err = r.RunWorkflow(cmd, config.PostIngestWorkflow, corpusName)
-	if err != nil && !errors.Is(err, workflows.ErrWorkflowNotExist) {
-		return err
 	}
 
 	return nil
@@ -235,6 +197,16 @@ func extractEndIndices(ctx context.Context, cancel context.CancelCauseFunc, inde
 			cancel(fmt.Errorf("%w: opening %q: %w", ErrExtract, index, err))
 			return
 		}
+
+		fStat, err := fIndex.Stat()
+		if err != nil {
+			cancel(fmt.Errorf("%w: getting statistics for %q: %w", ErrExtract, index, err))
+			return
+		}
+
+		indexProgress := progress_bar.NewProgressBar("Index", fStat.Size(), os.Stdout)
+		indexProgress.Start()
+		defer indexProgress.Stop()
 
 		defer func() {
 			closeErr := fIndex.Close()
@@ -262,7 +234,6 @@ func extractEndIndices(ctx context.Context, cancel context.CancelCauseFunc, inde
 				line, readErr := rIndex.ReadString('\n')
 				switch {
 				case errors.Is(readErr, io.EOF):
-					fmt.Println("got last article")
 					return
 				case readErr != nil:
 					cancel(readErr)
@@ -283,6 +254,7 @@ func extractEndIndices(ctx context.Context, cancel context.CancelCauseFunc, inde
 					}
 
 					endIndices <- endIndex
+					indexProgress.Add(int64(len(line)))
 				}
 			}
 		}

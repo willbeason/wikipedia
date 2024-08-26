@@ -61,7 +61,7 @@ func runCmd(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	cleanedChannel, cleanWork := jobs.Map(jobs.WorkBuffer, docs, func(from *documents.Page) (protos.ID, error) {
+	cleanedChannel, cleanWork := jobs.MapOld(jobs.WorkBuffer, docs, func(from *documents.Page) (protos.ID, error) {
 		from.Text = nlp.NormalizeArticle(from.Text)
 		return from, nil
 	})

@@ -44,12 +44,12 @@ func RenamedArticles(cmd *cobra.Command, corpusBefore, titlesBefore, corpusAfter
 	beforePath := filepath.Join(workspacePath, corpusBefore, titlesBefore)
 	afterPath := filepath.Join(workspacePath, corpusAfter, titlesAfter)
 
-	before, err := protos.Read[documents.TitleIndex](beforePath)
+	before, err := protos.ReadOne[documents.TitleIndex](beforePath)
 	if err != nil {
 		return err
 	}
 
-	after, err := protos.Read[documents.TitleIndex](afterPath)
+	after, err := protos.ReadOne[documents.TitleIndex](afterPath)
 	if err != nil {
 		return err
 	}

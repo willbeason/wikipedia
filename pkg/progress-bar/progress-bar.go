@@ -46,6 +46,10 @@ func (p *ProgressBar) Increment() {
 	p.progress.Add(1)
 }
 
+func (p *ProgressBar) Add(progress int64) {
+	p.progress.Add(progress)
+}
+
 func (p *ProgressBar) Set(progress int64) {
 	p.progress.Swap(progress)
 }
@@ -82,14 +86,20 @@ func (p *ProgressBar) printProgress() {
 	estimatedTimeLeftString := "--:--:--"
 	if progressPercent > 0.0 {
 		now := time.Now()
+
 		timeSinceStart := now.Sub(p.startTime)
 		estimatedDuration := time.Duration(float64(timeSinceStart) / progressPercent)
 		estimatedEnd := p.startTime.Add(estimatedDuration)
 		estimatedTimeLeft := estimatedEnd.Sub(now)
+
 		hoursLeft := estimatedTimeLeft / time.Hour
 		minutesLeft := (estimatedTimeLeft % time.Hour) / time.Minute
 		secondsLeft := (estimatedTimeLeft % time.Minute) / time.Second
+
 		estimatedTimeLeftString = fmt.Sprintf("%02d:%02d:%02d", hoursLeft, minutesLeft, secondsLeft)
+	}
+	if progressPercent > 1.0 {
+		progressPercent = 1.0
 	}
 
 	usableProgressBarWidth := width - len(p.name) - 7 - len(countIndicator) - len(estimatedTimeLeftString)
@@ -113,7 +123,6 @@ func (p *ProgressBar) printProgress() {
 }
 
 func (p *ProgressBar) Stop() {
-	p.Set(p.maxProgress)
 	p.printProgress()
 	p.stop <- struct{}{}
 	close(p.stop)

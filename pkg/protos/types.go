@@ -19,6 +19,12 @@ type Proto[T any] interface {
 	proto.Message
 }
 
+type ProtoID[T any] interface {
+	*T
+	proto.Message
+	ID
+}
+
 type Sink[IN any, PIN Proto[IN], OUT any] func(
 	context.Context,
 	context.CancelCauseFunc,

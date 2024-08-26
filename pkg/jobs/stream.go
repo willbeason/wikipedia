@@ -76,36 +76,8 @@ func (r *Runner) Run(ctx context.Context, cancel context.CancelCauseFunc, workQu
 	return &wg
 }
 
-// Filter discards elements which do not cause predicate to return true.
-func Filter[T any](buffer int, in <-chan T, predicate func(T) (bool, error)) (<-chan T, WorkQueue) {
-	out := make(chan T, buffer)
-	work := make(chan Work, buffer)
-
-	go func() {
-		for i := range in {
-			x := i
-			work <- func() error {
-				o, err := predicate(x)
-				if err != nil {
-					return err
-				}
-
-				if o {
-					out <- x
-				}
-				return nil
-			}
-		}
-
-		close(out)
-		close(work)
-	}()
-
-	return out, work
-}
-
-// Map mutates an input channel, optionally changing the type.
-func Map[FROM, TO any](buffer int, in <-chan FROM, fn func(FROM) (TO, error)) (chan TO, WorkQueue) {
+// Deprecated: MapOld mutates an input channel, optionally changing the type.
+func MapOld[FROM, TO any](buffer int, in <-chan FROM, fn func(FROM) (TO, error)) (chan TO, WorkQueue) {
 	out := make(chan TO, buffer)
 	work := make(chan Work, buffer)
 
@@ -129,7 +101,7 @@ func Map[FROM, TO any](buffer int, in <-chan FROM, fn func(FROM) (TO, error)) (c
 	return out, work
 }
 
-// ForEach performs an action for each item, returning nothing.
+// Deprecated: ForEach performs an action for each item, returning nothing.
 func ForEach[FROM any](buffer int, in <-chan FROM, fn func(FROM) error) WorkQueue {
 	work := make(chan Work, buffer)
 

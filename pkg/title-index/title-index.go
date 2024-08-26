@@ -76,7 +76,7 @@ func TitleIndex(cmd *cobra.Command, cfg *config.TitleIndex, corpusNames ...strin
 
 	index := <-results
 
-	err = protos.Write(outFile, index)
+	err = protos.WriteOne(outFile, index)
 	if err != nil {
 		return fmt.Errorf("%w: writing title index: %w", ErrTitleIndex, err)
 	}

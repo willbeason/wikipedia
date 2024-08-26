@@ -59,7 +59,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	titleMap := make(map[uint32]string)
 
 	biographies := make(map[uint32]bool)
-	genders, err := protos.Read[documents.GenderIndex]("")
+	genders, err := protos.ReadOne[documents.GenderIndex]("")
 	if err != nil {
 		return err
 	}

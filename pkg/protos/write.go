@@ -5,75 +5,78 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"io"
 	"os"
-	"sync"
+
+	"github.com/willbeason/wikipedia/pkg/jobs"
 
 	"google.golang.org/protobuf/proto"
 )
 
-func WriteStream[IN any, PIN Proto[IN]](
-	ctx context.Context,
-	cancel context.CancelCauseFunc,
-	filepath string,
-	protos <-chan PIN,
-) *sync.WaitGroup {
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
+func WriteFile[OUT proto.Message](path string) jobs.SinkFn[OUT] {
+	return func(out <-chan OUT) jobs.Job {
+		return writeFileJob[OUT](path, out)
+	}
+}
 
-	go func() {
-		f, err := os.Create(filepath)
-		if err != nil {
-			cancel(err)
-			return
-		}
+func writeFileJob[OUT proto.Message](path string, out <-chan OUT) jobs.Job {
+	return func(ctx context.Context, errs chan<- error) {
+		writeStream[OUT](ctx, errs, path, out)
+	}
+}
 
-		defer func() {
-			closeErr := f.Close()
-			if closeErr != nil {
-				fmt.Printf("closing %q: %v\n", filepath, closeErr)
-			}
-			wg.Done()
-		}()
+func writeStream[OUT proto.Message](ctx context.Context, errs chan<- error, path string, out <-chan OUT) {
+	file, err := os.Create(path)
+	if err != nil {
+		errs <- err
+		return
+	}
 
-		bf := bufio.NewWriter(f)
+	defer closeFile(file, errs)
 
-	WriteLoop:
-		for {
-			select {
-			case <-ctx.Done():
+	writer := bufio.NewWriter(file)
+
+WriteLoop:
+	for {
+		select {
+		case <-ctx.Done():
+			break WriteLoop
+		case p, ok := <-out:
+			if !ok {
+				// Protos channel is closed.
+				err = writer.Flush()
+				if err != nil {
+					errs <- fmt.Errorf("flushing %q: %w", path, err)
+				}
 				break WriteLoop
-			case p, ok := <-protos:
-				if !ok {
-					// Protos channel is closed.
-					flushErr := bf.Flush()
-					if flushErr != nil {
-						fmt.Printf("flushing %q: %v\n", filepath, flushErr)
-					}
-					break WriteLoop
-				}
+			}
 
-				bytes, marshalErr := proto.Marshal(p)
-				if marshalErr != nil {
-					cancel(marshalErr)
-					break WriteLoop
-				}
-
-				// Record length of marshaled message.
-				lengthBuf := make([]byte, SizeLen)
-				binary.LittleEndian.PutUint32(lengthBuf, uint32(len(bytes)))
-				if _, writeErr := bf.Write(lengthBuf); writeErr != nil {
-					cancel(writeErr)
-					break WriteLoop
-				}
-
-				// Record message.
-				if _, writeErr := bf.Write(bytes); writeErr != nil {
-					cancel(writeErr)
-					break WriteLoop
-				}
+			err = writeNextMessage(writer, p)
+			if err != nil {
+				errs <- err
+				break WriteLoop
 			}
 		}
-	}()
+	}
+}
 
-	return wg
+func writeNextMessage(writer io.Writer, p proto.Message) error {
+	bytes, marshalErr := proto.Marshal(p)
+	if marshalErr != nil {
+		return fmt.Errorf("marhsaling %T: %w", p, marshalErr)
+	}
+
+	// Record length of marshaled message.
+	lengthBuf := make([]byte, SizeLen)
+	binary.LittleEndian.PutUint32(lengthBuf, uint32(len(bytes)))
+	if _, writeErr := writer.Write(lengthBuf); writeErr != nil {
+		return fmt.Errorf("writing size of next message: %w", writeErr)
+	}
+
+	// Record message.
+	if _, writeErr := writer.Write(bytes); writeErr != nil {
+		return fmt.Errorf("writing next message bytes: %w", writeErr)
+	}
+
+	return nil
 }

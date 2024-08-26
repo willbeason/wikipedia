@@ -99,7 +99,7 @@ func runCmd(cmd *cobra.Command, _ []string) error {
 		}
 
 		// Count words on each page.
-		countsChanel, countWork := jobs.Map(jobs.WorkBuffer, docs, func(page *documents.Page) (map[string]uint32, error) {
+		countsChanel, countWork := jobs.MapOld(jobs.WorkBuffer, docs, func(page *documents.Page) (map[string]uint32, error) {
 			pageWordCounts := make(map[string]uint32)
 			// 10% subsample.
 

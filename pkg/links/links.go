@@ -13,7 +13,6 @@ import (
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
-	"github.com/willbeason/wikipedia/pkg/pages"
 	"github.com/willbeason/wikipedia/pkg/protos"
 )
 
@@ -67,28 +66,37 @@ func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
 	titleIndexPath := filepath.Join(workspace, corpusName, cfg.Index)
 	redirectsPath := filepath.Join(workspace, corpusName, cfg.Redirects)
 
-	source := pages.StreamDB[documents.Page](articlesDir, parallel)
-
 	ctx, cancel := context.WithCancelCause(cmd.Context())
-	ps, err := source(ctx, cancel)
+
+	titleIndex, err := protos.ReadOne[documents.TitleIndex](titleIndexPath)
 	if err != nil {
 		return err
 	}
 
-	titleIndex, err := protos.Read[documents.TitleIndex](titleIndexPath)
+	redirectIndex, err := protos.ReadOne[documents.Redirects](redirectsPath)
 	if err != nil {
 		return err
 	}
 
-	redirectIndex, err := protos.Read[documents.Redirects](redirectsPath)
-	if err != nil {
-		return err
-	}
+	errs := make(chan error)
+	go func() {
+		for err := range errs {
+			cancel(err)
+		}
+	}()
 
-	linksChannel := makeLinks(parallel, titleIndex.Titles, redirectIndex, ps)
+	pageSource := jobs.NewSource(protos.ReadDir[documents.Page](articlesDir))
+	pageSourceWg, pageSourceJob, pages := pageSource()
+	go pageSourceJob(ctx, errs)
 
-	writeWg := protos.WriteStream(ctx, cancel, outFile, linksChannel)
-	writeWg.Wait()
+	linksChannel := makeLinks(parallel, titleIndex.Titles, redirectIndex, pages)
+
+	linksSink := jobs.NewSink(protos.WriteFile[*documents.ArticleIdLinks](outFile))
+	linksSinkWg, linksSinkJob := linksSink(linksChannel)
+	go linksSinkJob(ctx, errs)
+
+	pageSourceWg.Wait()
+	linksSinkWg.Wait()
 	if ctx.Err() != nil {
 		return fmt.Errorf("%w: writing title index: %w", ErrLinks, context.Cause(ctx))
 	}
@@ -105,7 +113,7 @@ func makeLinks(
 	results := make(chan *documents.ArticleIdLinks, jobs.WorkBuffer)
 
 	linksWg := sync.WaitGroup{}
-	for range parallel / 4 {
+	for range parallel / 2 {
 		linksWg.Add(1)
 		go func() {
 			var page *documents.Page
