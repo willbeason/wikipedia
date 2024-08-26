@@ -36,33 +36,3 @@ func ReadOne[OUT any, POUT Proto[OUT]](file string) (*OUT, error) {
 
 	return out, nil
 }
-
-func WriteOne(path string, p proto.Message) error {
-	err := os.MkdirAll(filepath.Dir(path), os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("writing %q: %w", path, err)
-	}
-
-	var bytes []byte
-
-	switch ext := filepath.Ext(path); ext {
-	case ".pb":
-		bytes, err = proto.Marshal(p)
-	case ".json":
-		bytes, err = protojson.MarshalOptions{Indent: "  "}.Marshal(p)
-	case ".txt":
-		bytes, err = prototext.MarshalOptions{Indent: "  "}.Marshal(p)
-	default:
-		return fmt.Errorf("%w: %q", ErrUnsupportedProtoExtension, ext)
-	}
-	if err != nil {
-		return fmt.Errorf("marshalling %q: %w", path, err)
-	}
-
-	err = os.WriteFile(path, bytes, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("writing %q: %w", path, err)
-	}
-
-	return nil
-}

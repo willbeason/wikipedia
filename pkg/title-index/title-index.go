@@ -74,7 +74,7 @@ func TitleIndex(cmd *cobra.Command, cfg *config.TitleIndex, corpusNames ...strin
 	pageSourceWg, pageSourceJob, ps := pageSource()
 	go pageSourceJob(ctx, errs)
 
-	indexMap := jobs.NewMap[*documents.Page, *documents.ArticleIdTitle](makeIndex)
+	indexMap := jobs.NewMap(jobs.Convert(getTitle))
 	indexMapWg, indexMapJob, titles := indexMap(ps)
 	go indexMapJob(ctx, errs)
 
@@ -89,30 +89,9 @@ func TitleIndex(cmd *cobra.Command, cfg *config.TitleIndex, corpusNames ...strin
 	return nil
 }
 
-func makeIndex(pages <-chan *documents.Page, titles chan<- *documents.ArticleIdTitle) jobs.Job {
-	return func(ctx context.Context, _ chan<- error) {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case page, ok := <-pages:
-				if !ok {
-					return
-				}
-
-				title := &documents.ArticleIdTitle{
-					Id:    page.Id,
-					Title: page.Title,
-				}
-
-				select {
-				case <-ctx.Done():
-					return
-				case titles <- title:
-					// Normal case.
-				}
-
-			}
-		}
-	}
+func getTitle(page *documents.Page) (*documents.ArticleIdTitle, error) {
+	return &documents.ArticleIdTitle{
+		Id:    page.Id,
+		Title: page.Title,
+	}, nil
 }
