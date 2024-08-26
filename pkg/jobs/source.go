@@ -13,7 +13,7 @@ type Source[T any] func() (*sync.WaitGroup, Job, <-chan T)
 
 func NewSource[T any](sourceFn SourceFn[T]) Source[T] {
 	return func() (*sync.WaitGroup, Job, <-chan T) {
-		in := make(chan T)
+		in := make(chan T, DefaultBuffer)
 		wg := &sync.WaitGroup{}
 		// Ensure the job is initiated at least once before waiting succeeds.
 		wg.Add(1)

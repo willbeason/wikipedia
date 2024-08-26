@@ -5,6 +5,8 @@ import (
 	"sync"
 )
 
+const DefaultBuffer = 1000
+
 // A Job represents a unit of work which may be run concurrently with other Jobs.
 // The caller is responsible for handling errors and cancelling the job's context
 // if appropriate.
@@ -22,6 +24,3 @@ func newJob(wg *sync.WaitGroup, first *sync.Once, job Job) Job {
 		job(ctx, errs)
 	}
 }
-
-// Map processes objects of type T to type U.
-type Map[T, U any] func(<-chan T) (*sync.WaitGroup, Job, <-chan U)

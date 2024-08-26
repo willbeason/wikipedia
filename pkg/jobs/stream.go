@@ -147,7 +147,7 @@ func Reduce[IN any](ctx context.Context, buffer int, in <-chan IN, fn func(IN) e
 	return work
 }
 
-func NewMap[K comparable, V any]() map[K]V {
+func NewMap2[K comparable, V any]() map[K]V {
 	return make(map[K]V)
 }
 

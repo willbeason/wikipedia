@@ -56,7 +56,7 @@ func Frequency(cmd *cobra.Command, cfg *config.GenderFrequency, corpusNames ...s
 		parallel,
 		10000,
 		ps,
-		jobs.NewMap[uint32, string],
+		jobs.NewMap2[uint32, string],
 		genderMapWorkFn,
 		jobs.MergeInto[uint32, string],
 	)

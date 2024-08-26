@@ -24,8 +24,9 @@ message Redirect {
   string redirect = 2;
 }
 
-message TitleIndex {
-  map<string, uint32> titles = 1;
+message ArticleIdTitle {
+  uint32 id = 1;
+  string title = 2;
 }
 
 message ArticleIdGender {

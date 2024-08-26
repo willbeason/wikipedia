@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/willbeason/wikipedia/pkg/analysis"
 	"path/filepath"
 	"sync"
 
@@ -68,16 +69,6 @@ func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
 
 	ctx, cancel := context.WithCancelCause(cmd.Context())
 
-	titleIndex, err := protos.ReadOne[documents.TitleIndex](titleIndexPath)
-	if err != nil {
-		return err
-	}
-
-	redirectIndex, err := protos.ReadOne[documents.Redirects](redirectsPath)
-	if err != nil {
-		return err
-	}
-
 	errs := make(chan error)
 	go func() {
 		for err := range errs {
@@ -85,11 +76,29 @@ func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
 		}
 	}()
 
+	titlesSource := jobs.NewSource(protos.ReadFile[documents.ArticleIdTitle](titleIndexPath))
+	titlesWg, titlesJob, titles := titlesSource()
+	go titlesJob(ctx, errs)
+
+	titleReduce := jobs.NewMap(analysis.MakeTitleMapFn)
+	titleReduceWg, titleReduceJob, titleIndexes := titleReduce(titles)
+	go titleReduceJob(ctx, errs)
+
+	titleIndex := <-titleIndexes
+
+	titlesWg.Wait()
+	titleReduceWg.Wait()
+
+	redirectIndex, err := protos.ReadOne[documents.Redirects](redirectsPath)
+	if err != nil {
+		return err
+	}
+
 	pageSource := jobs.NewSource(protos.ReadDir[documents.Page](articlesDir))
 	pageSourceWg, pageSourceJob, pages := pageSource()
 	go pageSourceJob(ctx, errs)
 
-	linksChannel := makeLinks(parallel, titleIndex.Titles, redirectIndex, pages)
+	linksChannel := makeLinks(parallel, titleIndex, redirectIndex, pages)
 
 	linksSink := jobs.NewSink(protos.WriteFile[*documents.ArticleIdLinks](outFile))
 	linksSinkWg, linksSinkJob := linksSink(linksChannel)

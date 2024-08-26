@@ -8,7 +8,7 @@ import (
 )
 
 type Categorizer struct {
-	TitleIndex *TitleIndex
+	TitleIndex map[string]uint32
 }
 
 var categorySplit = regexp.MustCompile(`]]\s*\[\[`)
@@ -68,10 +68,10 @@ func (c *Categorizer) Categorize(page *Page) *Categories {
 			continue
 		}
 
-		categoryID, ok := c.TitleIndex.Titles[categoryTitle]
+		categoryID, ok := c.TitleIndex[categoryTitle]
 
 		if !ok {
-			categoryID, ok = c.TitleIndex.Titles[strings.ReplaceAll(categoryTitle, "-", " ")]
+			categoryID, ok = c.TitleIndex[strings.ReplaceAll(categoryTitle, "-", " ")]
 		}
 
 		if !ok {

@@ -3,6 +3,8 @@ package view
 import (
 	"context"
 	"fmt"
+	"github.com/willbeason/wikipedia/pkg/analysis"
+	"github.com/willbeason/wikipedia/pkg/protos"
 	"os"
 	"path/filepath"
 
@@ -12,7 +14,6 @@ import (
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/pages"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func Cmd() *cobra.Command {
@@ -33,6 +34,12 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 
 	ctx, cancel := context.WithCancelCause(cmd.Context())
+	errs := make(chan error)
+	go func() {
+		for err := range errs {
+			cancel(err)
+		}
+	}()
 
 	// We don't want to print pages in parallel.
 	parallel := 1
@@ -48,19 +55,21 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	}
 	if len(titles) > 0 {
 		indexFilepath := filepath.Join(environment.WikiPath, environment.TitleIndex)
-		indexBytes, err2 := os.ReadFile(indexFilepath)
-		if err2 != nil {
-			return fmt.Errorf("reading index %q: %w", indexFilepath, err2)
-		}
+		titlesSource := jobs.NewSource(protos.ReadFile[documents.ArticleIdTitle](indexFilepath))
+		titlesWg, titlesJob, titleIds := titlesSource()
+		go titlesJob(ctx, errs)
 
-		index := documents.TitleIndex{}
-		err2 = protojson.Unmarshal(indexBytes, &index)
-		if err2 != nil {
-			return fmt.Errorf("unmarshalling index %q: %w", indexFilepath, err2)
-		}
+		titleReduce := jobs.NewMap(analysis.MakeTitleMapFn)
+		titleReduceWg, titleReduceJob, titleIndexes := titleReduce(titleIds)
+		go titleReduceJob(ctx, errs)
+
+		index := <-titleIndexes
+
+		titlesWg.Wait()
+		titleReduceWg.Wait()
 
 		for _, title := range titles {
-			id, found := index.Titles[title]
+			id, found := index[title]
 			if !found {
 				return flags.InvalidFlagError(flags.TitlesKey, fmt.Sprintf("unable to find article of title %q", title))
 			}

@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/willbeason/wikipedia/pkg/jobs"
+
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
-	"github.com/willbeason/wikipedia/pkg/pages"
 	"github.com/willbeason/wikipedia/pkg/protos"
 )
 
@@ -51,10 +52,15 @@ func TitleIndex(cmd *cobra.Command, cfg *config.TitleIndex, corpusNames ...strin
 	fmt.Printf("Creating title index for corpus %q from directory %q and writing to %q\n",
 		corpusName, articlesDir, outFile)
 
-	parallel, err := flags.GetParallel(cmd)
-	if err != nil {
-		return err
-	}
+	ctx := cmd.Context()
+	ctx, cancel := context.WithCancelCause(ctx)
+
+	errs := make(chan error)
+	go func() {
+		for err := range errs {
+			cancel(err)
+		}
+	}()
 
 	workspace, err := flags.GetWorkspacePath(cmd)
 	if err != nil {
@@ -64,41 +70,49 @@ func TitleIndex(cmd *cobra.Command, cfg *config.TitleIndex, corpusNames ...strin
 	articlesDir = filepath.Join(workspace, corpusName, articlesDir)
 	outFile = filepath.Join(workspace, corpusName, outFile)
 
-	source := pages.StreamDB[documents.Page](articlesDir, parallel)
+	pageSource := jobs.NewSource(protos.ReadDir[documents.Page](articlesDir))
+	pageSourceWg, pageSourceJob, ps := pageSource()
+	go pageSourceJob(ctx, errs)
 
-	ctx, cancel := context.WithCancelCause(cmd.Context())
-	ps, err := source(ctx, cancel)
-	if err != nil {
-		return err
-	}
+	indexMap := jobs.NewMap[*documents.Page, *documents.ArticleIdTitle](makeIndex)
+	indexMapWg, indexMapJob, titles := indexMap(ps)
+	go indexMapJob(ctx, errs)
 
-	results := makeIndex(ps)
+	titlesSink := jobs.NewSink(protos.WriteFile[*documents.ArticleIdTitle](outFile))
+	titlesSinkWg, titlesSinkJob := titlesSink(titles)
+	go titlesSinkJob(ctx, errs)
 
-	index := <-results
-
-	err = protos.WriteOne(outFile, index)
-	if err != nil {
-		return fmt.Errorf("%w: writing title index: %w", ErrTitleIndex, err)
-	}
+	pageSourceWg.Wait()
+	indexMapWg.Wait()
+	titlesSinkWg.Wait()
 
 	return nil
 }
 
-func makeIndex(pages <-chan *documents.Page) <-chan *documents.TitleIndex {
-	results := make(chan *documents.TitleIndex)
+func makeIndex(pages <-chan *documents.Page, titles chan<- *documents.ArticleIdTitle) jobs.Job {
+	return func(ctx context.Context, _ chan<- error) {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case page, ok := <-pages:
+				if !ok {
+					return
+				}
 
-	go func() {
-		result := &documents.TitleIndex{
-			Titles: make(map[string]uint32),
+				title := &documents.ArticleIdTitle{
+					Id:    page.Id,
+					Title: page.Title,
+				}
+
+				select {
+				case <-ctx.Done():
+					return
+				case titles <- title:
+					// Normal case.
+				}
+
+			}
 		}
-
-		for page := range pages {
-			result.Titles[page.Title] = page.Id
-		}
-
-		results <- result
-		close(results)
-	}()
-
-	return results
+	}
 }

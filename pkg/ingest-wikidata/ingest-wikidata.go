@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/willbeason/wikipedia/pkg/analysis"
 	"io"
 	"os"
 	"path/filepath"
@@ -87,6 +88,14 @@ func IngestWikidata(cmd *cobra.Command, wikidataCfg *config.IngestWikidata, args
 		return err
 	}
 
+
+	errs := make(chan error)
+	go func() {
+		for err := range errs {
+			cancel(err)
+		}
+	}()
+
 	parallel, err := flags.GetParallel(cmd)
 	if err != nil {
 		return err
@@ -97,10 +106,19 @@ func IngestWikidata(cmd *cobra.Command, wikidataCfg *config.IngestWikidata, args
 	}
 
 	titleIndexPath := filepath.Join(workspacePath, wikidataDate, wikidataCfg.Index)
-	titleIndex, err := protos.ReadOne[documents.TitleIndex](titleIndexPath)
-	if err != nil {
-		return err
-	}
+
+	titlesSource := jobs.NewSource(protos.ReadFile[documents.ArticleIdTitle](titleIndexPath))
+	titlesWg, titlesJob, titles := titlesSource()
+	go titlesJob(ctx, errs)
+
+	titleReduce := jobs.NewMap(analysis.MakeTitleMapFn)
+	titleReduceWg, titleReduceJob, titleIndexes := titleReduce(titles)
+	go titleReduceJob(ctx, errs)
+
+	titleIndex := <-titleIndexes
+
+	titlesWg.Wait()
+	titleReduceWg.Wait()
 
 	parsedEntities := parseObjects(cancel, parallel, wikidataCfg, titleIndex, unparsedObjects)
 
@@ -200,7 +218,7 @@ func parseObjects(
 	cancel context.CancelCauseFunc,
 	parallel int,
 	cfg *config.IngestWikidata,
-	index *documents.TitleIndex,
+	index map[string]uint32,
 	unparsedObjects <-chan unparsedObject,
 ) <-chan protos.ID {
 	parsedObjects := make(chan protos.ID, 10000)
@@ -229,7 +247,7 @@ var count atomic.Int64
 
 func parseObjectsWorker(
 	cfg *config.IngestWikidata,
-	index *documents.TitleIndex,
+	index map[string]uint32,
 	unparsedObjects <-chan unparsedObject,
 	parsedEntities chan<- protos.ID,
 ) error {
@@ -279,7 +297,7 @@ func ParseObject(
 	allowedInstances map[string]bool,
 	requireWikipediaArticle map[string]bool,
 	keepClaims []string,
-	index *documents.TitleIndex,
+	index map[string]uint32,
 	unparsedObj []byte,
 ) (*entities.Entity, error) {
 	rawEntity := &Entity{}
@@ -373,7 +391,7 @@ func ParseObject(
 		return nil, ErrNotObject
 	}
 
-	id := index.Titles[title]
+	id := index[title]
 	if id == 0 {
 		// Probably an article in a namespace we don't care about, like Categories.
 		return nil, ErrNotObject

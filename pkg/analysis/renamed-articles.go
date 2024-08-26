@@ -1,8 +1,11 @@
 package analysis
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
+
+	"github.com/willbeason/wikipedia/pkg/jobs"
 
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/documents"
@@ -44,27 +47,50 @@ func RenamedArticles(cmd *cobra.Command, corpusBefore, titlesBefore, corpusAfter
 	beforePath := filepath.Join(workspacePath, corpusBefore, titlesBefore)
 	afterPath := filepath.Join(workspacePath, corpusAfter, titlesAfter)
 
-	before, err := protos.ReadOne[documents.TitleIndex](beforePath)
-	if err != nil {
-		return err
-	}
+	ctx := cmd.Context()
+	ctx, cancel := context.WithCancelCause(ctx)
 
-	after, err := protos.ReadOne[documents.TitleIndex](afterPath)
-	if err != nil {
-		return err
-	}
+	errs := make(chan error)
+	go func() {
+		for err := range errs {
+			cancel(err)
+		}
+	}()
 
-	beforeSize := len(before.Titles)
-	afterSize := len(after.Titles)
+	beforeTitlesSource := jobs.NewSource(protos.ReadFile[documents.ArticleIdTitle](beforePath))
+	beforeTitlesWg, beforeTitlesJob, beforeTitles := beforeTitlesSource()
+	go beforeTitlesJob(ctx, errs)
+
+	afterTitlesSource := jobs.NewSource(protos.ReadFile[documents.ArticleIdTitle](afterPath))
+	afterTitlesWg, afterTitlesJob, afterTitles := afterTitlesSource()
+	go afterTitlesJob(ctx, errs)
+
+	titleReduce := jobs.NewMap(MakeTitleMapFn)
+	beforeTitleReduceWg, beforeTitleReduceJob, befores := titleReduce(beforeTitles)
+	go beforeTitleReduceJob(ctx, errs)
+
+	afterTitleReduceWg, afterTitleReduceJob, afters := titleReduce(afterTitles)
+	go afterTitleReduceJob(ctx, errs)
+
+	before := <- befores
+	after := <- afters
+
+	beforeTitlesWg.Wait()
+	beforeTitleReduceWg.Wait()
+	afterTitlesWg.Wait()
+	afterTitleReduceWg.Wait()
+
+	beforeSize := len(before)
+	afterSize := len(after)
 
 	inverseAfter := make(map[uint32]string)
-	for title, id := range after.Titles {
+	for title, id := range after {
 		inverseAfter[id] = title
 	}
 
 	renamed := 0
 	deleted := 0
-	for beforeTitle, id := range before.Titles {
+	for beforeTitle, id := range before {
 		if afterTitle, ok := inverseAfter[id]; ok && beforeTitle != afterTitle {
 			renamed++
 		} else if !ok {
@@ -75,6 +101,27 @@ func RenamedArticles(cmd *cobra.Command, corpusBefore, titlesBefore, corpusAfter
 	printArticlesChange(beforeSize, afterSize, deleted, renamed)
 
 	return nil
+}
+
+func MakeTitleMapFn(titles <-chan *documents.ArticleIdTitle, titleMap chan<- map[string]uint32) jobs.Job {
+	return func(ctx context.Context, _ chan<- error) {
+		result := make(map[string]uint32)
+		defer func() {
+			titleMap <- result
+		}()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case title, ok := <-titles:
+				if !ok {
+					return
+				}
+
+				result[title.Title] = title.Id
+			}
+		}
+	}
 }
 
 func printArticlesChange(before, after, deleted, renamed int) {

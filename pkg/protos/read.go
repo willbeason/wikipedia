@@ -49,6 +49,7 @@ func readDirJob[IN any, PIN Proto[IN]](dir string, in chan<- *IN) jobs.Job {
 		}
 
 		for _, file := range files {
+			fmt.Println(file.Name())
 			path := filepath.Join(dir, file.Name())
 			readStream[IN, PIN](ctx, errs, path, in)
 		}
@@ -74,7 +75,9 @@ ReadLoop:
 		default:
 			out, _, readErr := readNextMessage[IN, PIN](reader)
 			if readErr != nil {
-				errs <- readErr
+				if !errors.Is(readErr, io.EOF) {
+					errs <- readErr
+				}
 				break ReadLoop
 			}
 
@@ -88,9 +91,7 @@ ReadLoop:
 func readNextMessage[IN any, PIN Proto[IN]](reader io.Reader) (*IN, int, error) {
 	sizeBytes := make([]byte, SizeLen)
 	if _, readErr := io.ReadFull(reader, sizeBytes); readErr != nil {
-		if !errors.Is(readErr, io.EOF) {
-			return nil, 0, fmt.Errorf("reading size of next message: %w", readErr)
-		}
+		return nil, 0, fmt.Errorf("reading size of next message: %w", readErr)
 	}
 
 	size := binary.LittleEndian.Uint32(sizeBytes)
