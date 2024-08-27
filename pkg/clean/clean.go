@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/willbeason/wikipedia/pkg/protos"
 	"os"
 	"path/filepath"
 
@@ -11,11 +12,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/article"
 	"github.com/willbeason/wikipedia/pkg/config"
-	"github.com/willbeason/wikipedia/pkg/db"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
-	"github.com/willbeason/wikipedia/pkg/pages"
 )
 
 func Cmd() *cobra.Command {
@@ -75,44 +74,34 @@ func Clean(cmd *cobra.Command, cfg *config.Clean, corpusNames ...string) error {
 
 	ctx, cancel := context.WithCancelCause(cmd.Context())
 
-	source := pages.StreamDB[documents.Page](articlesDir, parallel)
+	errs := make(chan error)
+	go func() {
+		for err := range errs {
+			cancel(err)
+		}
+	}()
 
-	docs, err := source(ctx, cancel)
-	if err != nil {
-		return fmt.Errorf("reading articles for cleaning: %w", err)
-	}
+	docsSource := jobs.NewSource(protos.ReadDir[documents.Page](articlesDir))
+	docsSourceWg, docsSourceJob, docs := docsSource()
+	go docsSourceJob(ctx, errs)
 
-	cleanedChannel, cleanWork := jobs.MapOld(jobs.WorkBuffer, docs, func(from *documents.Page) (*documents.Page, error) {
+	cleanedMap := jobs.NewMap(jobs.Convert(func(from *documents.Page) (*documents.Page, error) {
 		tokens := article.Tokenize(article.UnparsedText(from.Text))
 		from.Text = article.Render(tokens)
 		return from, nil
-	})
-
-	var sinkWork jobs.WorkQueue
-	var outDB *badger.DB
-
-	outDB, err = toOutDB(outDir)
-	if err != nil {
-		return err
+	}))
+	cleanedMapWg, cleanedMapJob, cleanedArticles := cleanedMap(docs)
+	for range parallel {
+		go cleanedMapJob(ctx, errs)
 	}
 
-	sinkWork = jobs.Reduce(ctx, jobs.WorkBuffer, cleanedChannel, db.WriteProto[*documents.Page](outDB))
+	cleanedSink := jobs.NewSink(protos.WriteDir[*documents.Page](outDir, 100))
+	cleanedSinkWg, cleanedSinkJob := cleanedSink(cleanedArticles)
+	go cleanedSinkJob(ctx, errs)
 
-	runner := jobs.NewRunner()
-	cleanWg := runner.Run(ctx, cancel, cleanWork)
-
-	sinkWg := runner.Run(ctx, cancel, sinkWork)
-
-	cleanWg.Wait()
-	close(cleanedChannel)
-	sinkWg.Wait()
-
-	if outDB != nil {
-		err = db.RunGC(outDB)
-		if err != nil {
-			return err
-		}
-	}
+	docsSourceWg.Wait()
+	cleanedMapWg.Wait()
+	cleanedSinkWg.Wait()
 
 	if ctx.Err() != nil {
 		return context.Cause(ctx)

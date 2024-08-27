@@ -84,3 +84,14 @@ type GenderComparison struct {
 	// Links is the filepath to the list of links by article.
 	Links string `yaml:"links"`
 }
+
+type PageRank struct {
+	// Index is the filepath to the title index.
+	Index string `yaml:"index"`
+
+	// GenderIndex is the filepath to the GenderIndex.
+	GenderIndex string `yaml:"genderIndex"`
+
+	// Links is the filepath to the list of links by article.
+	Links string `yaml:"links"`
+}

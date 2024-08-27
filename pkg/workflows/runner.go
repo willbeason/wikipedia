@@ -3,6 +3,7 @@ package workflows
 import (
 	"errors"
 	"fmt"
+	"github.com/willbeason/wikipedia/pkg/analysis/pagerank"
 
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/analysis/gender"
@@ -103,6 +104,13 @@ func (r *Runner) RunJob(cmd *cobra.Command, jobName string, args ...string) erro
 		}
 
 		return ingest_wikidata.IngestWikidata(cmd, wikidataCfg, args...)
+	case "pagerank":
+		wikidataCfg, err := config.UnmarshallJob[config.PageRank](job)
+		if err != nil {
+			return err
+		}
+
+		return pagerank.RunPageRank(cmd, wikidataCfg, args...)
 	default:
 		return fmt.Errorf("%w: job %q has unknown subCommand %q",
 			config.ErrLoad, jobName, job.SubCommand)

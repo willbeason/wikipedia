@@ -1,6 +1,7 @@
 package jobs
 
 import (
+	"context"
 	"sync"
 )
 
@@ -28,5 +29,23 @@ func NewSource[T any](sourceFn SourceFn[T]) Source[T] {
 		}()
 
 		return wg, newJob(wg, first, job), in
+	}
+}
+
+type KV[K comparable, V any] struct {
+	Key K
+	Value V
+}
+
+func MapSourceFn[K comparable, V any](m map[K]V) SourceFn[KV[K, V]] {
+	return func(kvs chan<- KV[K, V]) Job {
+		return func(ctx context.Context, errors chan<- error) {
+			for k, v := range m {
+				if ctx.Err() != nil {
+					break
+				}
+				kvs <- KV[K, V]{Key: k, Value: v}
+			}
+		}
 	}
 }
