@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/willbeason/wikipedia/pkg/analysis"
 	"io"
 	"os"
 	"path/filepath"
@@ -111,7 +110,7 @@ func IngestWikidata(cmd *cobra.Command, wikidataCfg *config.IngestWikidata, args
 	titlesWg, titlesJob, titles := titlesSource()
 	go titlesJob(ctx, errs)
 
-	titleReduce := jobs.NewMap(analysis.MakeTitleMapFn)
+	titleReduce := jobs.NewMap(jobs.Reduce3(documents.NewTitleMap, documents.MakeTitleMap))
 	titleReduceWg, titleReduceJob, titleIndexes := titleReduce(titles)
 	go titleReduceJob(ctx, errs)
 

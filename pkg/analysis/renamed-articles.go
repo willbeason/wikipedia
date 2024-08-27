@@ -65,7 +65,7 @@ func RenamedArticles(cmd *cobra.Command, corpusBefore, titlesBefore, corpusAfter
 	afterTitlesWg, afterTitlesJob, afterTitles := afterTitlesSource()
 	go afterTitlesJob(ctx, errs)
 
-	titleReduce := jobs.NewMap(MakeTitleMapFn)
+	titleReduce := jobs.NewMap(documents.MakeTitleMapFn)
 	beforeTitleReduceWg, beforeTitleReduceJob, befores := titleReduce(beforeTitles)
 	go beforeTitleReduceJob(ctx, errs)
 
@@ -101,27 +101,6 @@ func RenamedArticles(cmd *cobra.Command, corpusBefore, titlesBefore, corpusAfter
 	printArticlesChange(beforeSize, afterSize, deleted, renamed)
 
 	return nil
-}
-
-func MakeTitleMapFn(titles <-chan *documents.ArticleIdTitle, titleMap chan<- map[string]uint32) jobs.Job {
-	return func(ctx context.Context, _ chan<- error) {
-		result := make(map[string]uint32)
-		defer func() {
-			titleMap <- result
-		}()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case title, ok := <-titles:
-				if !ok {
-					return
-				}
-
-				result[title.Title] = title.Id
-			}
-		}
-	}
 }
 
 func printArticlesChange(before, after, deleted, renamed int) {

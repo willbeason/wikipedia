@@ -3,7 +3,6 @@ package view
 import (
 	"context"
 	"fmt"
-	"github.com/willbeason/wikipedia/pkg/analysis"
 	"github.com/willbeason/wikipedia/pkg/protos"
 	"os"
 	"path/filepath"
@@ -59,7 +58,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		titlesWg, titlesJob, titleIds := titlesSource()
 		go titlesJob(ctx, errs)
 
-		titleReduce := jobs.NewMap(analysis.MakeTitleMapFn)
+		titleReduce := jobs.NewMap(documents.MakeTitleMapFn)
 		titleReduceWg, titleReduceJob, titleIndexes := titleReduce(titleIds)
 		go titleReduceJob(ctx, errs)
 

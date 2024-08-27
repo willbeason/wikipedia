@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/willbeason/wikipedia/pkg/analysis"
 	"path/filepath"
 	"sync"
 
@@ -80,7 +79,7 @@ func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
 	titlesWg, titlesJob, titles := titlesSource()
 	go titlesJob(ctx, errs)
 
-	titleReduce := jobs.NewMap(analysis.MakeTitleMapFn)
+	titleReduce := jobs.NewMap(documents.MakeTitleMapFn)
 	titleReduceWg, titleReduceJob, titleIndexes := titleReduce(titles)
 	go titleReduceJob(ctx, errs)
 
