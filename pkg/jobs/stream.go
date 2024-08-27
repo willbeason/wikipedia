@@ -147,19 +147,6 @@ func Reduce[IN any](ctx context.Context, buffer int, in <-chan IN, fn func(IN) e
 	return work
 }
 
-func NewMap2[K comparable, V any]() map[K]V {
-	return make(map[K]V)
-}
-
-// MergeInto merges KV pairs from fromMap into intoMap. Assumes sets of keys are disjoint.
-func MergeInto[K comparable, V any](intoMap map[K]V, fromMap map[K]V) (map[K]V, error) {
-	for k, v := range fromMap {
-		intoMap[k] = v
-	}
-
-	return intoMap, nil
-}
-
 func Reduce2[IN any, OUT any](
 	ctx context.Context,
 	cancel context.CancelCauseFunc,

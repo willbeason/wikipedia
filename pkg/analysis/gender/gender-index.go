@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	ingest_wikidata "github.com/willbeason/wikipedia/pkg/ingest-wikidata"
 	"path/filepath"
 	"sync"
 
@@ -107,4 +108,26 @@ func Index(cmd *cobra.Command, cfg *config.GenderIndex, corpusNames ...string) e
 	}
 
 	return nil
+}
+
+var ErrNotHuman = errors.New("entity is not human")
+
+func processEntity(entity *entities.Entity) (string, error) {
+	instanceOfClaims := entity.Claims[ingest_wikidata.InstanceOf]
+	isHuman := false
+	for _, claim := range instanceOfClaims.Claim {
+		if claim.Value == "Q5" {
+			isHuman = true
+		}
+	}
+	if !isHuman {
+		return "", ErrNotHuman
+	}
+
+	genderClaims, hasGenderClaims := entity.Claims[Claim]
+	if !hasGenderClaims {
+		return NoClaims, nil
+	}
+	claims := genderClaims.Claim
+	return Infer(claims), nil
 }

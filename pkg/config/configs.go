@@ -65,8 +65,8 @@ type IngestWikidata struct {
 }
 
 type GenderFrequency struct {
-	// InPath is the filepath to the extracted Wikidata.
-	In string `yaml:"in"`
+	// GenderIndex is the filepath to the extracted GenderIndex.
+	GenderIndex string `yaml:"genderIndex"`
 }
 
 type GenderIndex struct {

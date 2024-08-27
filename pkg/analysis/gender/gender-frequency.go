@@ -4,16 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"path/filepath"
-	"sort"
-
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/config"
-	"github.com/willbeason/wikipedia/pkg/entities"
+	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
-	ingest_wikidata "github.com/willbeason/wikipedia/pkg/ingest-wikidata"
-	"github.com/willbeason/wikipedia/pkg/jobs"
-	"github.com/willbeason/wikipedia/pkg/pages"
+	"path/filepath"
+	"sort"
+	"sync"
 )
 
 var ErrGenderFrequency = errors.New("running gender frequency calculation")
@@ -31,38 +28,29 @@ func Frequency(cmd *cobra.Command, cfg *config.GenderFrequency, corpusNames ...s
 	}
 	corpusName := corpusNames[0]
 
-	parallel, err := flags.GetParallel(cmd)
-	if err != nil {
-		return err
-	}
-
 	workspace, err := flags.GetWorkspacePath(cmd)
 	if err != nil {
 		return err
 	}
 
-	wikidataDB := filepath.Join(workspace, corpusName, cfg.In)
-	source := pages.StreamDB[entities.Entity](wikidataDB, parallel)
+	genderIndexFile := filepath.Join(workspace, corpusName, cfg.GenderIndex)
 
 	ctx, cancel := context.WithCancelCause(cmd.Context())
-	ps, err := source(ctx, cancel)
-	if err != nil {
-		return err
-	}
 
-	articleGendersChan := jobs.Reduce2[*entities.Entity, map[uint32]string](
-		ctx,
-		cancel,
-		parallel,
-		10000,
-		ps,
-		jobs.NewMap2[uint32, string],
-		genderMapWorkFn,
-		jobs.MergeInto[uint32, string],
-	)
+	errs := make(chan error, 1)
+	errsWg := sync.WaitGroup{}
+	errsWg.Add(1)
+	go func() {
+		for err := range errs {
+			cancel(err)
+		}
+		errsWg.Done()
+	}()
 
-	articleGenders := <-articleGendersChan
+	articleGendersFuture := documents.ReadGenderMap(ctx, genderIndexFile, errs)
+	articleGenders := <-articleGendersFuture
 
+	fmt.Println(len(articleGenders))
 	result := make(map[string]int)
 	for _, gender := range articleGenders {
 		result[gender]++
@@ -83,42 +71,11 @@ func Frequency(cmd *cobra.Command, cfg *config.GenderFrequency, corpusNames ...s
 		fmt.Printf("%s, %d\n", c.Key, c.Count)
 	}
 
-	return nil
-}
-
-func genderMapWorkFn(out map[uint32]string, e *entities.Entity) error {
-	inferredGender, err := processEntity(e)
-
-	switch {
-	case errors.Is(err, ErrNotHuman):
-		// Ignore non-humans.
-	case err != nil:
-		return err
-	default:
-		out[e.Id] = inferredGender
+	close(errs)
+	errsWg.Wait()
+	if ctx.Err() != nil {
+		return context.Cause(ctx)
 	}
 
 	return nil
-}
-
-var ErrNotHuman = errors.New("entity is not human")
-
-func processEntity(entity *entities.Entity) (string, error) {
-	instanceOfClaims := entity.Claims[ingest_wikidata.InstanceOf]
-	isHuman := false
-	for _, claim := range instanceOfClaims.Claim {
-		if claim.Value == "Q5" {
-			isHuman = true
-		}
-	}
-	if !isHuman {
-		return "", ErrNotHuman
-	}
-
-	genderClaims, hasGenderClaims := entity.Claims[Claim]
-	if !hasGenderClaims {
-		return NoClaims, nil
-	}
-	claims := genderClaims.Claim
-	return Infer(claims), nil
 }

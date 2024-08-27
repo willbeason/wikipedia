@@ -105,19 +105,8 @@ func IngestWikidata(cmd *cobra.Command, wikidataCfg *config.IngestWikidata, args
 	}
 
 	titleIndexPath := filepath.Join(workspacePath, wikidataDate, wikidataCfg.Index)
-
-	titlesSource := jobs.NewSource(protos.ReadFile[documents.ArticleIdTitle](titleIndexPath))
-	titlesWg, titlesJob, titles := titlesSource()
-	go titlesJob(ctx, errs)
-
-	titleReduce := jobs.NewMap(jobs.Reduce3(documents.NewTitleMap, documents.MakeTitleMap))
-	titleReduceWg, titleReduceJob, titleIndexes := titleReduce(titles)
-	go titleReduceJob(ctx, errs)
-
-	titleIndex := <-titleIndexes
-
-	titlesWg.Wait()
-	titleReduceWg.Wait()
+	titleIndexFuture := documents.ReadTitleMap(ctx, titleIndexPath, errs)
+	titleIndex := <-titleIndexFuture
 
 	parsedEntities := parseObjects(cancel, parallel, wikidataCfg, titleIndex, unparsedObjects)
 

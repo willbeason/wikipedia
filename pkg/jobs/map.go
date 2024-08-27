@@ -78,3 +78,7 @@ func Reduce3[IN, OUT any](newOut func() OUT, fn func(IN, OUT) error) MapFn[IN, O
 		}
 	}
 }
+
+func MakeMap[K comparable, V any]() map[K]V {
+	return make(map[K]V)
+}

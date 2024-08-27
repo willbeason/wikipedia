@@ -3,34 +3,39 @@ package documents
 import (
 	"context"
 	"github.com/willbeason/wikipedia/pkg/jobs"
+	"github.com/willbeason/wikipedia/pkg/protos"
 )
 
-func NewTitleMap() map[string]uint32 {
-	return make(map[string]uint32)
+func ReadTitleMap(ctx context.Context, filename string, errs chan<- error) <-chan map[string]uint32 {
+	titlesSource := jobs.NewSource(protos.ReadFile[ArticleIdTitle](filename))
+	_, titlesJob, titleIds := titlesSource()
+	go titlesJob(ctx, errs)
+
+	titleReduce := jobs.NewMap(jobs.Reduce3(jobs.MakeMap[string, uint32], mergeTitleMap))
+	_, titleReduceJob, futureIndex := titleReduce(titleIds)
+	go titleReduceJob(ctx, errs)
+
+	return futureIndex
 }
 
-func MakeTitleMap(title *ArticleIdTitle, titleMap map[string]uint32) error {
+func mergeTitleMap(title *ArticleIdTitle, titleMap map[string]uint32) error {
 	titleMap[title.Title] = title.Id
 	return nil
 }
 
-func MakeTitleMapFn(titles <-chan *ArticleIdTitle, titleMap chan<- map[string]uint32) jobs.Job {
-	return func(ctx context.Context, _ chan<- error) {
-		result := make(map[string]uint32)
-		defer func() {
-			titleMap <- result
-		}()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case title, ok := <-titles:
-				if !ok {
-					return
-				}
+func ReadGenderMap(ctx context.Context, filename string, errs chan<- error) <-chan map[uint32]string {
+	genderSource := jobs.NewSource(protos.ReadFile[ArticleIdGender](filename))
+	_, genderJob, genderIds := genderSource()
+	go genderJob(ctx, errs)
 
-				result[title.Title] = title.Id
-			}
-		}
-	}
+	genderReduce := jobs.NewMap(jobs.Reduce3(jobs.MakeMap[uint32, string], mergeGenderMap))
+	_, genderReduceJob, futureIndex := genderReduce(genderIds)
+	go genderReduceJob(ctx, errs)
+
+	return futureIndex
+}
+
+func mergeGenderMap(gender *ArticleIdGender, genderMap map[uint32]string) error {
+	genderMap[gender.Id] = gender.Gender
+	return nil
 }

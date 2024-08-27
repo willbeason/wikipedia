@@ -5,12 +5,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/willbeason/wikipedia/pkg/jobs"
-
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
-	"github.com/willbeason/wikipedia/pkg/protos"
 )
 
 func RenamedArticlesCmd() *cobra.Command {
@@ -57,28 +54,11 @@ func RenamedArticles(cmd *cobra.Command, corpusBefore, titlesBefore, corpusAfter
 		}
 	}()
 
-	beforeTitlesSource := jobs.NewSource(protos.ReadFile[documents.ArticleIdTitle](beforePath))
-	beforeTitlesWg, beforeTitlesJob, beforeTitles := beforeTitlesSource()
-	go beforeTitlesJob(ctx, errs)
+	beforeFuture := documents.ReadTitleMap(ctx, beforePath, errs)
+	afterFuture := documents.ReadTitleMap(ctx, afterPath, errs)
 
-	afterTitlesSource := jobs.NewSource(protos.ReadFile[documents.ArticleIdTitle](afterPath))
-	afterTitlesWg, afterTitlesJob, afterTitles := afterTitlesSource()
-	go afterTitlesJob(ctx, errs)
-
-	titleReduce := jobs.NewMap(documents.MakeTitleMapFn)
-	beforeTitleReduceWg, beforeTitleReduceJob, befores := titleReduce(beforeTitles)
-	go beforeTitleReduceJob(ctx, errs)
-
-	afterTitleReduceWg, afterTitleReduceJob, afters := titleReduce(afterTitles)
-	go afterTitleReduceJob(ctx, errs)
-
-	before := <- befores
-	after := <- afters
-
-	beforeTitlesWg.Wait()
-	beforeTitleReduceWg.Wait()
-	afterTitlesWg.Wait()
-	afterTitleReduceWg.Wait()
+	before := <- beforeFuture
+	after := <- afterFuture
 
 	beforeSize := len(before)
 	afterSize := len(after)

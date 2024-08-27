@@ -75,18 +75,8 @@ func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
 		}
 	}()
 
-	titlesSource := jobs.NewSource(protos.ReadFile[documents.ArticleIdTitle](titleIndexPath))
-	titlesWg, titlesJob, titles := titlesSource()
-	go titlesJob(ctx, errs)
-
-	titleReduce := jobs.NewMap(documents.MakeTitleMapFn)
-	titleReduceWg, titleReduceJob, titleIndexes := titleReduce(titles)
-	go titleReduceJob(ctx, errs)
-
-	titleIndex := <-titleIndexes
-
-	titlesWg.Wait()
-	titleReduceWg.Wait()
+	titleIndexFuture := documents.ReadTitleMap(ctx, titleIndexPath, errs)
+	titleIndex := <-titleIndexFuture
 
 	redirectSource := jobs.NewSource(protos.ReadFile[documents.Redirect](redirectsPath))
 	redirectsWg, redirectsJob, redirects := redirectSource()

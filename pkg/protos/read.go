@@ -73,7 +73,7 @@ ReadLoop:
 		case <-ctx.Done():
 			break ReadLoop
 		default:
-			out, _, readErr := readNextMessage[IN, PIN](reader)
+			nextMessage, _, readErr := readNextMessage[IN, PIN](reader)
 			if readErr != nil {
 				if !errors.Is(readErr, io.EOF) {
 					errs <- readErr
@@ -81,7 +81,12 @@ ReadLoop:
 				break ReadLoop
 			}
 
-			in <- out
+			select {
+			case <-ctx.Done():
+				break ReadLoop
+			case in <- nextMessage:
+				// Expected behavior.
+			}
 		}
 	}
 }

@@ -3,7 +3,6 @@ package view
 import (
 	"context"
 	"fmt"
-	"github.com/willbeason/wikipedia/pkg/protos"
 	"os"
 	"path/filepath"
 
@@ -54,18 +53,8 @@ func runCmd(cmd *cobra.Command, args []string) error {
 	}
 	if len(titles) > 0 {
 		indexFilepath := filepath.Join(environment.WikiPath, environment.TitleIndex)
-		titlesSource := jobs.NewSource(protos.ReadFile[documents.ArticleIdTitle](indexFilepath))
-		titlesWg, titlesJob, titleIds := titlesSource()
-		go titlesJob(ctx, errs)
-
-		titleReduce := jobs.NewMap(documents.MakeTitleMapFn)
-		titleReduceWg, titleReduceJob, titleIndexes := titleReduce(titleIds)
-		go titleReduceJob(ctx, errs)
-
-		index := <-titleIndexes
-
-		titlesWg.Wait()
-		titleReduceWg.Wait()
+		futureIndex := documents.ReadTitleMap(ctx, indexFilepath, errs)
+		index := <-futureIndex
 
 		for _, title := range titles {
 			id, found := index[title]
