@@ -8,7 +8,6 @@ import (
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
-	"github.com/willbeason/wikipedia/pkg/jobs"
 	"math"
 	"path/filepath"
 	"sort"
@@ -163,64 +162,30 @@ func convertToIndex(network map[uint32][]uint32, idToIndex map[uint32]int) [][]i
 }
 
 func iteratePageRank(ctx context.Context, errs chan<- error, network [][]int, weights []float64) []float64 {
-	kvSource := jobs.NewSource(jobs.SliceSourceFn(network))
-	kvWg, kvJob, kvs := kvSource()
-	go kvJob(ctx, errs)
+	start := time.Now()
 
 	dampWeightMtx := sync.Mutex{}
 	dampWeight := (1.0 - damping) / float64(len(network))
 
 	// Initialize all possible keys
-	nMaps := 1024
 	nextWeights := make([]float64, len(weights))
-	idLocks := make([]sync.Mutex, nMaps)
 
-	
+	invNetworkSize := 1.0 / float64(len(network))
+	for k, v := range network {
+		if len(v) == 0 {
+			// This article links to nowhere, so all weight goes to damping.
+			dampWeightMtx.Lock()
+			dampWeight += damping * weights[k] * invNetworkSize
+			dampWeightMtx.Unlock()
+			continue
+		}
 
-	rowSink := jobs.NewSink(func(ts <-chan jobs.KV[int, []int]) jobs.Job {
-		return func(ctx context.Context, errs chan<- error) {
-			for kv := range ts {
-				if len(kv.Value) == 0 {
-					// This article links to nowhere, so all weight goes to damping.
-					dampWeightMtx.Lock()
-					dampWeight += damping * weights[kv.Key] / float64(len(network))
-					dampWeightMtx.Unlock()
-					continue
-				}
-
-				linkToWeight := damping * weights[kv.Key] / float64(len(kv.Value))
-				for _, to := range kv.Value {
-					lock := to % nMaps
-					idLocks[lock].Lock()
-					nextWeights[to] += linkToWeight
-					idLocks[lock].Unlock()
-				}
-			}}
-		},
-	)
-	rowSinkWg, rowSinkJob := rowSink(kvs)
-
-	//rowMapWg, rowMapJob, weightsChan := rowSink(kvs)
-	for range 16 {
-		go rowSinkJob(ctx, errs)
+		linkToWeight := damping * weights[k] / float64(len(v))
+		for _, to := range v {
+			nextWeights[to] += linkToWeight
+		}
 	}
-	//
-	//rowReduce := jobs.NewMap(jobs.ReduceToOne(jobs.MakeMap[uint32, float64], func(from, to map[uint32]float64) error {
-	//	for k, v := range from {
-	//		to[k] += v
-	//	}
-	//	return nil
-	//}))
-	//rowReduceWg, rowReduceJob, rowReduceFuture := rowReduce(weightsChan)
-	start := time.Now()
-	//go rowReduceJob(ctx, errs)
 
-	kvWg.Wait()
-	rowSinkWg.Wait()
-	//rowMapWg.Wait()
-	//rowReduceWg.Wait()
-
-	//nextWeights := <-rowReduceFuture
 
 	// Add random traversal weight.
 	for k := range nextWeights {
