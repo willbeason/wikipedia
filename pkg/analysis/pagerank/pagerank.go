@@ -14,6 +14,7 @@ import (
 	"sort"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 const (
@@ -62,11 +63,15 @@ func RunPageRank(cmd *cobra.Command, cfg *config.PageRank, corpusNames ...string
 	fmt.Println("Finished loading links.")
 	fmt.Println(len(links), "Links")
 	// Initialize weights equally.
-	weights := make(map[uint32]float64, len(links))
-	for i := range links {
-		weights[i] = 1.0 / float64(len(links))
+	weights := make([]float64, len(links))
+	invLenLinks := 1.0 / float64(len(links))
+	for i := range weights {
+		weights[i] = invLenLinks
 	}
 	fmt.Println(len(weights), "Weights")
+
+	indexToId, idToIndex := makeIdDictionary(links)
+	indexLinks := convertToIndex(links, idToIndex)
 
 	converged := atomic.Bool{}
 	for i := range maxIterations {
@@ -75,9 +80,9 @@ func RunPageRank(cmd *cobra.Command, cfg *config.PageRank, corpusNames ...string
 			break
 		}
 
-		nextWeights := iteratePageRank(ctx, errs, links, weights)
+		nextWeights := iteratePageRank(ctx, errs, indexLinks, weights)
 
-		go func(j int, before, after map[uint32]float64) {
+		go func(j int, before, after []float64) {
 			diffs := 0.0
 			for id := range before {
 				diffs += math.Abs(before[id] - after[id])
@@ -96,9 +101,9 @@ func RunPageRank(cmd *cobra.Command, cfg *config.PageRank, corpusNames ...string
 
 	pageRanks := make([]PageRank, len(weights))
 	i := 0
-	for k, weight := range weights {
+	for index, weight := range weights {
 		pageRanks[i] = PageRank{
-			id:   k,
+			id:   indexToId[index],
 			rank: weight,
 		}
 		i++
@@ -128,55 +133,100 @@ func RunPageRank(cmd *cobra.Command, cfg *config.PageRank, corpusNames ...string
 	return nil
 }
 
-func iteratePageRank(ctx context.Context, errs chan<- error, network map[uint32][]uint32, weights map[uint32]float64) map[uint32]float64 {
-	kvSource := jobs.NewSource(jobs.MapSourceFn(network))
+func makeIdDictionary(network map[uint32][]uint32) ([]uint32, map[uint32]int) {
+	indexToId := make([]uint32, len(network))
+	idToIndex := make(map[uint32]int)
+
+
+	i := 0
+	for k := range network {
+		indexToId[i] = k
+		idToIndex[k] = i
+		i++
+	}
+
+	return indexToId, idToIndex
+}
+
+func convertToIndex(network map[uint32][]uint32, idToIndex map[uint32]int) [][]int {
+	result := make([][]int, len(network))
+
+	for k, v := range network {
+		converted := make([]int, len(v))
+		for i, id := range v {
+			converted[i] = idToIndex[id]
+		}
+		result[idToIndex[k]] = converted
+	}
+
+	return result
+}
+
+func iteratePageRank(ctx context.Context, errs chan<- error, network [][]int, weights []float64) []float64 {
+	kvSource := jobs.NewSource(jobs.SliceSourceFn(network))
 	kvWg, kvJob, kvs := kvSource()
 	go kvJob(ctx, errs)
 
 	dampWeightMtx := sync.Mutex{}
 	dampWeight := (1.0 - damping) / float64(len(network))
 
-	rowMap := jobs.NewMap(jobs.ReduceToMany(jobs.MakeMap[uint32, float64],
-		func(kv jobs.KV[uint32, []uint32], out map[uint32]float64) error {
-			if len(kv.Value) == 0 {
-				// This article links to nowhere, so all weight goes to damping.
-				dampWeightMtx.Lock()
-				dampWeight += damping * weights[kv.Key] / float64(len(network))
-				dampWeightMtx.Unlock()
-				return nil
-			}
+	// Initialize all possible keys
+	nMaps := 1024
+	nextWeights := make([]float64, len(weights))
+	idLocks := make([]sync.Mutex, nMaps)
 
-			linkToWeight := damping * weights[kv.Key] / float64(len(kv.Value))
-			for _, to := range kv.Value {
-				out[to] += linkToWeight
-			}
-			return nil
+	
+
+	rowSink := jobs.NewSink(func(ts <-chan jobs.KV[int, []int]) jobs.Job {
+		return func(ctx context.Context, errs chan<- error) {
+			for kv := range ts {
+				if len(kv.Value) == 0 {
+					// This article links to nowhere, so all weight goes to damping.
+					dampWeightMtx.Lock()
+					dampWeight += damping * weights[kv.Key] / float64(len(network))
+					dampWeightMtx.Unlock()
+					continue
+				}
+
+				linkToWeight := damping * weights[kv.Key] / float64(len(kv.Value))
+				for _, to := range kv.Value {
+					lock := to % nMaps
+					idLocks[lock].Lock()
+					nextWeights[to] += linkToWeight
+					idLocks[lock].Unlock()
+				}
+			}}
 		},
-	))
-	rowMapWg, rowMapJob, weightsChan := rowMap(kvs)
-	for range 64 {
-		go rowMapJob(ctx, errs)
-	}
+	)
+	rowSinkWg, rowSinkJob := rowSink(kvs)
 
-	rowReduce := jobs.NewMap(jobs.ReduceToOne(jobs.MakeMap[uint32, float64], func(from, to map[uint32]float64) error {
-		for k, v := range from {
-			to[k] += v
-		}
-		return nil
-	}))
-	rowReduceWg, rowReduceJob, rowReduceFuture := rowReduce(weightsChan)
-	go rowReduceJob(ctx, errs)
+	//rowMapWg, rowMapJob, weightsChan := rowSink(kvs)
+	for range 16 {
+		go rowSinkJob(ctx, errs)
+	}
+	//
+	//rowReduce := jobs.NewMap(jobs.ReduceToOne(jobs.MakeMap[uint32, float64], func(from, to map[uint32]float64) error {
+	//	for k, v := range from {
+	//		to[k] += v
+	//	}
+	//	return nil
+	//}))
+	//rowReduceWg, rowReduceJob, rowReduceFuture := rowReduce(weightsChan)
+	start := time.Now()
+	//go rowReduceJob(ctx, errs)
 
 	kvWg.Wait()
-	rowMapWg.Wait()
-	rowReduceWg.Wait()
+	rowSinkWg.Wait()
+	//rowMapWg.Wait()
+	//rowReduceWg.Wait()
 
-	nextWeights := <-rowReduceFuture
+	//nextWeights := <-rowReduceFuture
 
 	// Add random traversal weight.
-	for id := range network {
-		nextWeights[id] += dampWeight
+	for k := range nextWeights {
+		nextWeights[k] += dampWeight
 	}
+	fmt.Println(time.Since(start))
 
 	return nextWeights
 }

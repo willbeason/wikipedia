@@ -95,7 +95,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	printWork := jobs.ForEach(jobs.WorkBuffer, ps, pages.Print)
+	printWork := jobs.ForEachOld(jobs.WorkBuffer, ps, pages.Print)
 
 	printWg := runner.Run(ctx, cancel, printWork)
 	printWg.Wait()

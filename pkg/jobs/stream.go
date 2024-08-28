@@ -101,8 +101,8 @@ func MapOld[FROM, TO any](buffer int, in <-chan FROM, fn func(FROM) (TO, error))
 	return out, work
 }
 
-// Deprecated: ForEach performs an action for each item, returning nothing.
-func ForEach[FROM any](buffer int, in <-chan FROM, fn func(FROM) error) WorkQueue {
+// Deprecated: ForEachOld performs an action for each item, returning nothing.
+func ForEachOld[FROM any](buffer int, in <-chan FROM, fn func(FROM) error) WorkQueue {
 	work := make(chan Work, buffer)
 
 	go func() {
