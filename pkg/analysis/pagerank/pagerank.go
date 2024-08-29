@@ -4,24 +4,25 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
+	"path/filepath"
+	"sort"
+	"sync"
+	"sync/atomic"
+
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/protos"
-	"math"
-	"path/filepath"
-	"sort"
-	"sync"
-	"sync/atomic"
 )
 
 const (
-	damping           = 0.85
-	convergeThreshold = 1e-10
+	defaultDamping           = 0.85
+	defaultConvergeThreshold = 1e-10
 
-	maxIterations = 100
+	defaultMaxIterations = 100
 )
 
 var ErrPageRank = errors.New("calculating PageRank")
@@ -52,8 +53,8 @@ func RunPageRank(cmd *cobra.Command, cfg *config.PageRank, corpusNames ...string
 	titleIndexFile := filepath.Join(workspace, corpusName, cfg.Index)
 	titleIndexFuture := documents.ReadReverseTitleMap(ctx, titleIndexFile, errs)
 
-	//genderIndexFile := filepath.Join(workspace, corpusName, cfg.GenderIndex)
-	//articleGendersFuture := documents.ReadGenderMap(ctx, genderIndexFile, errs)
+	// genderIndexFile := filepath.Join(workspace, corpusName, cfg.GenderIndex)
+	// articleGendersFuture := documents.ReadGenderMap(ctx, genderIndexFile, errs)
 
 	linksFile := filepath.Join(workspace, corpusName, cfg.Links)
 	linksFuture := documents.ReadLinksMap(ctx, linksFile, errs)
@@ -64,9 +65,9 @@ func RunPageRank(cmd *cobra.Command, cfg *config.PageRank, corpusNames ...string
 	fmt.Println(len(links), "Links")
 	// Initialize weights equally.
 	weights := make([]float64, len(links))
-	invLenLinks := 1.0 / float64(len(links))
+	// Initialize Pagerank to 1.0 per article.
 	for i := range weights {
-		weights[i] = invLenLinks
+		weights[i] = 1.0
 	}
 	fmt.Println(len(weights), "Weights")
 
@@ -74,7 +75,7 @@ func RunPageRank(cmd *cobra.Command, cfg *config.PageRank, corpusNames ...string
 	indexLinks := convertToIndex(links, idToIndex)
 
 	converged := atomic.Bool{}
-	for i := range maxIterations {
+	for i := range defaultMaxIterations {
 		if converged.Load() {
 			break
 		}
@@ -89,7 +90,7 @@ func RunPageRank(cmd *cobra.Command, cfg *config.PageRank, corpusNames ...string
 
 			fmt.Printf("%d: %g\n", i, diffs)
 
-			if diffs < convergeThreshold {
+			if diffs < defaultConvergeThreshold {
 				fmt.Printf("Converged early at iteration %d\n", j)
 				converged.Store(true)
 			}
@@ -102,7 +103,7 @@ func RunPageRank(cmd *cobra.Command, cfg *config.PageRank, corpusNames ...string
 	i := 0
 	for index, weight := range weights {
 		pageRanks[i] = &documents.PageRank{
-			Id:   indexToId[index],
+			Id:       indexToId[index],
 			Pagerank: weight,
 		}
 		i++
@@ -146,7 +147,6 @@ func makeIdDictionary(network map[uint32][]uint32) ([]uint32, map[uint32]uint32)
 	indexToId := make([]uint32, len(network))
 	idToIndex := make(map[uint32]uint32)
 
-
 	i := uint32(0)
 	for k := range network {
 		indexToId[i] = k
@@ -171,18 +171,130 @@ func convertToIndex(network map[uint32][]uint32, idToIndex map[uint32]uint32) []
 	return result
 }
 
+type Calculator struct {
+	// Damping is the proportion of traffic which navigates via a link on the
+	// current article. Each iteration, all weight is "damped" by multiplying by
+	// this constant.
+	damping float64
+
+	// Threshold is the desired "accuracy" of the PageRank calculation.
+	threshold     float64
+	maxIterations int
+
+	// filter tracks the set of articles which act as primary sources for damped weight.
+	// If unset, all pages are considered primary sources.
+	// If set, secondary sources still get dead-end weight to preserve network behavior.
+	// (This is what lets us add subnetworks together.)
+	filter []bool
+}
+
+// calculatePageRank calculates the unnormalized Pagerank for all nodes in a network.
+//
+//	network is a
+//
+// Uses an average PageRank of 1.0 instead of 1.0 / len(network) as n
+func (c Calculator) calculatePageRank(network [][]uint32) []float64 {
+	weights := make([]float64, len(network))
+	if c.filter == nil {
+		for i := range weights {
+			weights[i] = 1.0
+		}
+	} else {
+		for i := range weights {
+			if c.filter[i] {
+				weights[i] = 1.0
+			}
+		}
+	}
+
+	converged := atomic.Bool{}
+	for i := range c.maxIterations {
+		if converged.Load() {
+			break
+		}
+
+		nextWeights := c.iteratePageRank(network, weights)
+
+		go func(j int, before, after []float64) {
+			diffs := 0.0
+			for id := range before {
+				diffs += math.Abs(before[id] - after[id])
+			}
+
+			fmt.Printf("%d: %g\n", i, diffs)
+
+			if diffs < c.threshold {
+				fmt.Printf("Converged early at iteration %d\n", j)
+				converged.Store(true)
+			}
+		}(i, weights, nextWeights)
+
+		weights = nextWeights
+	}
+
+	return nil
+}
+
+func (c Calculator) iteratePageRank(network [][]uint32, weights []float64) []float64 {
+	// Initialize all possible keys.
+	// This is faster than reusing the same slice and resetting the values each time.
+	nextWeights := make([]float64, len(weights))
+
+	// dampWeight is the weight added to all articles every iteration.
+	dampWeight := 1.0 - c.damping
+
+	// deadEndWeight tracks the weight of all articles which link nowhere.
+	deadEndWeight := 0.0
+	for k, v := range network {
+		if len(v) == 0 {
+			// This article links to nowhere, so all weight is distributed evenly.
+			deadEndWeight += weights[k]
+		} else {
+			// Evenly distribute this article's weight to all linked articles.
+			linkToWeight := weights[k] / float64(len(v))
+			for _, to := range v {
+				nextWeights[to] += linkToWeight
+			}
+		}
+	}
+
+	// Damp deadEndWeight since some of that weight only goes to filtered pages.
+	deadEndWeight *= c.damping
+	// Since deadEndWeight tracks the total network weight to be evenly
+	// distributed, we divide it by the network's size.
+	deadEndWeight /= float64(len(network))
+
+	// Add random traversal weight.
+	if c.filter == nil {
+		for k := range nextWeights {
+			nextWeights[k] = nextWeights[k]*c.damping + dampWeight + deadEndWeight
+		}
+	} else {
+		for k := range nextWeights {
+			// All pages are damped and get the dead end weight.
+			nextWeights[k] = nextWeights[k]*c.damping + deadEndWeight
+			if c.filter[k] {
+				// Only filtered articles get the damp weight.
+				// Effectively this makes these articles the "source" of PageRank.
+				nextWeights[k] += dampWeight
+			}
+		}
+	}
+
+	return nextWeights
+}
+
 func iteratePageRank(network [][]uint32, weights []float64) []float64 {
 	// Initialize all possible keys.
 	// This is faster than reusing the same slice and resetting the values each time.
 	nextWeights := make([]float64, len(weights))
 
-	invNetworkSize := 1.0 / float64(len(network))
-	dampWeight := (1.0 - damping) * invNetworkSize
-	deadEndWeight := damping * invNetworkSize
+	dampWeight := 1.0 - defaultDamping
+	deadEndWeight := 0.0
 	for k, v := range network {
 		if len(v) == 0 {
-			// This article links to nowhere, so all weight goes to damping.
-			dampWeight += weights[k] * deadEndWeight
+			// This article links to nowhere, so all weight is randomly distributed.
+			deadEndWeight += weights[k]
 		} else {
 			linkToWeight := weights[k] / float64(len(v))
 			for _, to := range v {
@@ -191,9 +303,15 @@ func iteratePageRank(network [][]uint32, weights []float64) []float64 {
 		}
 	}
 
+	// deadEndWeight is the un-damped weight that goes to all pages, not just the filtered pages.
+	deadEndWeight *= defaultDamping
+	// Since deadEndWeight tracks the total network weight to be evenly
+	// distributed, we divide it by the network's size.
+	deadEndWeight /= float64(len(network))
+
 	// Add random traversal weight.
 	for k, v := range nextWeights {
-		nextWeights[k] = v * damping + dampWeight
+		nextWeights[k] = v*defaultDamping + dampWeight + deadEndWeight
 	}
 
 	return nextWeights
