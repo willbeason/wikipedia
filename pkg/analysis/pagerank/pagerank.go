@@ -8,17 +8,18 @@ import (
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
+	"github.com/willbeason/wikipedia/pkg/jobs"
+	"github.com/willbeason/wikipedia/pkg/protos"
 	"math"
 	"path/filepath"
 	"sort"
 	"sync"
 	"sync/atomic"
-	"time"
 )
 
 const (
 	damping           = 0.85
-	convergeThreshold = 1e-8
+	convergeThreshold = 1e-10
 
 	maxIterations = 100
 )
@@ -75,11 +76,10 @@ func RunPageRank(cmd *cobra.Command, cfg *config.PageRank, corpusNames ...string
 	converged := atomic.Bool{}
 	for i := range maxIterations {
 		if converged.Load() {
-			fmt.Printf("Converged early at iteration %d\n", i)
 			break
 		}
 
-		nextWeights := iteratePageRank(ctx, errs, indexLinks, weights)
+		nextWeights := iteratePageRank(indexLinks, weights)
 
 		go func(j int, before, after []float64) {
 			diffs := 0.0
@@ -87,7 +87,7 @@ func RunPageRank(cmd *cobra.Command, cfg *config.PageRank, corpusNames ...string
 				diffs += math.Abs(before[id] - after[id])
 			}
 
-			fmt.Printf("%d: %.010f\n", i, diffs)
+			fmt.Printf("%d: %g\n", i, diffs)
 
 			if diffs < convergeThreshold {
 				fmt.Printf("Converged early at iteration %d\n", j)
@@ -98,30 +98,40 @@ func RunPageRank(cmd *cobra.Command, cfg *config.PageRank, corpusNames ...string
 		weights = nextWeights
 	}
 
-	pageRanks := make([]PageRank, len(weights))
+	pageRanks := make([]*documents.PageRank, len(weights))
 	i := 0
 	for index, weight := range weights {
-		pageRanks[i] = PageRank{
-			id:   indexToId[index],
-			rank: weight,
+		pageRanks[i] = &documents.PageRank{
+			Id:   indexToId[index],
+			Pagerank: weight,
 		}
 		i++
 	}
 	fmt.Println(len(pageRanks), "PageRanks")
 
 	sort.Slice(pageRanks, func(i, j int) bool {
-		return pageRanks[i].rank > pageRanks[j].rank
+		return pageRanks[i].Pagerank > pageRanks[j].Pagerank
 	})
 
 	titleIndex := <-titleIndexFuture
 
 	for i := range 10 {
-		title := titleIndex[pageRanks[i].id]
-		rank := pageRanks[i].rank
-		fmt.Printf("%d: %s, %.08f\n", i, title, rank)
+		title := titleIndex[pageRanks[i].Id]
+		rank := pageRanks[i].Pagerank
+		fmt.Printf("%d: %s, %.020f\n", i, title, rank)
 	}
 
-	//articleGenders := <-articleGendersFuture
+	pageRanksSource := jobs.NewSource(jobs.SliceSourceFn(pageRanks))
+	pageRanksSourceWg, pageRanksSourceJob, pageRanksChan := pageRanksSource()
+	go pageRanksSourceJob(ctx, errs)
+
+	outFile := filepath.Join(workspace, corpusName, cfg.Out)
+	pageRanksSink := jobs.NewSink(protos.WriteFile[*documents.PageRank](outFile))
+	pageRanksSinkWg, pageRanksSinkJob := pageRanksSink(pageRanksChan)
+	go pageRanksSinkJob(ctx, errs)
+
+	pageRanksSourceWg.Wait()
+	pageRanksSinkWg.Wait()
 
 	close(errs)
 	errsWg.Wait()
@@ -132,12 +142,12 @@ func RunPageRank(cmd *cobra.Command, cfg *config.PageRank, corpusNames ...string
 	return nil
 }
 
-func makeIdDictionary(network map[uint32][]uint32) ([]uint32, map[uint32]int) {
+func makeIdDictionary(network map[uint32][]uint32) ([]uint32, map[uint32]uint32) {
 	indexToId := make([]uint32, len(network))
-	idToIndex := make(map[uint32]int)
+	idToIndex := make(map[uint32]uint32)
 
 
-	i := 0
+	i := uint32(0)
 	for k := range network {
 		indexToId[i] = k
 		idToIndex[k] = i
@@ -147,11 +157,11 @@ func makeIdDictionary(network map[uint32][]uint32) ([]uint32, map[uint32]int) {
 	return indexToId, idToIndex
 }
 
-func convertToIndex(network map[uint32][]uint32, idToIndex map[uint32]int) [][]int {
-	result := make([][]int, len(network))
+func convertToIndex(network map[uint32][]uint32, idToIndex map[uint32]uint32) [][]uint32 {
+	result := make([][]uint32, len(network))
 
 	for k, v := range network {
-		converted := make([]int, len(v))
+		converted := make([]uint32, len(v))
 		for i, id := range v {
 			converted[i] = idToIndex[id]
 		}
@@ -161,42 +171,30 @@ func convertToIndex(network map[uint32][]uint32, idToIndex map[uint32]int) [][]i
 	return result
 }
 
-func iteratePageRank(ctx context.Context, errs chan<- error, network [][]int, weights []float64) []float64 {
-	start := time.Now()
-
-	dampWeightMtx := sync.Mutex{}
-	dampWeight := (1.0 - damping) / float64(len(network))
-
-	// Initialize all possible keys
+func iteratePageRank(network [][]uint32, weights []float64) []float64 {
+	// Initialize all possible keys.
+	// This is faster than reusing the same slice and resetting the values each time.
 	nextWeights := make([]float64, len(weights))
 
 	invNetworkSize := 1.0 / float64(len(network))
+	dampWeight := (1.0 - damping) * invNetworkSize
+	deadEndWeight := damping * invNetworkSize
 	for k, v := range network {
 		if len(v) == 0 {
 			// This article links to nowhere, so all weight goes to damping.
-			dampWeightMtx.Lock()
-			dampWeight += damping * weights[k] * invNetworkSize
-			dampWeightMtx.Unlock()
-			continue
-		}
-
-		linkToWeight := damping * weights[k] / float64(len(v))
-		for _, to := range v {
-			nextWeights[to] += linkToWeight
+			dampWeight += weights[k] * deadEndWeight
+		} else {
+			linkToWeight := weights[k] / float64(len(v))
+			for _, to := range v {
+				nextWeights[to] += linkToWeight
+			}
 		}
 	}
-
 
 	// Add random traversal weight.
-	for k := range nextWeights {
-		nextWeights[k] += dampWeight
+	for k, v := range nextWeights {
+		nextWeights[k] = v * damping + dampWeight
 	}
-	fmt.Println(time.Since(start))
 
 	return nextWeights
-}
-
-type PageRank struct {
-	id   uint32
-	rank float64
 }

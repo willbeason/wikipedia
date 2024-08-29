@@ -50,14 +50,14 @@ func MapSourceFn[K comparable, V any](m map[K]V) SourceFn[KV[K, V]] {
 	}
 }
 
-func SliceSourceFn[V any](m []V) SourceFn[KV[int, V]] {
-	return func(kvs chan<- KV[int, V]) Job {
+func SliceSourceFn[V any](m []V) SourceFn[V] {
+	return func(vs chan<- V) Job {
 		return func(ctx context.Context, errors chan<- error) {
-			for k, v := range m {
+			for _, v := range m {
 				if ctx.Err() != nil {
 					break
 				}
-				kvs <- KV[int, V]{Key: k, Value: v}
+				vs <- v
 			}
 		}
 	}

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/willbeason/wikipedia/pkg/jobs"
 	"google.golang.org/protobuf/proto"
@@ -25,6 +26,13 @@ func writeFileJob[OUT proto.Message](path string, out <-chan OUT) jobs.Job {
 }
 
 func writeStream[OUT proto.Message](ctx context.Context, errs chan<- error, path string, out <-chan OUT) {
+	dir := filepath.Dir(path)
+	err := os.MkdirAll(dir, os.ModePerm)
+	if err != nil {
+		errs <- err
+		return
+	}
+
 	file, err := os.Create(path)
 	if err != nil {
 		errs <- err

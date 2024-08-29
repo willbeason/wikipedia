@@ -111,6 +111,13 @@ func (r *Runner) RunJob(cmd *cobra.Command, jobName string, args ...string) erro
 		}
 
 		return pagerank.RunPageRank(cmd, wikidataCfg, args...)
+	case "pagerank-compare":
+		wikidataCfg, err := config.UnmarshallJob[config.ComparePageRank](job)
+		if err != nil {
+			return err
+		}
+
+		return pagerank.RunComparePageRank(cmd, wikidataCfg, args...)
 	default:
 		return fmt.Errorf("%w: job %q has unknown subCommand %q",
 			config.ErrLoad, jobName, job.SubCommand)

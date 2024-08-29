@@ -15,6 +15,11 @@ message Page {
   string text = 3;
 }
 
+message PageRank {
+  uint32 id = 1;
+  double pagerank = 2;
+}
+
 message Redirect {
   string title = 1;
   string redirect = 2;

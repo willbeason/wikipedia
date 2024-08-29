@@ -76,7 +76,7 @@ ReadLoop:
 			nextMessage, _, readErr := readNextMessage[IN, PIN](reader)
 			if readErr != nil {
 				if !errors.Is(readErr, io.EOF) {
-					errs <- readErr
+					errs <- fmt.Errorf("reading %q: %w", path, readErr)
 				}
 				break ReadLoop
 			}
@@ -101,7 +101,10 @@ func readNextMessage[IN any, PIN Proto[IN]](reader io.Reader) (*IN, int, error) 
 
 	size := binary.LittleEndian.Uint32(sizeBytes)
 	messageBytes := make([]byte, size)
-	if _, readErr := io.ReadFull(reader, messageBytes); readErr != nil {
+	if bytesRead, readErr := io.ReadFull(reader, messageBytes); readErr != nil {
+		if errors.Is(readErr, io.ErrUnexpectedEOF) {
+			return nil, 0, fmt.Errorf("read %d of %d message bytes: %w", bytesRead, size, readErr)
+		}
 		return nil, 0, fmt.Errorf("reading next message bytes: %w", readErr)
 	}
 

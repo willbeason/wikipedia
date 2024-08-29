@@ -94,4 +94,19 @@ type PageRank struct {
 
 	// Links is the filepath to the list of links by article.
 	Links string `yaml:"links"`
+
+	// Out is the file to write the PageRanks to.
+	Out string `yaml:"out"`
+}
+
+type ComparePageRank struct {
+	// Index is the filepath to the title index.
+	Index string `yaml:"index"`
+
+	// GenderIndex is the filepath to the GenderIndex.
+	GenderIndex string `yaml:"genderIndex"`
+
+	// PageRanks is the name of the PageRanks file in both corpora.
+	PageRanks string `yaml:"pageRanks"`
+
 }
