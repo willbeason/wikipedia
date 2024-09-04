@@ -67,7 +67,7 @@ func RunPageRank(cmd *cobra.Command, cfg *config.PageRank, corpusNames ...string
 	fmt.Println("Started loading links.")
 	links := <-linksFuture
 	fmt.Println("Finished loading links.")
-	fmt.Println(len(links), "Links")
+	fmt.Println(len(links), "Articles")
 	indexToId, idToIndex := makeIdDictionary(links)
 	indexLinks := convertToIndex(links, idToIndex)
 
@@ -111,7 +111,7 @@ func RunPageRank(cmd *cobra.Command, cfg *config.PageRank, corpusNames ...string
 	titleIndex := <-titleIndexFuture
 
 	i, n := 0, 0
-	for n < 100 {
+	for n < 100 && n < len(pageRanks) {
 		if cfg.GenderIndex != "" {
 			for genderIndex[pageRanks[i].Id] == "" {
 				i++
