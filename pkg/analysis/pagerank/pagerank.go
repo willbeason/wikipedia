@@ -10,8 +10,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/willbeason/wikipedia/pkg/analysis/gender"
-
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/analysis/gender"
 	"github.com/willbeason/wikipedia/pkg/config"

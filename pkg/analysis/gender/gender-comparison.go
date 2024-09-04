@@ -8,8 +8,6 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/willbeason/wikipedia/pkg/jobs"
-
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/documents"

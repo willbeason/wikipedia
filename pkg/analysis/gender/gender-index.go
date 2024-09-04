@@ -7,8 +7,6 @@ import (
 	"path/filepath"
 	"sync"
 
-	ingest_wikidata "github.com/willbeason/wikipedia/pkg/ingest-wikidata"
-
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/documents"

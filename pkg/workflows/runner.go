@@ -3,8 +3,6 @@ package workflows
 import (
 	"errors"
 	"fmt"
-
-
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/analysis/gender"
 	"github.com/willbeason/wikipedia/pkg/analysis/pagerank"
