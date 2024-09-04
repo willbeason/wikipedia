@@ -4,13 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/protos"
 )
 
 var ErrLoop = errors.New("redirect loop detected")
-
-
 func MakeRedirects(ctx context.Context, filename string, errs chan<- error) <-chan map[string]string {
 	redirectSource := jobs.NewSource(protos.ReadFile[Redirect](filename))
 	_, redirectsJob, redirects := redirectSource()

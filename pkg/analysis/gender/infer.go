@@ -25,21 +25,21 @@ const (
 )
 
 var ReadableGender = map[string]string{
-	ManGender: "man",
-	WomanGender: "woman",
-	TransWomanGender: "trans woman",
+	ManGender:         "man",
+	WomanGender:       "woman",
+	TransWomanGender:  "trans woman",
 	ConflictingClaims: "conflict",
-	NonBinaryGender: "non-binary",
-	TransManGender: "trans man",
-	NoClaims: "no claims",
-	"Q121307100": "intersex woman",
-	"Q18116794": "genderfluid",
-	"Q121307094": "intersex man",
-	"Q12964198": "genderqueer",
-	EunuchGender: "eunuch",
-	"Q189125": "transgender",
-	"Q301702": "two-spirit",
-	"Q505371": "agender",
+	NonBinaryGender:   "non-binary",
+	TransManGender:    "trans man",
+	NoClaims:          "no claims",
+	"Q121307100":      "intersex woman",
+	"Q18116794":       "genderfluid",
+	"Q121307094":      "intersex man",
+	"Q12964198":       "genderqueer",
+	EunuchGender:      "eunuch",
+	"Q189125":         "transgender",
+	"Q301702":         "two-spirit",
+	"Q505371":         "agender",
 }
 
 func filterDeprecated(claims []*entities.Claim) []*entities.Claim {

@@ -33,7 +33,7 @@ func NewSource[T any](sourceFn SourceFn[T]) Source[T] {
 }
 
 type KV[K comparable, V any] struct {
-	Key K
+	Key   K
 	Value V
 }
 

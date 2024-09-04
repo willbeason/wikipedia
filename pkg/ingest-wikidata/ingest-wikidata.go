@@ -87,7 +87,6 @@ func IngestWikidata(cmd *cobra.Command, wikidataCfg *config.IngestWikidata, args
 		return err
 	}
 
-
 	errs := make(chan error)
 	go func() {
 		for err := range errs {

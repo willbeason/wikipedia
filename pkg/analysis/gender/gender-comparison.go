@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"github.com/willbeason/wikipedia/pkg/jobs"
 
@@ -15,6 +14,7 @@ import (
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
+	"github.com/willbeason/wikipedia/pkg/jobs"
 	progress_bar "github.com/willbeason/wikipedia/pkg/progress-bar"
 	"github.com/willbeason/wikipedia/pkg/protos"
 )
@@ -78,6 +78,8 @@ func Comparison(cmd *cobra.Command, cfg *config.GenderComparison, corpusNames ..
 	totalGenderedLinked := 0
 	genderLinkTargetsMap := make(map[string]int)
 
+	fmt.Println("Sections not implemented - reimplement.")
+
 	articlesProgress := progress_bar.NewProgressBar("Articles", int64(len(beforeLinks)), os.Stdout)
 	articlesProgress.Start()
 	n := 0
@@ -100,17 +102,7 @@ func Comparison(cmd *cobra.Command, cfg *config.GenderComparison, corpusNames ..
 		}
 
 		for _, link := range links.Links {
-			if hasGender {
-				section := strings.TrimSpace(link.Section)
-				if section == "" {
-					section = "Lead"
-				}
-				beforeSectionCountsMap[section]++
-				sectionLinkCounts[section]++
-				beforeGenderLinkCountsMap[gender]++
-			}
-
-			targetGender, targetHasGender := beforeGender[link.Target]
+			targetGender, targetHasGender := beforeGender[link]
 			if targetHasGender {
 				genderLinkTargetsMap[targetGender]++
 			}

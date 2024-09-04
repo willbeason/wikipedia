@@ -47,9 +47,9 @@ func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
 	}
 	corpusName := corpusNames[0]
 	articlesDir := cfg.In
-	outFile := cfg.Out
+	outPath := cfg.Out
 	fmt.Printf("Creating link network for corpus %q from directory %q and writing to %q\n",
-		corpusName, articlesDir, outFile)
+		corpusName, articlesDir, outPath)
 
 	parallel, err := flags.GetParallel(cmd)
 	if err != nil {
@@ -62,7 +62,7 @@ func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
 	}
 
 	articlesDir = filepath.Join(workspace, corpusName, articlesDir)
-	outFile = filepath.Join(workspace, corpusName, outFile)
+	outPath = filepath.Join(workspace, corpusName, outPath)
 	titleIndexPath := filepath.Join(workspace, corpusName, cfg.Index)
 	redirectsPath := filepath.Join(workspace, corpusName, cfg.Redirects)
 
@@ -86,7 +86,7 @@ func Links(cmd *cobra.Command, cfg *config.Links, corpusNames ...string) error {
 
 	linksChannel := makeLinks(parallel, titleIndex, redirectIndex, pages)
 
-	linksSink := jobs.NewSink(protos.WriteFile[*documents.ArticleIdLinks](outFile))
+	linksSink := jobs.NewSink(protos.WriteFile[*documents.ArticleIdLinks](outPath))
 	linksSinkWg, linksSinkJob := linksSink(linksChannel)
 	go linksSinkJob(ctx, errs)
 
@@ -140,10 +140,7 @@ func makeLinks(
 						continue
 					}
 
-					links.Links = append(links.Links, &documents.Link{
-						Target:  id,
-						Section: link.Section,
-					})
+					links.Links = append(links.Links, id)
 				}
 
 				results <- links

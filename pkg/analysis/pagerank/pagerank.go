@@ -4,14 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/willbeason/wikipedia/pkg/analysis/gender"
 	"math"
 	"path/filepath"
 	"sort"
 	"sync"
 	"sync/atomic"
 
+	"github.com/willbeason/wikipedia/pkg/analysis/gender"
+
 	"github.com/spf13/cobra"
+	"github.com/willbeason/wikipedia/pkg/analysis/gender"
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
@@ -205,7 +207,7 @@ type Calculator struct {
 //		network is a sparse array of links. Each element is a list of links from the node
 //	 whose identifier corresponds to the index in the list.
 //
-// Uses an average PageRank of 1.0 instead of 1.0 / len(network) as n
+// Uses an average PageRank of 1.0 instead of 1.0 / len(network) as n.
 func (c Calculator) calculatePageRank(network [][]uint32) []float64 {
 	weights := make([]float64, len(network))
 	if c.filter == nil {

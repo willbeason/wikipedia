@@ -57,8 +57,8 @@ func RenamedArticles(cmd *cobra.Command, corpusBefore, titlesBefore, corpusAfter
 	beforeFuture := documents.ReadTitleMap(ctx, beforePath, errs)
 	afterFuture := documents.ReadTitleMap(ctx, afterPath, errs)
 
-	before := <- beforeFuture
-	after := <- afterFuture
+	before := <-beforeFuture
+	after := <-afterFuture
 
 	beforeSize := len(before)
 	afterSize := len(after)

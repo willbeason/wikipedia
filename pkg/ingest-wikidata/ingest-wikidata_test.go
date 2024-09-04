@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/willbeason/wikipedia/pkg/documents"
 	ingest_wikidata "github.com/willbeason/wikipedia/pkg/ingest-wikidata"
 )
 
@@ -54,9 +53,7 @@ func TestParseObject(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			index := &documents.TitleIndex{Titles: tc.titles}
-
-			obj, err := ingest_wikidata.ParseObject(allowedInstances, nil, claimIDs, index, []byte(tc.json))
+			obj, err := ingest_wikidata.ParseObject(allowedInstances, nil, claimIDs, tc.titles, []byte(tc.json))
 			if !errors.Is(err, tc.wantError) {
 				t.Fatalf("got error %v, want %v", err, tc.wantError)
 			}

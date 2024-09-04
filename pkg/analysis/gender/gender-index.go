@@ -4,17 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	ingest_wikidata "github.com/willbeason/wikipedia/pkg/ingest-wikidata"
 	"path/filepath"
 	"sync"
 
-	"github.com/willbeason/wikipedia/pkg/jobs"
+	ingest_wikidata "github.com/willbeason/wikipedia/pkg/ingest-wikidata"
 
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/entities"
 	"github.com/willbeason/wikipedia/pkg/flags"
+	ingest_wikidata "github.com/willbeason/wikipedia/pkg/ingest-wikidata"
+	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/pages"
 	"github.com/willbeason/wikipedia/pkg/protos"
 )

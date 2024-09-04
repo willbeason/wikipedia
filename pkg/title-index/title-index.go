@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/willbeason/wikipedia/pkg/jobs"
-
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
+	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/protos"
 )
 

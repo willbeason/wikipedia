@@ -3,14 +3,15 @@ package pagerank
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+	"sort"
+	"sync"
+
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/analysis/gender"
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
-	"path/filepath"
-	"sort"
-	"sync"
 )
 
 func RunComparePageRank(cmd *cobra.Command, cfg *config.ComparePageRank, corpusNames ...string) error {
@@ -44,8 +45,8 @@ func RunComparePageRank(cmd *cobra.Command, cfg *config.ComparePageRank, corpusN
 	beforePageRanksFuture := documents.ReadPageRanks(ctx, errs, beforePageRankFile)
 	afterPageRanksFuture := documents.ReadPageRanks(ctx, errs, afterPageRankFile)
 
-	beforePageRanks := <- beforePageRanksFuture
-	afterPageRanks := <- afterPageRanksFuture
+	beforePageRanks := <-beforePageRanksFuture
+	afterPageRanks := <-afterPageRanksFuture
 
 	beforeGenderFile := filepath.Join(workspace, beforeCorpus, cfg.GenderIndex)
 	afterGenderFile := filepath.Join(workspace, afterCorpus, cfg.GenderIndex)
@@ -53,8 +54,8 @@ func RunComparePageRank(cmd *cobra.Command, cfg *config.ComparePageRank, corpusN
 	beforeGenderIndexFuture := documents.ReadGenderMap(ctx, beforeGenderFile, errs)
 	afterGenderIndexFuture := documents.ReadGenderMap(ctx, afterGenderFile, errs)
 
-	beforeGenderIndex := <- beforeGenderIndexFuture
-	afterGenderIndex := <- afterGenderIndexFuture
+	beforeGenderIndex := <-beforeGenderIndexFuture
+	afterGenderIndex := <-afterGenderIndexFuture
 
 	beforeGenderPageRank := make(map[string]float64)
 	afterGenderPageRank := make(map[string]float64)
@@ -109,5 +110,5 @@ func RunComparePageRank(cmd *cobra.Command, cfg *config.ComparePageRank, corpusN
 type GenderPageRank struct {
 	Gender string
 	Before float64
-	After float64
+	After  float64
 }

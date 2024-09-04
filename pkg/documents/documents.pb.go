@@ -499,8 +499,8 @@ type ArticleIdLinks struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id    uint32  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Links []*Link `protobuf:"bytes,2,rep,name=links,proto3" json:"links,omitempty"`
+	Id    uint32   `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Links []uint32 `protobuf:"varint,2,rep,packed,name=links,proto3" json:"links,omitempty"`
 }
 
 func (x *ArticleIdLinks) Reset() {
@@ -542,66 +542,11 @@ func (x *ArticleIdLinks) GetId() uint32 {
 	return 0
 }
 
-func (x *ArticleIdLinks) GetLinks() []*Link {
+func (x *ArticleIdLinks) GetLinks() []uint32 {
 	if x != nil {
 		return x.Links
 	}
 	return nil
-}
-
-type Link struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Target  uint32 `protobuf:"varint,1,opt,name=target,proto3" json:"target,omitempty"`
-	Section string `protobuf:"bytes,2,opt,name=section,proto3" json:"section,omitempty"`
-}
-
-func (x *Link) Reset() {
-	*x = Link{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_documents_documents_proto_msgTypes[10]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *Link) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Link) ProtoMessage() {}
-
-func (x *Link) ProtoReflect() protoreflect.Message {
-	mi := &file_documents_documents_proto_msgTypes[10]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Link.ProtoReflect.Descriptor instead.
-func (*Link) Descriptor() ([]byte, []int) {
-	return file_documents_documents_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *Link) GetTarget() uint32 {
-	if x != nil {
-		return x.Target
-	}
-	return 0
-}
-
-func (x *Link) GetSection() string {
-	if x != nil {
-		return x.Section
-	}
-	return ""
 }
 
 var File_documents_documents_proto protoreflect.FileDescriptor
@@ -649,16 +594,12 @@ var file_documents_documents_proto_rawDesc = []byte{
 	0x52, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0x2c, 0x0a, 0x0a, 0x43,
 	0x61, 0x74, 0x65, 0x67, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x12, 0x1e, 0x0a, 0x0a, 0x63, 0x61, 0x74,
 	0x65, 0x67, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0d, 0x52, 0x0a, 0x63,
-	0x61, 0x74, 0x65, 0x67, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x22, 0x3d, 0x0a, 0x0e, 0x41, 0x72, 0x74,
+	0x61, 0x74, 0x65, 0x67, 0x6f, 0x72, 0x69, 0x65, 0x73, 0x22, 0x36, 0x0a, 0x0e, 0x41, 0x72, 0x74,
 	0x69, 0x63, 0x6c, 0x65, 0x49, 0x64, 0x4c, 0x69, 0x6e, 0x6b, 0x73, 0x12, 0x0e, 0x0a, 0x02, 0x69,
-	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x02, 0x69, 0x64, 0x12, 0x1b, 0x0a, 0x05, 0x6c,
-	0x69, 0x6e, 0x6b, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x05, 0x2e, 0x4c, 0x69, 0x6e,
-	0x6b, 0x52, 0x05, 0x6c, 0x69, 0x6e, 0x6b, 0x73, 0x22, 0x38, 0x0a, 0x04, 0x4c, 0x69, 0x6e, 0x6b,
-	0x12, 0x16, 0x0a, 0x06, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d,
-	0x52, 0x06, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x65, 0x63, 0x74,
-	0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x73, 0x65, 0x63, 0x74, 0x69,
-	0x6f, 0x6e, 0x42, 0x0f, 0x5a, 0x0d, 0x70, 0x6b, 0x67, 0x2f, 0x64, 0x6f, 0x63, 0x75, 0x6d, 0x65,
-	0x6e, 0x74, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0d, 0x52, 0x02, 0x69, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x6c,
+	0x69, 0x6e, 0x6b, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0d, 0x52, 0x05, 0x6c, 0x69, 0x6e, 0x6b,
+	0x73, 0x42, 0x0f, 0x5a, 0x0d, 0x70, 0x6b, 0x67, 0x2f, 0x64, 0x6f, 0x63, 0x75, 0x6d, 0x65, 0x6e,
+	0x74, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -673,7 +614,7 @@ func file_documents_documents_proto_rawDescGZIP() []byte {
 	return file_documents_documents_proto_rawDescData
 }
 
-var file_documents_documents_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_documents_documents_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_documents_documents_proto_goTypes = []interface{}{
 	(*Document)(nil),        // 0: Document
 	(*Page)(nil),            // 1: Page
@@ -685,21 +626,19 @@ var file_documents_documents_proto_goTypes = []interface{}{
 	(*PageCategories)(nil),  // 7: PageCategories
 	(*Categories)(nil),      // 8: Categories
 	(*ArticleIdLinks)(nil),  // 9: ArticleIdLinks
-	(*Link)(nil),            // 10: Link
-	nil,                     // 11: GenderIndex.GendersEntry
-	nil,                     // 12: PageCategories.PagesEntry
+	nil,                     // 10: GenderIndex.GendersEntry
+	nil,                     // 11: PageCategories.PagesEntry
 }
 var file_documents_documents_proto_depIdxs = []int32{
 	1,  // 0: Document.pages:type_name -> Page
-	11, // 1: GenderIndex.genders:type_name -> GenderIndex.GendersEntry
-	12, // 2: PageCategories.pages:type_name -> PageCategories.PagesEntry
-	10, // 3: ArticleIdLinks.links:type_name -> Link
-	8,  // 4: PageCategories.PagesEntry.value:type_name -> Categories
-	5,  // [5:5] is the sub-list for method output_type
-	5,  // [5:5] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	10, // 1: GenderIndex.genders:type_name -> GenderIndex.GendersEntry
+	11, // 2: PageCategories.pages:type_name -> PageCategories.PagesEntry
+	8,  // 3: PageCategories.PagesEntry.value:type_name -> Categories
+	4,  // [4:4] is the sub-list for method output_type
+	4,  // [4:4] is the sub-list for method input_type
+	4,  // [4:4] is the sub-list for extension type_name
+	4,  // [4:4] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_documents_documents_proto_init() }
@@ -828,18 +767,6 @@ func file_documents_documents_proto_init() {
 				return nil
 			}
 		}
-		file_documents_documents_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Link); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -847,7 +774,7 @@ func file_documents_documents_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_documents_documents_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

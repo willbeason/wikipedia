@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/willbeason/wikipedia/pkg/protos"
 	"os"
 	"path/filepath"
+
+	"github.com/willbeason/wikipedia/pkg/protos"
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/spf13/cobra"
@@ -15,6 +16,7 @@ import (
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
 	"github.com/willbeason/wikipedia/pkg/jobs"
+	"github.com/willbeason/wikipedia/pkg/protos"
 )
 
 func Cmd() *cobra.Command {

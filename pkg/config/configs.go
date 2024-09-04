@@ -111,5 +111,4 @@ type ComparePageRank struct {
 
 	// PageRanks is the name of the PageRanks file in both corpora.
 	PageRanks string `yaml:"pageRanks"`
-
 }

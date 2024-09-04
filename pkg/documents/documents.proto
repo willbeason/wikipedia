@@ -49,10 +49,5 @@ message Categories {
 
 message ArticleIdLinks {
   uint32 id = 1;
-  repeated Link links = 2;
-}
-
-message Link {
-  uint32 target = 1;
-  string section = 2;
+  repeated uint32 links = 2;
 }

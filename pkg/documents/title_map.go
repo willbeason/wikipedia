@@ -2,6 +2,7 @@ package documents
 
 import (
 	"context"
+
 	"github.com/willbeason/wikipedia/pkg/jobs"
 	"github.com/willbeason/wikipedia/pkg/protos"
 )
@@ -72,7 +73,7 @@ func ReadLinksMap(ctx context.Context, filename string, errs chan<- error) <-cha
 func mergeArticleLinks(links *ArticleIdLinks, linkMap map[uint32][]uint32) error {
 	result := make([]uint32, len(links.Links))
 	for i, link := range links.Links {
-		result[i] = link.Target
+		result[i] = link
 	}
 	linkMap[links.Id] = result
 

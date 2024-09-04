@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
+	"sort"
+	"sync"
+
 	"github.com/spf13/cobra"
 	"github.com/willbeason/wikipedia/pkg/config"
 	"github.com/willbeason/wikipedia/pkg/documents"
 	"github.com/willbeason/wikipedia/pkg/flags"
-	"path/filepath"
-	"sort"
-	"sync"
 )
 
 var ErrGenderFrequency = errors.New("running gender frequency calculation")
