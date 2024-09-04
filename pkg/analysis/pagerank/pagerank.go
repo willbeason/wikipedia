@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/willbeason/wikipedia/pkg/analysis/gender"
 	"math"
 	"path/filepath"
 	"sort"
@@ -20,7 +21,7 @@ import (
 
 const (
 	defaultDamping           = 0.85
-	defaultConvergeThreshold = 1e-10
+	defaultConvergeThreshold = 1e-9
 
 	defaultMaxIterations = 100
 )
@@ -53,8 +54,12 @@ func RunPageRank(cmd *cobra.Command, cfg *config.PageRank, corpusNames ...string
 	titleIndexFile := filepath.Join(workspace, corpusName, cfg.Index)
 	titleIndexFuture := documents.ReadReverseTitleMap(ctx, titleIndexFile, errs)
 
-	// genderIndexFile := filepath.Join(workspace, corpusName, cfg.GenderIndex)
-	// articleGendersFuture := documents.ReadGenderMap(ctx, genderIndexFile, errs)
+	articleGendersFuture := make(<-chan map[uint32]string)
+	if cfg.GenderIndex != "" {
+		fmt.Println("Started loading gender index.")
+		genderIndexFile := filepath.Join(workspace, corpusName, cfg.GenderIndex)
+		articleGendersFuture = documents.ReadGenderMap(ctx, genderIndexFile, errs)
+	}
 
 	linksFile := filepath.Join(workspace, corpusName, cfg.Links)
 	linksFuture := documents.ReadLinksMap(ctx, linksFile, errs)
@@ -63,41 +68,30 @@ func RunPageRank(cmd *cobra.Command, cfg *config.PageRank, corpusNames ...string
 	links := <-linksFuture
 	fmt.Println("Finished loading links.")
 	fmt.Println(len(links), "Links")
-	// Initialize weights equally.
-	weights := make([]float64, len(links))
-	// Initialize Pagerank to 1.0 per article.
-	for i := range weights {
-		weights[i] = 1.0
-	}
-	fmt.Println(len(weights), "Weights")
-
 	indexToId, idToIndex := makeIdDictionary(links)
 	indexLinks := convertToIndex(links, idToIndex)
 
-	converged := atomic.Bool{}
-	for i := range defaultMaxIterations {
-		if converged.Load() {
-			break
+	var genderIndex map[uint32]string
+	var filter []bool
+	if cfg.GenderIndex != "" {
+		fmt.Println("Finished loading gender index.")
+		genderIndex = <-articleGendersFuture
+
+		filter = make([]bool, len(links))
+		for i := range filter {
+			filter[i] = genderIndex[indexToId[i]] == cfg.GenderFilter
 		}
-
-		nextWeights := iteratePageRank(indexLinks, weights)
-
-		go func(j int, before, after []float64) {
-			diffs := 0.0
-			for id := range before {
-				diffs += math.Abs(before[id] - after[id])
-			}
-
-			fmt.Printf("%d: %g\n", i, diffs)
-
-			if diffs < defaultConvergeThreshold {
-				fmt.Printf("Converged early at iteration %d\n", j)
-				converged.Store(true)
-			}
-		}(i, weights, nextWeights)
-
-		weights = nextWeights
 	}
+
+	calculator := Calculator{
+		damping:       defaultDamping,
+		threshold:     defaultConvergeThreshold,
+		maxIterations: defaultMaxIterations,
+		filter:        filter,
+	}
+
+	weights := calculator.calculatePageRank(indexLinks)
+	fmt.Println(len(weights), "Weights")
 
 	pageRanks := make([]*documents.PageRank, len(weights))
 	i := 0
@@ -116,10 +110,27 @@ func RunPageRank(cmd *cobra.Command, cfg *config.PageRank, corpusNames ...string
 
 	titleIndex := <-titleIndexFuture
 
-	for i := range 10 {
-		title := titleIndex[pageRanks[i].Id]
-		rank := pageRanks[i].Pagerank
-		fmt.Printf("%d: %s, %.020f\n", i, title, rank)
+	i, n := 0, 0
+	for n < 100 {
+		if cfg.GenderIndex != "" {
+			for genderIndex[pageRanks[i].Id] == "" {
+				i++
+			}
+		}
+
+		pageRank := pageRanks[i]
+		title := titleIndex[pageRank.Id]
+		rank := pageRank.Pagerank
+
+		if cfg.GenderIndex == "" {
+			fmt.Printf("%d,%q,%.020f\n", i, title, rank)
+		} else {
+			articleGender := gender.ReadableGender[genderIndex[pageRank.Id]]
+			fmt.Printf("%d,%q,%s,%.020f\n", i, title, articleGender, rank)
+		}
+
+		i++
+		n++
 	}
 
 	pageRanksSource := jobs.NewSource(jobs.SliceSourceFn(pageRanks))
@@ -178,6 +189,7 @@ type Calculator struct {
 	damping float64
 
 	// Threshold is the desired "accuracy" of the PageRank calculation.
+	// Is the proportion of total PageRank beyond which we don't care about error.
 	threshold     float64
 	maxIterations int
 
@@ -190,7 +202,8 @@ type Calculator struct {
 
 // calculatePageRank calculates the unnormalized Pagerank for all nodes in a network.
 //
-//	network is a
+//		network is a sparse array of links. Each element is a list of links from the node
+//	 whose identifier corresponds to the index in the list.
 //
 // Uses an average PageRank of 1.0 instead of 1.0 / len(network) as n
 func (c Calculator) calculatePageRank(network [][]uint32) []float64 {
@@ -208,6 +221,7 @@ func (c Calculator) calculatePageRank(network [][]uint32) []float64 {
 	}
 
 	converged := atomic.Bool{}
+	threshold := c.threshold * float64(len(network))
 	for i := range c.maxIterations {
 		if converged.Load() {
 			break
@@ -223,7 +237,7 @@ func (c Calculator) calculatePageRank(network [][]uint32) []float64 {
 
 			fmt.Printf("%d: %g\n", i, diffs)
 
-			if diffs < c.threshold {
+			if diffs < threshold {
 				fmt.Printf("Converged early at iteration %d\n", j)
 				converged.Store(true)
 			}
@@ -232,7 +246,7 @@ func (c Calculator) calculatePageRank(network [][]uint32) []float64 {
 		weights = nextWeights
 	}
 
-	return nil
+	return weights
 }
 
 func (c Calculator) iteratePageRank(network [][]uint32, weights []float64) []float64 {
@@ -279,39 +293,6 @@ func (c Calculator) iteratePageRank(network [][]uint32, weights []float64) []flo
 				nextWeights[k] += dampWeight
 			}
 		}
-	}
-
-	return nextWeights
-}
-
-func iteratePageRank(network [][]uint32, weights []float64) []float64 {
-	// Initialize all possible keys.
-	// This is faster than reusing the same slice and resetting the values each time.
-	nextWeights := make([]float64, len(weights))
-
-	dampWeight := 1.0 - defaultDamping
-	deadEndWeight := 0.0
-	for k, v := range network {
-		if len(v) == 0 {
-			// This article links to nowhere, so all weight is randomly distributed.
-			deadEndWeight += weights[k]
-		} else {
-			linkToWeight := weights[k] / float64(len(v))
-			for _, to := range v {
-				nextWeights[to] += linkToWeight
-			}
-		}
-	}
-
-	// deadEndWeight is the un-damped weight that goes to all pages, not just the filtered pages.
-	deadEndWeight *= defaultDamping
-	// Since deadEndWeight tracks the total network weight to be evenly
-	// distributed, we divide it by the network's size.
-	deadEndWeight /= float64(len(network))
-
-	// Add random traversal weight.
-	for k, v := range nextWeights {
-		nextWeights[k] = v*defaultDamping + dampWeight + deadEndWeight
 	}
 
 	return nextWeights

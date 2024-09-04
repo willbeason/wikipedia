@@ -92,6 +92,9 @@ type PageRank struct {
 	// GenderIndex is the filepath to the GenderIndex.
 	GenderIndex string `yaml:"genderIndex"`
 
+	// GenderFilter is the ID of the gender to include as source nodes.
+	GenderFilter string `yaml:"genderFilter"`
+
 	// Links is the filepath to the list of links by article.
 	Links string `yaml:"links"`
 
